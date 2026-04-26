@@ -175,11 +175,19 @@ impl std::fmt::Display for FingerprintError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::InvalidHexLength { expected, actual } => {
-                write!(f, "Invalid hex length: expected {}, got {}", expected, actual)
+                write!(
+                    f,
+                    "Invalid hex length: expected {}, got {}",
+                    expected, actual
+                )
             }
             Self::InvalidHexChar(s) => write!(f, "Invalid hex character: {}", s),
             Self::IncompatibleSchema { expected, actual } => {
-                write!(f, "Incompatible schema: expected v{}, got v{}", expected, actual)
+                write!(
+                    f,
+                    "Incompatible schema: expected v{}, got v{}",
+                    expected, actual
+                )
             }
             Self::VerificationFailed => write!(f, "Fingerprint verification failed"),
         }
@@ -307,7 +315,9 @@ impl CalibrationEntry {
 
     /// Check if material changed
     pub fn material_changed(&self) -> bool {
-        !self.input_fingerprint.content_equals(&self.output_fingerprint)
+        !self
+            .input_fingerprint
+            .content_equals(&self.output_fingerprint)
     }
 
     /// Format as log line
@@ -461,10 +471,7 @@ impl Default for CalibrationLog {
 /// Deterministic hash of f64 array (platform-independent)
 pub fn deterministic_hash_f64(data: &[f64]) -> [u8; 32] {
     // Convert f64 to canonical byte representation
-    let bytes: Vec<u8> = data
-        .iter()
-        .flat_map(|&f| f.to_be_bytes())
-        .collect();
+    let bytes: Vec<u8> = data.iter().flat_map(|&f| f.to_be_bytes()).collect();
 
     deterministic_hash(&bytes)
 }
@@ -707,7 +714,10 @@ mod tests {
     #[test]
     fn test_hex_invalid() {
         assert!(MaterialFingerprint::from_hex("abc").is_err());
-        assert!(MaterialFingerprint::from_hex("gg00000000000000000000000000000000000000000000000000000000000000").is_err());
+        assert!(MaterialFingerprint::from_hex(
+            "gg00000000000000000000000000000000000000000000000000000000000000"
+        )
+        .is_err());
     }
 
     #[test]
@@ -744,14 +754,7 @@ mod tests {
         let fp_in = MaterialFingerprint::from_params(&vec![1.5, 0.1]);
         let fp_out = MaterialFingerprint::from_params(&vec![1.52, 0.12]);
 
-        let entry = CalibrationEntry::new(
-            fp_in,
-            fp_out,
-            "Adam",
-            100,
-            0.001,
-            "BK7",
-        );
+        let entry = CalibrationEntry::new(fp_in, fp_out, "Adam", 100, 0.001, "BK7");
 
         log.add_entry(entry);
 
@@ -765,14 +768,7 @@ mod tests {
 
         for i in 0..5 {
             let fp = MaterialFingerprint::from_params(&vec![i as f64]);
-            let entry = CalibrationEntry::new(
-                fp.clone(),
-                fp,
-                "SGD",
-                i,
-                0.1,
-                "Test",
-            );
+            let entry = CalibrationEntry::new(fp.clone(), fp, "SGD", i, 0.1, "Test");
             log.add_entry(entry);
         }
 
@@ -813,16 +809,10 @@ mod tests {
 
     #[test]
     fn test_named_params_fingerprint() {
-        let fp1 = fingerprint_from_named(&[
-            ("ior", 1.5),
-            ("roughness", 0.1),
-        ]);
+        let fp1 = fingerprint_from_named(&[("ior", 1.5), ("roughness", 0.1)]);
 
         // Order shouldn't matter
-        let fp2 = fingerprint_from_named(&[
-            ("roughness", 0.1),
-            ("ior", 1.5),
-        ]);
+        let fp2 = fingerprint_from_named(&[("roughness", 0.1), ("ior", 1.5)]);
 
         assert_eq!(fp1.hash, fp2.hash);
     }
@@ -831,14 +821,7 @@ mod tests {
     fn test_calibration_log_json() {
         let mut log = CalibrationLog::new();
         let fp = MaterialFingerprint::from_params(&vec![1.5]);
-        let entry = CalibrationEntry::new(
-            fp.clone(),
-            fp,
-            "Adam",
-            50,
-            0.01,
-            "Test",
-        );
+        let entry = CalibrationEntry::new(fp.clone(), fp, "Adam", 50, 0.01, "Test");
         log.add_entry(entry);
 
         let json = log.to_json();

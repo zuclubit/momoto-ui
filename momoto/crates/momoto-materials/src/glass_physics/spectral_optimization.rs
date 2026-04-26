@@ -97,45 +97,45 @@ impl SpectralQuality {
     /// Real-time: 16 samples, optimized for CIE luminance function
     fn realtime_wavelengths() -> Vec<f64> {
         vec![
-            400.0,  // Violet
-            435.0,  // Blue
-            460.0,  // Blue-cyan
-            490.0,  // Cyan
-            510.0,  // Green-cyan
-            530.0,  // Green (high sensitivity)
-            550.0,  // Peak sensitivity
-            565.0,  // Yellow-green
-            580.0,  // Yellow
-            600.0,  // Orange
-            620.0,  // Red-orange
-            650.0,  // Red
-            680.0,  // Deep red
-            700.0,  // Far red
-            730.0,  // Edge
-            760.0,  // Far edge
+            400.0, // Violet
+            435.0, // Blue
+            460.0, // Blue-cyan
+            490.0, // Cyan
+            510.0, // Green-cyan
+            530.0, // Green (high sensitivity)
+            550.0, // Peak sensitivity
+            565.0, // Yellow-green
+            580.0, // Yellow
+            600.0, // Orange
+            620.0, // Red-orange
+            650.0, // Red
+            680.0, // Deep red
+            700.0, // Far red
+            730.0, // Edge
+            760.0, // Far edge
         ]
     }
 
     /// Fast preview: 8 samples at key wavelengths
     fn fast_preview_wavelengths() -> Vec<f64> {
         vec![
-            420.0,  // Blue
-            460.0,  // Cyan-blue
-            500.0,  // Cyan
-            540.0,  // Green (peak)
-            570.0,  // Yellow
-            600.0,  // Orange
-            640.0,  // Red
-            700.0,  // Far red
+            420.0, // Blue
+            460.0, // Cyan-blue
+            500.0, // Cyan
+            540.0, // Green (peak)
+            570.0, // Yellow
+            600.0, // Orange
+            640.0, // Red
+            700.0, // Far red
         ]
     }
 
     /// Minimal: RGB primaries only
     fn minimal_wavelengths() -> Vec<f64> {
         vec![
-            450.0,  // Blue
-            550.0,  // Green
-            650.0,  // Red
+            450.0, // Blue
+            550.0, // Green
+            650.0, // Red
         ]
     }
 
@@ -165,9 +165,7 @@ pub fn create_optimized_signal(quality: SpectralQuality, intensity: f64) -> Spec
 /// Create D65 illuminant at specified quality
 pub fn create_d65_at_quality(quality: SpectralQuality) -> SpectralSignal {
     let wavelengths = quality.wavelengths();
-    let intensities: Vec<f64> = wavelengths.iter()
-        .map(|&wl| d65_spd_at(wl))
-        .collect();
+    let intensities: Vec<f64> = wavelengths.iter().map(|&wl| d65_spd_at(wl)).collect();
     SpectralSignal::from_arrays(&wavelengths, &intensities)
 }
 
@@ -358,11 +356,21 @@ impl AdaptiveQualitySelector {
 
         // Approximate baseline timings based on benchmark data
         // These should be calibrated per-platform
-        selector.baseline_timings.insert(SpectralQuality::FullSpectral, 12.5);
-        selector.baseline_timings.insert(SpectralQuality::HighQuality, 5.4);
-        selector.baseline_timings.insert(SpectralQuality::RealTime, 3.6);
-        selector.baseline_timings.insert(SpectralQuality::FastPreview, 1.8);
-        selector.baseline_timings.insert(SpectralQuality::MinimalPreview, 1.0);
+        selector
+            .baseline_timings
+            .insert(SpectralQuality::FullSpectral, 12.5);
+        selector
+            .baseline_timings
+            .insert(SpectralQuality::HighQuality, 5.4);
+        selector
+            .baseline_timings
+            .insert(SpectralQuality::RealTime, 3.6);
+        selector
+            .baseline_timings
+            .insert(SpectralQuality::FastPreview, 1.8);
+        selector
+            .baseline_timings
+            .insert(SpectralQuality::MinimalPreview, 1.0);
 
         selector
     }
@@ -455,8 +463,7 @@ mod tests {
 
     #[test]
     fn test_quality_comparison_thin_film() {
-        let pipeline = SpectralPipeline::new()
-            .add_stage(ThinFilmStage::new(1.45, 300.0, 1.52));
+        let pipeline = SpectralPipeline::new().add_stage(ThinFilmStage::new(1.45, 300.0, 1.52));
         let context = EvaluationContext::default();
 
         for quality in [
@@ -512,8 +519,7 @@ mod tests {
         // Test 1: Complex thin film at different angles
         println!("--- Thin Film (n=1.45, 250nm) at Various Angles ---");
         for angle in [0.0, 30.0, 60.0] {
-            let pipeline = SpectralPipeline::new()
-                .add_stage(ThinFilmStage::new(1.45, 250.0, 1.52));
+            let pipeline = SpectralPipeline::new().add_stage(ThinFilmStage::new(1.45, 250.0, 1.52));
             let context = EvaluationContext::default().with_angle_deg(angle);
 
             println!("  Angle: {}°", angle);
@@ -536,8 +542,7 @@ mod tests {
 
         // Test 2: Dispersion (crown glass)
         println!("\n--- Crown Glass Dispersion ---");
-        let pipeline = SpectralPipeline::new()
-            .add_stage(DispersionStage::crown_glass());
+        let pipeline = SpectralPipeline::new().add_stage(DispersionStage::crown_glass());
         let context = EvaluationContext::default();
 
         for quality in [
@@ -549,16 +554,19 @@ mod tests {
             println!(
                 "  {:?}: RGB=[{:.3}, {:.3}, {:.3}] vs ref=[{:.3}, {:.3}, {:.3}], ΔE={:.4}",
                 quality,
-                metrics.optimized_rgb[0], metrics.optimized_rgb[1], metrics.optimized_rgb[2],
-                metrics.reference_rgb[0], metrics.reference_rgb[1], metrics.reference_rgb[2],
+                metrics.optimized_rgb[0],
+                metrics.optimized_rgb[1],
+                metrics.optimized_rgb[2],
+                metrics.reference_rgb[0],
+                metrics.reference_rgb[1],
+                metrics.reference_rgb[2],
                 metrics.delta_e
             );
         }
 
         // Test 3: Metal (gold)
         println!("\n--- Gold Metal Reflection ---");
-        let pipeline = SpectralPipeline::new()
-            .add_stage(MetalReflectanceStage::gold());
+        let pipeline = SpectralPipeline::new().add_stage(MetalReflectanceStage::gold());
         let context = EvaluationContext::default();
 
         for quality in [
@@ -570,8 +578,12 @@ mod tests {
             println!(
                 "  {:?}: RGB=[{:.3}, {:.3}, {:.3}] vs ref=[{:.3}, {:.3}, {:.3}], ΔE={:.4}",
                 quality,
-                metrics.optimized_rgb[0], metrics.optimized_rgb[1], metrics.optimized_rgb[2],
-                metrics.reference_rgb[0], metrics.reference_rgb[1], metrics.reference_rgb[2],
+                metrics.optimized_rgb[0],
+                metrics.optimized_rgb[1],
+                metrics.optimized_rgb[2],
+                metrics.reference_rgb[0],
+                metrics.reference_rgb[1],
+                metrics.reference_rgb[2],
                 metrics.delta_e
             );
         }
@@ -607,7 +619,10 @@ mod tests {
         }
 
         // Document the finding: naive sampling has high error
-        println!("\n  CONCLUSION: Max ΔE = {:.2} - LUTs required for ΔE < 1", max_delta_e);
+        println!(
+            "\n  CONCLUSION: Max ΔE = {:.2} - LUTs required for ΔE < 1",
+            max_delta_e
+        );
 
         // This test validates the NEED for LUTs, not the quality of naive sampling
         // High ΔE is expected and proves our point

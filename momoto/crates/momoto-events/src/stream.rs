@@ -2,10 +2,10 @@
 // momoto-events::stream — EventStream for sequential event consumption
 // =============================================================================
 
-use std::sync::{Arc, Mutex};
-use serde::{Deserialize, Serialize};
-use crate::event::Event;
 use crate::broadcaster::{EventBroadcaster, EventHandler, Subscription};
+use crate::event::Event;
+use serde::{Deserialize, Serialize};
+use std::sync::{Arc, Mutex};
 
 /// Stream operating mode.
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -22,12 +22,19 @@ pub struct StreamConfig {
 impl StreamConfig {
     /// Real-time mode: flush after every event.
     pub fn realtime() -> Self {
-        Self { mode: StreamMode::Realtime }
+        Self {
+            mode: StreamMode::Realtime,
+        }
     }
 
     /// Batched mode: accumulate up to `batch_size` events or `timeout_ms`.
     pub fn batched(batch_size: usize, timeout_ms: u64) -> Self {
-        Self { mode: StreamMode::Batched { batch_size, timeout_ms } }
+        Self {
+            mode: StreamMode::Batched {
+                batch_size,
+                timeout_ms,
+            },
+        }
     }
 }
 
@@ -155,9 +162,7 @@ impl EventStream {
                 s.dropped_events += 1;
                 Err(PushError::Paused)
             }
-            StreamStateInternal::Closed => {
-                Err(PushError::Closed)
-            }
+            StreamStateInternal::Closed => Err(PushError::Closed),
         }
     }
 

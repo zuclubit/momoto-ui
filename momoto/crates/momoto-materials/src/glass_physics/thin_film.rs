@@ -51,7 +51,10 @@ pub struct ThinFilm {
 impl ThinFilm {
     /// Create new thin film coating
     pub const fn new(n_film: f64, thickness_nm: f64) -> Self {
-        Self { n_film, thickness_nm }
+        Self {
+            n_film,
+            thickness_nm,
+        }
     }
 
     /// Calculate optical path difference
@@ -110,9 +113,9 @@ impl ThinFilm {
     /// Calculate RGB reflectance including interference
     pub fn reflectance_rgb(&self, n_substrate: f64, cos_theta: f64) -> [f64; 3] {
         [
-            self.reflectance(650.0, n_substrate, cos_theta),  // Red
-            self.reflectance(550.0, n_substrate, cos_theta),  // Green
-            self.reflectance(450.0, n_substrate, cos_theta),  // Blue
+            self.reflectance(650.0, n_substrate, cos_theta), // Red
+            self.reflectance(550.0, n_substrate, cos_theta), // Green
+            self.reflectance(450.0, n_substrate, cos_theta), // Blue
         ]
     }
 
@@ -180,7 +183,12 @@ fn fresnel_amplitude(n1: f64, n2: f64, cos_theta1: f64) -> f64 {
 /// Fresnel reflection at second interface (film -> substrate)
 ///
 /// Accounts for refraction into the film first
-fn fresnel_amplitude_transmitted(n_air: f64, n_film: f64, n_substrate: f64, cos_theta_air: f64) -> f64 {
+fn fresnel_amplitude_transmitted(
+    n_air: f64,
+    n_film: f64,
+    n_substrate: f64,
+    cos_theta_air: f64,
+) -> f64 {
     // Angle in film from Snell's law
     let sin_air = (1.0 - cos_theta_air * cos_theta_air).sqrt();
     let sin_film = n_air * sin_air / n_film;
@@ -280,11 +288,7 @@ pub fn thin_film_to_rgb(film: &ThinFilm, n_substrate: f64, cos_theta: f64) -> (u
 /// Generate CSS gradient for iridescent effect
 ///
 /// Creates angle-dependent color shift
-pub fn to_css_iridescent_gradient(
-    film: &ThinFilm,
-    n_substrate: f64,
-    base_color: &str,
-) -> String {
+pub fn to_css_iridescent_gradient(film: &ThinFilm, n_substrate: f64, base_color: &str) -> String {
     // Sample at different angles
     let angles = [0.0, 15.0, 30.0, 45.0, 60.0, 75.0];
     let mut stops = Vec::new();
@@ -307,8 +311,8 @@ pub fn to_css_iridescent_gradient(
 
 /// Generate CSS for soap bubble effect
 pub fn to_css_soap_bubble(film: &ThinFilm, _size_percent: f64) -> String {
-    let rgb_center = film.reflectance_rgb(1.0, 1.0);  // Normal incidence
-    let rgb_edge = film.reflectance_rgb(1.0, 0.3);   // Grazing
+    let rgb_center = film.reflectance_rgb(1.0, 1.0); // Normal incidence
+    let rgb_edge = film.reflectance_rgb(1.0, 0.3); // Grazing
 
     let r_c = (rgb_center[0] * 255.0) as u8;
     let g_c = (rgb_center[1] * 255.0) as u8;
@@ -325,10 +329,7 @@ pub fn to_css_soap_bubble(film: &ThinFilm, _size_percent: f64) -> String {
          rgba({}, {}, {}, 0.3) 50%, \
          rgba({}, {}, {}, 0.5) 80%, \
          rgba({}, {}, {}, 0.7) 100%)",
-        r_c, g_c, b_c,
-        r_c, g_c, b_c,
-        r_e, g_e, b_e,
-        r_e, g_e, b_e,
+        r_c, g_c, b_c, r_c, g_c, b_c, r_e, g_e, b_e, r_e, g_e, b_e,
     )
 }
 
@@ -350,11 +351,7 @@ pub fn to_css_oil_slick(film: &ThinFilm) -> String {
          rgba({}, {}, {}, 0.5) 50%, \
          rgba({}, {}, {}, 0.6) 75%, \
          rgba({}, {}, {}, 0.6) 100%)",
-        r1, g1, b1,
-        r2, g2, b2,
-        r3, g3, b3,
-        r4, g4, b4,
-        r1, g1, b1,
+        r1, g1, b1, r2, g2, b2, r3, g3, b3, r4, g4, b4, r1, g1, b1,
     )
 }
 
@@ -374,7 +371,10 @@ pub struct ThinFilmStack {
 impl ThinFilmStack {
     /// Create new thin film stack
     pub fn new(layers: Vec<ThinFilm>, n_substrate: f64) -> Self {
-        Self { layers, n_substrate }
+        Self {
+            layers,
+            n_substrate,
+        }
     }
 
     /// Calculate reflectance using transfer matrix method (simplified)
@@ -480,7 +480,10 @@ mod tests {
 
         // Normal incidence: OPD = 2 * n * d = 2 * 1.5 * 100 = 300nm
         let opd_normal = film.optical_path_difference(1.0);
-        assert!((opd_normal - 300.0).abs() < 1.0, "OPD at normal should be ~300nm");
+        assert!(
+            (opd_normal - 300.0).abs() < 1.0,
+            "OPD at normal should be ~300nm"
+        );
 
         // OPD decreases at grazing angles
         let opd_grazing = film.optical_path_difference(0.5);
@@ -527,7 +530,8 @@ mod tests {
         assert!(
             r_coated < r_bare,
             "AR coating should reduce reflection: {} < {}",
-            r_coated, r_bare
+            r_coated,
+            r_bare
         );
     }
 
@@ -545,7 +549,10 @@ mod tests {
             + (rgb_thin[1] - rgb_thick[1]).abs()
             + (rgb_thin[2] - rgb_thick[2]).abs();
 
-        assert!(diff > 0.1, "Different thicknesses should give different colors");
+        assert!(
+            diff > 0.1,
+            "Different thicknesses should give different colors"
+        );
     }
 
     #[test]
@@ -567,10 +574,7 @@ mod tests {
     fn test_thin_film_stack() {
         // Create a multi-layer coating
         let stack = ThinFilmStack::new(
-            vec![
-                ThinFilm::new(1.38, 100.0),
-                ThinFilm::new(1.70, 50.0),
-            ],
+            vec![ThinFilm::new(1.38, 100.0), ThinFilm::new(1.70, 50.0)],
             1.52,
         );
 
@@ -593,7 +597,9 @@ mod tests {
                 assert!(
                     r >= 0.0 && r <= 1.0,
                     "{} RGB[{}] should be valid: {}",
-                    name, i, r
+                    name,
+                    i,
+                    r
                 );
             }
         }
@@ -613,6 +619,9 @@ mod tests {
         let film = ThinFilm::new(1.4, 200.0);
         let lambda = dominant_wavelength(&film, 1.5, 0.9);
 
-        assert!(lambda >= 400.0 && lambda <= 700.0, "Should be in visible range");
+        assert!(
+            lambda >= 400.0 && lambda <= 700.0,
+            "Should be in visible range"
+        );
     }
 }

@@ -23,11 +23,9 @@
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 
-use super::perceptual_loss::{
-    rgb_to_lab, delta_e_2000, DeltaEFormula,
-};
-use super::material_datasets::MaterialDatabase;
 use super::differentiable_render::MaterialParams;
+use super::material_datasets::MaterialDatabase;
+use super::perceptual_loss::{delta_e_2000, rgb_to_lab, DeltaEFormula};
 
 // ============================================================================
 // CONFIGURATION
@@ -133,29 +131,21 @@ pub enum ConvergenceStatus {
         improvement_rate: f64,
     },
     /// Successfully converged
-    Converged {
-        iterations: usize,
-        final_loss: f64,
-    },
+    Converged { iterations: usize, final_loss: f64 },
     /// Stalled (no improvement)
-    Stalled {
-        iterations: usize,
-        best_loss: f64,
-    },
+    Stalled { iterations: usize, best_loss: f64 },
     /// Hit iteration limit
-    MaxIterations {
-        iterations: usize,
-        final_loss: f64,
-    },
+    MaxIterations { iterations: usize, final_loss: f64 },
 }
 
 impl ConvergenceStatus {
     /// Check if calibration is done (converged, stalled, or max iterations)
     pub fn is_done(&self) -> bool {
-        matches!(self,
-            ConvergenceStatus::Converged { .. } |
-            ConvergenceStatus::Stalled { .. } |
-            ConvergenceStatus::MaxIterations { .. }
+        matches!(
+            self,
+            ConvergenceStatus::Converged { .. }
+                | ConvergenceStatus::Stalled { .. }
+                | ConvergenceStatus::MaxIterations { .. }
         )
     }
 
@@ -411,7 +401,8 @@ impl CalibrationFeedbackLoop {
             }
 
             // Compute gradients (numerical)
-            let gradients = compute_gradient(params, reference_rgb, &forward_fn, self.config.formula);
+            let gradients =
+                compute_gradient(params, reference_rgb, &forward_fn, self.config.formula);
 
             // Adam update
             if let Some(ref mut adam) = self.adam_state {
@@ -639,11 +630,17 @@ mod tests {
         assert!(!status.is_done());
         assert!(!status.is_converged());
 
-        let status = ConvergenceStatus::Converged { iterations: 10, final_loss: 0.5 };
+        let status = ConvergenceStatus::Converged {
+            iterations: 10,
+            final_loss: 0.5,
+        };
         assert!(status.is_done());
         assert!(status.is_converged());
 
-        let status = ConvergenceStatus::Stalled { iterations: 100, best_loss: 2.0 };
+        let status = ConvergenceStatus::Stalled {
+            iterations: 100,
+            best_loss: 2.0,
+        };
         assert!(status.is_done());
         assert!(!status.is_converged());
     }
@@ -660,8 +657,7 @@ mod tests {
 
     #[test]
     fn test_feedback_loop_step() {
-        let config = RealtimeCalibrationConfig::new()
-            .with_tolerance(100.0); // High tolerance for test
+        let config = RealtimeCalibrationConfig::new().with_tolerance(100.0); // High tolerance for test
 
         let mut feedback = CalibrationFeedbackLoop::new(config);
         let mut params = MaterialParams::default();
@@ -716,7 +712,10 @@ mod tests {
     #[test]
     fn test_calibration_result_summary() {
         let result = CalibrationResult {
-            status: ConvergenceStatus::Converged { iterations: 50, final_loss: 0.8 },
+            status: ConvergenceStatus::Converged {
+                iterations: 50,
+                final_loss: 0.8,
+            },
             final_delta_e: 0.8,
             iterations: 50,
             elapsed_ms: 100.0,

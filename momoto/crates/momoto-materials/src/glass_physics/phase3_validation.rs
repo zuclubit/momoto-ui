@@ -20,9 +20,9 @@
 use std::time::Instant;
 
 use super::complex_ior::{self, metals, SpectralComplexIOR};
-use super::mie_lut::{self, MieParams, particles};
-use super::thin_film::{self, presets as thin_film_presets};
 use super::fresnel::fresnel_schlick;
+use super::mie_lut::{self, particles, MieParams};
+use super::thin_film::{self, presets as thin_film_presets};
 
 // ============================================================================
 // COMPARISON RESULT TYPES
@@ -90,7 +90,7 @@ pub fn compare_complex_vs_dielectric_fresnel() -> Vec<Phase3ComparisonResult> {
 
     // Test materials
     let test_cases: Vec<(&str, SpectralComplexIOR, f64)> = vec![
-        ("Gold", metals::GOLD, 1.5),      // Metal vs glass n=1.5
+        ("Gold", metals::GOLD, 1.5), // Metal vs glass n=1.5
         ("Silver", metals::SILVER, 1.5),
         ("Copper", metals::COPPER, 1.5),
         ("Aluminum", metals::ALUMINUM, 1.5),
@@ -98,7 +98,10 @@ pub fn compare_complex_vs_dielectric_fresnel() -> Vec<Phase3ComparisonResult> {
 
     for (name, metal, n_dielectric) in test_cases {
         let mut errors = Vec::new();
-        let angles: Vec<f64> = (0..90).step_by(10).map(|a| (a as f64).to_radians().cos()).collect();
+        let angles: Vec<f64> = (0..90)
+            .step_by(10)
+            .map(|a| (a as f64).to_radians().cos())
+            .collect();
 
         // Time complex Fresnel
         let start_complex = Instant::now();
@@ -109,7 +112,8 @@ pub fn compare_complex_vs_dielectric_fresnel() -> Vec<Phase3ComparisonResult> {
                 sum_complex += f;
             }
         }
-        let time_complex = start_complex.elapsed().as_nanos() as f64 / (iterations * angles.len()) as f64;
+        let time_complex =
+            start_complex.elapsed().as_nanos() as f64 / (iterations * angles.len()) as f64;
 
         // Time Schlick approximation for comparison
         let start_schlick = Instant::now();
@@ -120,7 +124,8 @@ pub fn compare_complex_vs_dielectric_fresnel() -> Vec<Phase3ComparisonResult> {
                 sum_schlick += f;
             }
         }
-        let time_schlick = start_schlick.elapsed().as_nanos() as f64 / (iterations * angles.len()) as f64;
+        let time_schlick =
+            start_schlick.elapsed().as_nanos() as f64 / (iterations * angles.len()) as f64;
 
         // Compare full vs Schlick for metals
         for &cos_t in &angles {
@@ -145,7 +150,11 @@ pub fn compare_complex_vs_dielectric_fresnel() -> Vec<Phase3ComparisonResult> {
             max_error,
             avg_error,
             accuracy_ok: true, // Not directly comparable
-            notes: format!("Metal Schlick error: max={:.1}%, avg={:.1}%", max_error * 100.0, avg_error * 100.0),
+            notes: format!(
+                "Metal Schlick error: max={:.1}%, avg={:.1}%",
+                max_error * 100.0,
+                avg_error * 100.0
+            ),
         });
     }
 
@@ -164,7 +173,10 @@ pub fn compare_metal_schlick_vs_full() -> Vec<Phase3ComparisonResult> {
     ];
 
     for (name, metal) in metals_list {
-        let angles: Vec<f64> = (0..90).step_by(5).map(|a| (a as f64).to_radians().cos()).collect();
+        let angles: Vec<f64> = (0..90)
+            .step_by(5)
+            .map(|a| (a as f64).to_radians().cos())
+            .collect();
         let mut errors = Vec::new();
 
         // Time full Fresnel
@@ -187,7 +199,8 @@ pub fn compare_metal_schlick_vs_full() -> Vec<Phase3ComparisonResult> {
                 sum_schlick += rgb[0] + rgb[1] + rgb[2];
             }
         }
-        let time_schlick = start_schlick.elapsed().as_nanos() as f64 / (iterations * angles.len()) as f64;
+        let time_schlick =
+            start_schlick.elapsed().as_nanos() as f64 / (iterations * angles.len()) as f64;
 
         // Calculate accuracy
         for &cos_t in &angles {
@@ -262,7 +275,8 @@ pub fn compare_mie_lut_vs_direct() -> Vec<Phase3ComparisonResult> {
                 sum_direct += phase;
             }
         }
-        let time_direct = start_direct.elapsed().as_nanos() as f64 / (iterations * angles.len()) as f64;
+        let time_direct =
+            start_direct.elapsed().as_nanos() as f64 / (iterations * angles.len()) as f64;
 
         // Calculate accuracy
         for &cos_t in &angles {
@@ -313,7 +327,8 @@ pub fn compare_rayleigh_vs_mie() -> Vec<Phase3ComparisonResult> {
             sum_rayleigh += phase;
         }
     }
-    let time_rayleigh = start_rayleigh.elapsed().as_nanos() as f64 / (iterations * angles.len()) as f64;
+    let time_rayleigh =
+        start_rayleigh.elapsed().as_nanos() as f64 / (iterations * angles.len()) as f64;
 
     // Time Mie LUT
     let start_mie = Instant::now();
@@ -366,7 +381,10 @@ pub fn benchmark_thin_film() -> Vec<Phase3ComparisonResult> {
 
     let film = thin_film_presets::SOAP_BUBBLE_MEDIUM;
     let n_substrate = 1.0;
-    let angles: Vec<f64> = (0..90).step_by(10).map(|a| (a as f64).to_radians().cos()).collect();
+    let angles: Vec<f64> = (0..90)
+        .step_by(10)
+        .map(|a| (a as f64).to_radians().cos())
+        .collect();
     let wavelengths = [450.0, 550.0, 650.0];
 
     // Time single wavelength
@@ -380,7 +398,8 @@ pub fn benchmark_thin_film() -> Vec<Phase3ComparisonResult> {
             }
         }
     }
-    let time_single = start_single.elapsed().as_nanos() as f64 / (iterations * angles.len() * wavelengths.len()) as f64;
+    let time_single = start_single.elapsed().as_nanos() as f64
+        / (iterations * angles.len() * wavelengths.len()) as f64;
 
     // Time RGB
     let start_rgb = Instant::now();
@@ -436,7 +455,9 @@ pub fn validate_thin_film_physics() -> Vec<Phase3ComparisonResult> {
         accuracy_ok: ar_reduction > 0.3, // Should reduce by at least 30%
         notes: format!(
             "Bare: {:.2}%, Coated: {:.2}%, Reduction: {:.0}%",
-            r_bare * 100.0, r_coated * 100.0, ar_reduction * 100.0
+            r_bare * 100.0,
+            r_coated * 100.0,
+            ar_reduction * 100.0
         ),
     });
 
@@ -460,8 +481,12 @@ pub fn validate_thin_film_physics() -> Vec<Phase3ComparisonResult> {
         accuracy_ok: color_shift > 0.05, // Should show visible color shift
         notes: format!(
             "Normal RGB: [{:.2}, {:.2}, {:.2}], Angled: [{:.2}, {:.2}, {:.2}]",
-            rgb_normal[0], rgb_normal[1], rgb_normal[2],
-            rgb_angled[0], rgb_angled[1], rgb_angled[2]
+            rgb_normal[0],
+            rgb_normal[1],
+            rgb_normal[2],
+            rgb_angled[0],
+            rgb_angled[1],
+            rgb_angled[2]
         ),
     });
 
@@ -517,8 +542,12 @@ pub fn full_phase3_report() -> String {
     // Complex IOR comparison
     report.push_str("## 1. Complex IOR for Metals\n\n");
     let complex_results = compare_complex_vs_dielectric_fresnel();
-    report.push_str("| Material | Full Complex (ns) | Dielectric Schlick (ns) | Metal Schlick Error |\n");
-    report.push_str("|----------|-------------------|-------------------------|--------------------|\n");
+    report.push_str(
+        "| Material | Full Complex (ns) | Dielectric Schlick (ns) | Metal Schlick Error |\n",
+    );
+    report.push_str(
+        "|----------|-------------------|-------------------------|--------------------|\n",
+    );
     for r in &complex_results {
         report.push_str(&format!(
             "| {} | {:.1} | {:.1} | max {:.1}%, avg {:.1}% |\n",
@@ -598,11 +627,26 @@ pub fn full_phase3_report() -> String {
     let memory = phase3_memory_analysis();
     report.push_str("| Component | Memory |\n");
     report.push_str("|-----------|--------|\n");
-    report.push_str(&format!("| Complex IOR presets | {} bytes |\n", memory.complex_ior_bytes));
-    report.push_str(&format!("| Mie LUT | {} KB |\n", memory.mie_lut_bytes / 1024));
-    report.push_str(&format!("| Thin-Film (no LUT) | {} bytes |\n", memory.thin_film_bytes));
-    report.push_str(&format!("| **Phase 3 Total** | **{} KB** |\n", memory.total_bytes / 1024));
-    report.push_str(&format!("| **Cumulative (P1+P2+P3)** | **{:.1} MB** |\n", memory.cumulative_bytes as f64 / (1024.0 * 1024.0)));
+    report.push_str(&format!(
+        "| Complex IOR presets | {} bytes |\n",
+        memory.complex_ior_bytes
+    ));
+    report.push_str(&format!(
+        "| Mie LUT | {} KB |\n",
+        memory.mie_lut_bytes / 1024
+    ));
+    report.push_str(&format!(
+        "| Thin-Film (no LUT) | {} bytes |\n",
+        memory.thin_film_bytes
+    ));
+    report.push_str(&format!(
+        "| **Phase 3 Total** | **{} KB** |\n",
+        memory.total_bytes / 1024
+    ));
+    report.push_str(&format!(
+        "| **Cumulative (P1+P2+P3)** | **{:.1} MB** |\n",
+        memory.cumulative_bytes as f64 / (1024.0 * 1024.0)
+    ));
     report.push_str("\n");
 
     // Summary
@@ -664,7 +708,8 @@ mod tests {
             assert!(
                 r.avg_error < 0.20,
                 "{} avg error should be < 20%: {}",
-                r.name, r.avg_error
+                r.name,
+                r.avg_error
             );
         }
     }
@@ -674,7 +719,11 @@ mod tests {
         let results = compare_mie_lut_vs_direct();
 
         for r in &results {
-            assert!(r.accuracy_ok, "{} should pass accuracy: max_error={}", r.name, r.max_error);
+            assert!(
+                r.accuracy_ok,
+                "{} should pass accuracy: max_error={}",
+                r.name, r.max_error
+            );
         }
     }
 

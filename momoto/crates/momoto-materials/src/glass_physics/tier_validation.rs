@@ -15,13 +15,12 @@
 //! - Energy conservation error
 //! - Performance (µs per evaluation)
 
-use super::fresnel::{fresnel_schlick, fresnel_full};
-use super::reference_renderer::{
-    fresnel_dielectric_full, fresnel_conductor_full, beer_lambert_exact,
-    ReferenceRenderer,
-};
 use super::enhanced_presets::QualityTier;
-use super::perceptual_loss::{rgb_to_lab, delta_e_2000, Illuminant};
+use super::fresnel::{fresnel_full, fresnel_schlick};
+use super::perceptual_loss::{delta_e_2000, rgb_to_lab, Illuminant};
+use super::reference_renderer::{
+    beer_lambert_exact, fresnel_conductor_full, fresnel_dielectric_full, ReferenceRenderer,
+};
 use std::time::Instant;
 
 // ============================================================================
@@ -72,19 +71,32 @@ impl CrossValidationReport {
         let mut md = String::new();
         md.push_str("# Quality Tier Cross-Validation Report\n\n");
         md.push_str(&format!("Test cases: {}\n", self.test_cases));
-        md.push_str(&format!("IOR range: {:.2} - {:.2}\n", self.ior_range.0, self.ior_range.1));
-        md.push_str(&format!("Angle range: {:.2}° - {:.2}°\n\n",
-            self.angle_range.0.to_degrees(), self.angle_range.1.to_degrees()));
+        md.push_str(&format!(
+            "IOR range: {:.2} - {:.2}\n",
+            self.ior_range.0, self.ior_range.1
+        ));
+        md.push_str(&format!(
+            "Angle range: {:.2}° - {:.2}°\n\n",
+            self.angle_range.0.to_degrees(),
+            self.angle_range.1.to_degrees()
+        ));
 
         md.push_str("## Accuracy vs Performance\n\n");
         md.push_str("| Tier | Fresnel RMSE | Max Error | ΔE2000 Mean | ΔE2000 Max | Time (µs) | Speedup |\n");
-        md.push_str("|------|--------------|-----------|-------------|------------|-----------|--------|\n");
+        md.push_str(
+            "|------|--------------|-----------|-------------|------------|-----------|--------|\n",
+        );
 
         for r in &self.tier_results {
             md.push_str(&format!(
                 "| {:?} | {:.6} | {:.6} | {:.2} | {:.2} | {:.2} | {:.1}x |\n",
-                r.tier, r.fresnel_rmse, r.fresnel_max_error,
-                r.mean_delta_e, r.max_delta_e, r.mean_eval_time_us, r.speedup_vs_reference
+                r.tier,
+                r.fresnel_rmse,
+                r.fresnel_max_error,
+                r.mean_delta_e,
+                r.max_delta_e,
+                r.mean_eval_time_us,
+                r.speedup_vs_reference
             ));
         }
 
@@ -100,21 +112,39 @@ impl CrossValidationReport {
     pub fn to_json(&self) -> String {
         let mut json = String::from("{\n");
         json.push_str(&format!("  \"test_cases\": {},\n", self.test_cases));
-        json.push_str(&format!("  \"ior_range\": [{:.2}, {:.2}],\n", self.ior_range.0, self.ior_range.1));
-        json.push_str(&format!("  \"angle_range_rad\": [{:.4}, {:.4}],\n", self.angle_range.0, self.angle_range.1));
-        json.push_str(&format!("  \"reference_time_us\": {:.4},\n", self.reference_time_us));
+        json.push_str(&format!(
+            "  \"ior_range\": [{:.2}, {:.2}],\n",
+            self.ior_range.0, self.ior_range.1
+        ));
+        json.push_str(&format!(
+            "  \"angle_range_rad\": [{:.4}, {:.4}],\n",
+            self.angle_range.0, self.angle_range.1
+        ));
+        json.push_str(&format!(
+            "  \"reference_time_us\": {:.4},\n",
+            self.reference_time_us
+        ));
         json.push_str("  \"tiers\": [\n");
 
         for (i, r) in self.tier_results.iter().enumerate() {
             json.push_str("    {\n");
             json.push_str(&format!("      \"tier\": \"{:?}\",\n", r.tier));
             json.push_str(&format!("      \"fresnel_rmse\": {:.8},\n", r.fresnel_rmse));
-            json.push_str(&format!("      \"fresnel_max_error\": {:.8},\n", r.fresnel_max_error));
+            json.push_str(&format!(
+                "      \"fresnel_max_error\": {:.8},\n",
+                r.fresnel_max_error
+            ));
             json.push_str(&format!("      \"mean_delta_e\": {:.4},\n", r.mean_delta_e));
             json.push_str(&format!("      \"max_delta_e\": {:.4},\n", r.max_delta_e));
             json.push_str(&format!("      \"energy_error\": {:.8},\n", r.energy_error));
-            json.push_str(&format!("      \"mean_eval_time_us\": {:.4},\n", r.mean_eval_time_us));
-            json.push_str(&format!("      \"speedup\": {:.2}\n", r.speedup_vs_reference));
+            json.push_str(&format!(
+                "      \"mean_eval_time_us\": {:.4},\n",
+                r.mean_eval_time_us
+            ));
+            json.push_str(&format!(
+                "      \"speedup\": {:.2}\n",
+                r.speedup_vs_reference
+            ));
             if i < self.tier_results.len() - 1 {
                 json.push_str("    },\n");
             } else {
@@ -157,7 +187,12 @@ fn evaluate_tier_fresnel(tier: QualityTier, ior: f64, cos_theta: f64) -> f64 {
 }
 
 /// Evaluate absorption for a specific tier
-fn evaluate_tier_absorption(tier: QualityTier, absorption: f64, thickness: f64, density: f64) -> f64 {
+fn evaluate_tier_absorption(
+    tier: QualityTier,
+    absorption: f64,
+    thickness: f64,
+    density: f64,
+) -> f64 {
     let distance = thickness * density;
 
     match tier {
@@ -169,7 +204,10 @@ fn evaluate_tier_absorption(tier: QualityTier, absorption: f64, thickness: f64, 
             // Simplified exponential
             (-absorption * distance * 0.1).exp()
         }
-        QualityTier::High | QualityTier::UltraHigh | QualityTier::Experimental | QualityTier::Reference => {
+        QualityTier::High
+        | QualityTier::UltraHigh
+        | QualityTier::Experimental
+        | QualityTier::Reference => {
             // Full Beer-Lambert
             beer_lambert_exact(absorption, distance, 1.0)
         }
@@ -184,9 +222,9 @@ fn reflectance_to_rgb(reflectance: f64, ior: f64) -> [f64; 3] {
     let ior_factor = (ior - 1.0) / 1.5; // Normalize around glass IOR
 
     [
-        base * (1.0 - 0.02 * ior_factor),  // R slightly reduced for high IOR
-        base,                               // G neutral
-        base * (1.0 + 0.02 * ior_factor),  // B slightly increased for high IOR
+        base * (1.0 - 0.02 * ior_factor), // R slightly reduced for high IOR
+        base,                             // G neutral
+        base * (1.0 + 0.02 * ior_factor), // B slightly increased for high IOR
     ]
 }
 
@@ -264,7 +302,9 @@ pub fn run_cross_validation() -> CrossValidationReport {
         }
 
         // Compute statistics
-        let fresnel_rmse = (fresnel_errors.iter().map(|e| e * e).sum::<f64>() / fresnel_errors.len() as f64).sqrt();
+        let fresnel_rmse = (fresnel_errors.iter().map(|e| e * e).sum::<f64>()
+            / fresnel_errors.len() as f64)
+            .sqrt();
         let fresnel_max_error = fresnel_errors.iter().cloned().fold(0.0_f64, f64::max);
         let mean_delta_e = delta_es.iter().sum::<f64>() / delta_es.len() as f64;
         let max_delta_e = delta_es.iter().cloned().fold(0.0_f64, f64::max);

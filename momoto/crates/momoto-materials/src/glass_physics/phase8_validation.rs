@@ -12,9 +12,7 @@
 use super::dataset_merl::MerlDataset;
 use super::material_export::{ExportTarget, GlslVersion, MaterialDescriptor, MaterialExporter};
 use super::material_fingerprint::deterministic_hash;
-use super::plugin_api::{
-    EvaluationContext, PluginMaterialParams, PluginRegistry,
-};
+use super::plugin_api::{EvaluationContext, PluginMaterialParams, PluginRegistry};
 use std::collections::HashMap;
 use std::time::Instant;
 
@@ -337,10 +335,10 @@ pub fn benchmark_fingerprint_consistency() -> FingerprintResults {
     let start = Instant::now();
 
     let test_data: [(f64, f64, f64); 4] = [
-        (1.0, 0.2, 0.47),  // gold-like
-        (1.0, 0.1, 0.2),   // silver-like
-        (1.0, 0.25, 1.1),  // copper-like
-        (0.0, 0.0, 1.52),  // glass-like
+        (1.0, 0.2, 0.47), // gold-like
+        (1.0, 0.1, 0.2),  // silver-like
+        (1.0, 0.25, 1.1), // copper-like
+        (0.0, 0.0, 1.52), // glass-like
     ];
 
     let mut fingerprints: Vec<[u8; 32]> = Vec::new();
@@ -729,10 +727,7 @@ pub fn generate_phase8_json_report(results: &Phase8BenchmarkResults) -> String {
     ));
     json.push_str("  },\n");
 
-    json.push_str(&format!(
-        "  \"total_time_ms\": {}\n",
-        results.total_time_ms
-    ));
+    json.push_str(&format!("  \"total_time_ms\": {}\n", results.total_time_ms));
 
     json.push_str("}\n");
 
@@ -759,8 +754,16 @@ mod tests {
         // and high IOR values. At angle=1.4rad (~80°) with IOR=2.4, errors can
         // reach ~40%. The mean error is the key quality metric and should be
         // well under 10%. Max error tolerance accounts for known edge cases.
-        assert!(results.mean_error < 0.10, "Mean error {} too high", results.mean_error);
-        assert!(results.max_error < 0.50, "Max error {} too high (Schlick limit at grazing angles)", results.max_error);
+        assert!(
+            results.mean_error < 0.10,
+            "Mean error {} too high",
+            results.mean_error
+        );
+        assert!(
+            results.max_error < 0.50,
+            "Max error {} too high (Schlick limit at grazing angles)",
+            results.max_error
+        );
     }
 
     #[test]

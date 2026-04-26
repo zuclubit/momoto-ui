@@ -140,8 +140,8 @@ impl BatchSpectralOutput {
 // GPU Evaluator
 // ============================================================================
 
+use super::spectral_cache::{PipelineHasher, SpectralCache, SpectralCacheKey};
 use super::spectral_pipeline::*;
-use super::spectral_cache::{SpectralCache, SpectralCacheKey, PipelineHasher};
 use std::time::Instant;
 
 /// GPU-accelerated spectral evaluator with CPU fallback
@@ -202,8 +202,11 @@ impl SpectralGpuEvaluator {
             let key = SpectralCacheKey::new(pipeline_hash, angle_deg, temp_k);
 
             let (rgb, energy) = self.cache.get_or_compute(key, || {
-                let pipeline = SpectralPipeline::new()
-                    .add_stage(ThinFilmStage::new(n, thickness_nm, substrate_n));
+                let pipeline = SpectralPipeline::new().add_stage(ThinFilmStage::new(
+                    n,
+                    thickness_nm,
+                    substrate_n,
+                ));
                 let context = EvaluationContext::default()
                     .with_angle_deg(angle_deg)
                     .with_temperature(temp_k);
@@ -243,9 +246,7 @@ impl SpectralGpuEvaluator {
         let mut output = BatchSpectralOutput::new(input.len(), self.backend);
 
         let d65 = SpectralSignal::d65_illuminant();
-        let pipeline_hash = PipelineHasher::new()
-            .add_metal(metal_type)
-            .finish();
+        let pipeline_hash = PipelineHasher::new().add_metal(metal_type).finish();
 
         for &(angle_deg, temp_k) in &input.contexts {
             let key = SpectralCacheKey::new(pipeline_hash, angle_deg, temp_k);
@@ -447,8 +448,8 @@ mod tests {
 
     #[test]
     fn test_batch_input() {
-        let input = BatchSpectralInput::new(12345)
-            .with_angles(&[0.0, 30.0, 45.0, 60.0, 75.0, 90.0]);
+        let input =
+            BatchSpectralInput::new(12345).with_angles(&[0.0, 30.0, 45.0, 60.0, 75.0, 90.0]);
 
         assert_eq!(input.len(), 6);
         assert_eq!(input.contexts[0], (0.0, 293.15));
@@ -459,8 +460,7 @@ mod tests {
     fn test_cpu_batch_evaluation() {
         let mut evaluator = SpectralGpuEvaluator::new();
 
-        let input = BatchSpectralInput::new(0)
-            .with_angles(&[0.0, 15.0, 30.0, 45.0, 60.0]);
+        let input = BatchSpectralInput::new(0).with_angles(&[0.0, 15.0, 30.0, 45.0, 60.0]);
 
         let output = evaluator.eval_thin_film_batch(1.45, 300.0, 1.52, &input);
 
@@ -491,8 +491,16 @@ mod tests {
         let speedup = output1.time_us / output2.time_us.max(0.001);
 
         println!("\nBatch with Cache:");
-        println!("  Cold: {:.2} μs ({:.1} ns/eval)", output1.time_us, output1.time_per_eval_ns());
-        println!("  Hot:  {:.2} μs ({:.1} ns/eval)", output2.time_us, output2.time_per_eval_ns());
+        println!(
+            "  Cold: {:.2} μs ({:.1} ns/eval)",
+            output1.time_us,
+            output1.time_per_eval_ns()
+        );
+        println!(
+            "  Hot:  {:.2} μs ({:.1} ns/eval)",
+            output2.time_us,
+            output2.time_per_eval_ns()
+        );
         println!("  Speedup: {:.1}×", speedup);
         println!("  {}", evaluator.cache_stats().summary());
 
@@ -503,18 +511,28 @@ mod tests {
     fn test_metal_batch() {
         let mut evaluator = SpectralGpuEvaluator::new();
 
-        let input = BatchSpectralInput::new(0)
-            .with_angles(&[0.0, 30.0, 60.0, 80.0]);
+        let input = BatchSpectralInput::new(0).with_angles(&[0.0, 30.0, 60.0, 80.0]);
 
         for metal in ["gold", "silver", "copper"] {
             let output = evaluator.eval_metal_batch(metal, &input);
 
-            println!("\n{} batch: {} results in {:.2} μs",
-                metal, output.rgb_results.len(), output.time_us);
+            println!(
+                "\n{} batch: {} results in {:.2} μs",
+                metal,
+                output.rgb_results.len(),
+                output.time_us
+            );
 
-            for (i, (rgb, energy)) in output.rgb_results.iter().zip(&output.energy_ratios).enumerate() {
-                println!("  {}°: RGB=[{:.3}, {:.3}, {:.3}], E={:.3}",
-                    input.contexts[i].0, rgb[0], rgb[1], rgb[2], energy);
+            for (i, (rgb, energy)) in output
+                .rgb_results
+                .iter()
+                .zip(&output.energy_ratios)
+                .enumerate()
+            {
+                println!(
+                    "  {}°: RGB=[{:.3}, {:.3}, {:.3}], E={:.3}",
+                    input.contexts[i].0, rgb[0], rgb[1], rgb[2], energy
+                );
             }
         }
     }

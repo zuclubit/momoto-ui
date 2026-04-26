@@ -41,13 +41,23 @@ impl EnergyReport {
     /// Creates a trivially conserved report (input == output, no losses).
     #[must_use]
     pub fn lossless(energy: f32) -> Self {
-        Self { input: energy, output: energy, absorbed: 0.0, scattered: 0.0 }
+        Self {
+            input: energy,
+            output: energy,
+            absorbed: 0.0,
+            scattered: 0.0,
+        }
     }
 
     /// Creates a fully absorbed report (input energy, zero output).
     #[must_use]
     pub fn full_absorption(energy: f32) -> Self {
-        Self { input: energy, output: 0.0, absorbed: energy, scattered: 0.0 }
+        Self {
+            input: energy,
+            output: 0.0,
+            absorbed: energy,
+            scattered: 0.0,
+        }
     }
 
     /// Returns `true` if `output + absorbed + scattered ≈ input` within `tolerance`.
@@ -98,9 +108,9 @@ impl Add for EnergyReport {
     /// Aggregate two energy reports (e.g., from multiple layers or channels).
     fn add(self, rhs: Self) -> Self {
         Self {
-            input:     self.input     + rhs.input,
-            output:    self.output    + rhs.output,
-            absorbed:  self.absorbed  + rhs.absorbed,
+            input: self.input + rhs.input,
+            output: self.output + rhs.output,
+            absorbed: self.absorbed + rhs.absorbed,
             scattered: self.scattered + rhs.scattered,
         }
     }
@@ -223,21 +233,41 @@ mod tests {
 
     #[test]
     fn energy_report_partial_losses() {
-        let r = EnergyReport { input: 1.0, output: 0.7, absorbed: 0.2, scattered: 0.1 };
+        let r = EnergyReport {
+            input: 1.0,
+            output: 0.7,
+            absorbed: 0.2,
+            scattered: 0.1,
+        };
         assert!(r.is_conserved(1e-5));
         assert!((r.efficiency() - 0.7).abs() < 1e-5);
     }
 
     #[test]
     fn energy_report_not_conserved_when_energy_created() {
-        let r = EnergyReport { input: 1.0, output: 1.5, absorbed: 0.0, scattered: 0.0 };
+        let r = EnergyReport {
+            input: 1.0,
+            output: 1.5,
+            absorbed: 0.0,
+            scattered: 0.0,
+        };
         assert!(!r.is_conserved(1e-4));
     }
 
     #[test]
     fn energy_report_add_aggregates() {
-        let a = EnergyReport { input: 1.0, output: 0.8, absorbed: 0.2, scattered: 0.0 };
-        let b = EnergyReport { input: 2.0, output: 1.6, absorbed: 0.4, scattered: 0.0 };
+        let a = EnergyReport {
+            input: 1.0,
+            output: 0.8,
+            absorbed: 0.2,
+            scattered: 0.0,
+        };
+        let b = EnergyReport {
+            input: 2.0,
+            output: 1.6,
+            absorbed: 0.4,
+            scattered: 0.0,
+        };
         let sum = a + b;
         assert!((sum.input - 3.0).abs() < 1e-6);
         assert!((sum.output - 2.4).abs() < 1e-6);

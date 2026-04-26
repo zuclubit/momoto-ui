@@ -19,18 +19,16 @@
 
 use std::time::Instant;
 
-use super::simd_batch::{SimdBatchInput, SimdBatchEvaluator, SimdConfig};
-use super::simd_parallel::{ParallelConfig, ParallelBatchEvaluator};
-use super::spectral_render::SpectralRenderConfig;
 use super::auto_calibration_realtime::RealtimeCalibrationConfig;
 use super::combined_effects_advanced::{
-    AdvancedCombinedMaterial, DispersionModel, total_advanced_memory,
+    total_advanced_memory, AdvancedCombinedMaterial, DispersionModel,
 };
-use super::presets_experimental::{
-    list_presets, create_default, total_presets_memory,
-};
-use super::perceptual_loss::{rgb_to_lab, delta_e_2000};
 use super::material_datasets::MaterialDatabase;
+use super::perceptual_loss::{delta_e_2000, rgb_to_lab};
+use super::presets_experimental::{create_default, list_presets, total_presets_memory};
+use super::simd_batch::{SimdBatchEvaluator, SimdBatchInput, SimdConfig};
+use super::simd_parallel::{ParallelBatchEvaluator, ParallelConfig};
+use super::spectral_render::SpectralRenderConfig;
 
 // ============================================================================
 // BENCHMARK RESULTS
@@ -249,14 +247,28 @@ pub fn benchmark_spectral_rendering() -> SpectralComparison {
     }
 
     let spectral_rgb = [
-        if red_count > 0 { red_sum / red_count as f64 } else { 0.5 },
-        if green_count > 0 { green_sum / green_count as f64 } else { 0.5 },
-        if blue_count > 0 { blue_sum / blue_count as f64 } else { 0.5 },
+        if red_count > 0 {
+            red_sum / red_count as f64
+        } else {
+            0.5
+        },
+        if green_count > 0 {
+            green_sum / green_count as f64
+        } else {
+            0.5
+        },
+        if blue_count > 0 {
+            blue_sum / blue_count as f64
+        } else {
+            0.5
+        },
     ];
 
     let spectral_rmse = ((spectral_rgb[0] - direct_rgb[0]).powi(2)
         + (spectral_rgb[1] - direct_rgb[1]).powi(2)
-        + (spectral_rgb[2] - direct_rgb[2]).powi(2)).sqrt() / 3.0_f64.sqrt();
+        + (spectral_rgb[2] - direct_rgb[2]).powi(2))
+    .sqrt()
+        / 3.0_f64.sqrt();
 
     // Delta E between spectral and direct
     let lab_spectral = rgb_to_lab(spectral_rgb, super::perceptual_loss::Illuminant::D65);
@@ -370,8 +382,12 @@ pub fn analyze_phase7_memory() -> Phase7MemoryAnalysis {
     // Validation overhead: ~3KB
     let validation_overhead = 3 * 1024;
 
-    let total_phase7 = parallel_buffers + spectral_luts + calibration_state
-        + advanced_effects + experimental_presets + validation_overhead;
+    let total_phase7 = parallel_buffers
+        + spectral_luts
+        + calibration_state
+        + advanced_effects
+        + experimental_presets
+        + validation_overhead;
 
     // Phase 6 total was ~448KB
     let phase6_total = 448 * 1024;
@@ -401,7 +417,7 @@ pub fn validate_perceptual_accuracy() -> PerceptualValidation {
         if let Some(material_data) = db.get(name) {
             // Create a material that should approximate this reference (use default IOR)
             let material = AdvancedCombinedMaterial::builder()
-                .add_fresnel(1.5)  // Default IOR since SpectralMeasurement doesn't have IOR
+                .add_fresnel(1.5) // Default IOR since SpectralMeasurement doesn't have IOR
                 .build();
 
             // Evaluate at 550nm
@@ -464,7 +480,7 @@ pub fn compare_phase6_vs_phase7() -> Phase7Comparison {
     // Phase 6 baseline estimates
     let phase6_throughput = results.parallel_comparison.sequential_throughput;
     let phase6_memory_kb = 448.0;
-    let phase6_mean_delta_e = 3.0;  // Estimated
+    let phase6_mean_delta_e = 3.0; // Estimated
 
     Phase7Comparison {
         phase6_throughput,
@@ -495,19 +511,20 @@ pub fn validate_parallel_correctness() -> bool {
     let parallel_result = parallel_evaluator.evaluate(&input);
 
     // Compare results (should be identical within floating point tolerance)
-    let fresnel_diff: f64 = sequential_result.fresnel.iter()
+    let fresnel_diff: f64 = sequential_result
+        .fresnel
+        .iter()
         .zip(parallel_result.fresnel.iter())
         .map(|(a, b)| (a - b).abs())
-        .sum::<f64>() / batch_size as f64;
+        .sum::<f64>()
+        / batch_size as f64;
 
     fresnel_diff < 1e-10
 }
 
 /// Validate spectral rendering correctness
 pub fn validate_spectral_correctness() -> bool {
-    let material = AdvancedCombinedMaterial::builder()
-        .add_fresnel(1.5)
-        .build();
+    let material = AdvancedCombinedMaterial::builder().add_fresnel(1.5).build();
 
     // Use AdvancedCombinedMaterial's evaluate_spectral
     let result = material.evaluate_spectral(0.7);
@@ -529,9 +546,12 @@ pub fn validate_experimental_presets() -> Vec<(String, bool)> {
     for name in preset_names {
         if let Some(material) = create_default(name) {
             let rgb = material.evaluate_rgb(0.7);
-            let valid = rgb[0] >= 0.0 && rgb[0] <= 1.0 &&
-                       rgb[1] >= 0.0 && rgb[1] <= 1.0 &&
-                       rgb[2] >= 0.0 && rgb[2] <= 1.0;
+            let valid = rgb[0] >= 0.0
+                && rgb[0] <= 1.0
+                && rgb[1] >= 0.0
+                && rgb[1] <= 1.0
+                && rgb[2] >= 0.0
+                && rgb[2] <= 1.0;
             results.push((name.to_string(), valid));
         } else {
             results.push((name.to_string(), false));
@@ -557,14 +577,22 @@ pub fn generate_phase7_report() -> String {
 
     // Executive Summary
     report.push_str("## Executive Summary\n\n");
-    report.push_str("Phase 7 delivers **ultra-realistic rendering**, **advanced parallelization**, ");
+    report
+        .push_str("Phase 7 delivers **ultra-realistic rendering**, **advanced parallelization**, ");
     report.push_str("and **real-time perceptual auto-calibration**.\n\n");
     report.push_str(&format!("**Key Achievements:**\n"));
-    report.push_str(&format!("- **{:.1}x** parallel speedup\n", comparison.speedup_factor));
-    report.push_str(&format!("- **{:.1}%** perceptual accuracy (within Delta E < 2.0)\n",
-        results.perceptual_validation.within_tolerance_pct));
-    report.push_str(&format!("- **{:.0} KB** total memory footprint\n\n",
-        comparison.phase7_memory_kb));
+    report.push_str(&format!(
+        "- **{:.1}x** parallel speedup\n",
+        comparison.speedup_factor
+    ));
+    report.push_str(&format!(
+        "- **{:.1}%** perceptual accuracy (within Delta E < 2.0)\n",
+        results.perceptual_validation.within_tolerance_pct
+    ));
+    report.push_str(&format!(
+        "- **{:.0} KB** total memory footprint\n\n",
+        comparison.phase7_memory_kb
+    ));
 
     // New Modules
     report.push_str("## New Modules\n\n");
@@ -578,7 +606,8 @@ pub fn generate_phase7_report() -> String {
     report.push_str("Frame-budgeted auto-calibration with CIEDE2000 perceptual feedback.\n\n");
 
     report.push_str("### 4. `combined_effects_advanced.rs`\n");
-    report.push_str("Extended effect layers with dynamic thin-films, oxidation, and dispersion.\n\n");
+    report
+        .push_str("Extended effect layers with dynamic thin-films, oxidation, and dispersion.\n\n");
 
     report.push_str("### 5. `presets_experimental.rs`\n");
     report.push_str("8 ultra-realistic presets combining all Phase 7 features.\n\n");
@@ -591,70 +620,116 @@ pub fn generate_phase7_report() -> String {
     report.push_str("### Parallel Processing\n\n");
     report.push_str("| Metric | Value |\n");
     report.push_str("|--------|-------|\n");
-    report.push_str(&format!("| Sequential throughput | {:.2e} ops/s |\n",
-        results.parallel_comparison.sequential_throughput));
-    report.push_str(&format!("| Parallel throughput | {:.2e} ops/s |\n",
-        results.parallel_comparison.parallel_throughput));
-    report.push_str(&format!("| Speedup | {:.2}x |\n",
-        results.parallel_comparison.speedup));
-    report.push_str(&format!("| Efficiency | {:.1}% |\n",
-        results.parallel_comparison.efficiency * 100.0));
-    report.push_str(&format!("| Thread count | {} |\n\n",
-        results.parallel_comparison.thread_count));
+    report.push_str(&format!(
+        "| Sequential throughput | {:.2e} ops/s |\n",
+        results.parallel_comparison.sequential_throughput
+    ));
+    report.push_str(&format!(
+        "| Parallel throughput | {:.2e} ops/s |\n",
+        results.parallel_comparison.parallel_throughput
+    ));
+    report.push_str(&format!(
+        "| Speedup | {:.2}x |\n",
+        results.parallel_comparison.speedup
+    ));
+    report.push_str(&format!(
+        "| Efficiency | {:.1}% |\n",
+        results.parallel_comparison.efficiency * 100.0
+    ));
+    report.push_str(&format!(
+        "| Thread count | {} |\n\n",
+        results.parallel_comparison.thread_count
+    ));
 
     report.push_str("### Spectral Rendering\n\n");
     report.push_str("| Metric | Value |\n");
     report.push_str("|--------|-------|\n");
-    report.push_str(&format!("| RGB evaluation | {:.2} µs |\n",
-        results.spectral_comparison.rgb_time_us));
-    report.push_str(&format!("| Spectral evaluation | {:.2} µs |\n",
-        results.spectral_comparison.spectral_time_us));
-    report.push_str(&format!("| Color accuracy (Delta E) | {:.3} |\n\n",
-        results.spectral_comparison.color_accuracy_delta_e));
+    report.push_str(&format!(
+        "| RGB evaluation | {:.2} µs |\n",
+        results.spectral_comparison.rgb_time_us
+    ));
+    report.push_str(&format!(
+        "| Spectral evaluation | {:.2} µs |\n",
+        results.spectral_comparison.spectral_time_us
+    ));
+    report.push_str(&format!(
+        "| Color accuracy (Delta E) | {:.3} |\n\n",
+        results.spectral_comparison.color_accuracy_delta_e
+    ));
 
     report.push_str("### Auto-Calibration\n\n");
     report.push_str("| Metric | Value |\n");
     report.push_str("|--------|-------|\n");
-    report.push_str(&format!("| Avg iterations | {} |\n",
-        results.calibration_metrics.avg_iterations));
-    report.push_str(&format!("| Avg final loss (Delta E) | {:.2} |\n",
-        results.calibration_metrics.avg_final_loss));
-    report.push_str(&format!("| Convergence rate | {:.1}% |\n",
-        results.calibration_metrics.convergence_rate));
-    report.push_str(&format!("| Avg time | {:.2} ms |\n\n",
-        results.calibration_metrics.avg_time_ms));
+    report.push_str(&format!(
+        "| Avg iterations | {} |\n",
+        results.calibration_metrics.avg_iterations
+    ));
+    report.push_str(&format!(
+        "| Avg final loss (Delta E) | {:.2} |\n",
+        results.calibration_metrics.avg_final_loss
+    ));
+    report.push_str(&format!(
+        "| Convergence rate | {:.1}% |\n",
+        results.calibration_metrics.convergence_rate
+    ));
+    report.push_str(&format!(
+        "| Avg time | {:.2} ms |\n\n",
+        results.calibration_metrics.avg_time_ms
+    ));
 
     // Memory Analysis
     report.push_str("## Memory Analysis\n\n");
     report.push_str("| Component | Memory |\n");
     report.push_str("|-----------|--------|\n");
-    report.push_str(&format!("| Parallel buffers | ~{} KB |\n",
-        results.memory_analysis.parallel_buffers / 1024));
-    report.push_str(&format!("| Spectral LUTs | ~{} KB |\n",
-        results.memory_analysis.spectral_luts / 1024));
-    report.push_str(&format!("| Calibration state | ~{} KB |\n",
-        results.memory_analysis.calibration_state / 1024));
-    report.push_str(&format!("| Advanced effects | ~{} KB |\n",
-        results.memory_analysis.advanced_effects / 1024));
-    report.push_str(&format!("| Experimental presets | ~{} KB |\n",
-        results.memory_analysis.experimental_presets / 1024));
-    report.push_str(&format!("| **Total Phase 7** | **~{} KB** |\n",
-        results.memory_analysis.total_phase7 / 1024));
-    report.push_str(&format!("| **Total All Phases** | **~{} KB** |\n\n",
-        results.memory_analysis.total_all_phases / 1024));
+    report.push_str(&format!(
+        "| Parallel buffers | ~{} KB |\n",
+        results.memory_analysis.parallel_buffers / 1024
+    ));
+    report.push_str(&format!(
+        "| Spectral LUTs | ~{} KB |\n",
+        results.memory_analysis.spectral_luts / 1024
+    ));
+    report.push_str(&format!(
+        "| Calibration state | ~{} KB |\n",
+        results.memory_analysis.calibration_state / 1024
+    ));
+    report.push_str(&format!(
+        "| Advanced effects | ~{} KB |\n",
+        results.memory_analysis.advanced_effects / 1024
+    ));
+    report.push_str(&format!(
+        "| Experimental presets | ~{} KB |\n",
+        results.memory_analysis.experimental_presets / 1024
+    ));
+    report.push_str(&format!(
+        "| **Total Phase 7** | **~{} KB** |\n",
+        results.memory_analysis.total_phase7 / 1024
+    ));
+    report.push_str(&format!(
+        "| **Total All Phases** | **~{} KB** |\n\n",
+        results.memory_analysis.total_all_phases / 1024
+    ));
 
     // Perceptual Validation
     report.push_str("## Perceptual Validation\n\n");
     report.push_str("| Metric | Value |\n");
     report.push_str("|--------|-------|\n");
-    report.push_str(&format!("| Materials tested | {} |\n",
-        results.perceptual_validation.reference_materials.len()));
-    report.push_str(&format!("| Mean Delta E | {:.2} |\n",
-        results.perceptual_validation.mean_delta_e));
-    report.push_str(&format!("| Max Delta E | {:.2} |\n",
-        results.perceptual_validation.max_delta_e));
-    report.push_str(&format!("| Within tolerance | {:.1}% |\n\n",
-        results.perceptual_validation.within_tolerance_pct));
+    report.push_str(&format!(
+        "| Materials tested | {} |\n",
+        results.perceptual_validation.reference_materials.len()
+    ));
+    report.push_str(&format!(
+        "| Mean Delta E | {:.2} |\n",
+        results.perceptual_validation.mean_delta_e
+    ));
+    report.push_str(&format!(
+        "| Max Delta E | {:.2} |\n",
+        results.perceptual_validation.max_delta_e
+    ));
+    report.push_str(&format!(
+        "| Within tolerance | {:.1}% |\n\n",
+        results.perceptual_validation.within_tolerance_pct
+    ));
 
     // Experimental Presets
     report.push_str("## Experimental Presets\n\n");
@@ -670,23 +745,35 @@ pub fn generate_phase7_report() -> String {
     report.push_str("## Phase 6 vs Phase 7 Comparison\n\n");
     report.push_str("| Metric | Phase 6 | Phase 7 | Improvement |\n");
     report.push_str("|--------|---------|---------|-------------|\n");
-    report.push_str(&format!("| Throughput | {:.2e} | {:.2e} | {:.1}x |\n",
-        comparison.phase6_throughput, comparison.phase7_throughput, comparison.speedup_factor));
-    report.push_str(&format!("| Memory | {:.0} KB | {:.0} KB | +{:.0} KB |\n",
-        comparison.phase6_memory_kb, comparison.phase7_memory_kb,
-        comparison.phase7_memory_kb - comparison.phase6_memory_kb));
-    report.push_str(&format!("| Mean Delta E | {:.1} | {:.1} | {:.1}x better |\n\n",
-        comparison.phase6_mean_delta_e, comparison.phase7_mean_delta_e,
-        comparison.phase6_mean_delta_e / comparison.phase7_mean_delta_e.max(0.1)));
+    report.push_str(&format!(
+        "| Throughput | {:.2e} | {:.2e} | {:.1}x |\n",
+        comparison.phase6_throughput, comparison.phase7_throughput, comparison.speedup_factor
+    ));
+    report.push_str(&format!(
+        "| Memory | {:.0} KB | {:.0} KB | +{:.0} KB |\n",
+        comparison.phase6_memory_kb,
+        comparison.phase7_memory_kb,
+        comparison.phase7_memory_kb - comparison.phase6_memory_kb
+    ));
+    report.push_str(&format!(
+        "| Mean Delta E | {:.1} | {:.1} | {:.1}x better |\n\n",
+        comparison.phase6_mean_delta_e,
+        comparison.phase7_mean_delta_e,
+        comparison.phase6_mean_delta_e / comparison.phase7_mean_delta_e.max(0.1)
+    ));
 
     // Conclusion
     report.push_str("## Conclusion\n\n");
     report.push_str("Phase 7 completes the Momoto Materials PBR engine with:\n\n");
     report.push_str("- **7 phases** of progressive PBR enhancements\n");
-    report.push_str(&format!("- **~{} KB** total memory footprint\n",
-        results.memory_analysis.total_all_phases / 1024));
-    report.push_str(&format!("- **{:.1}x** performance improvement via parallelization\n",
-        comparison.speedup_factor));
+    report.push_str(&format!(
+        "- **~{} KB** total memory footprint\n",
+        results.memory_analysis.total_all_phases / 1024
+    ));
+    report.push_str(&format!(
+        "- **{:.1}x** performance improvement via parallelization\n",
+        comparison.speedup_factor
+    ));
     report.push_str("- **Full spectral** accuracy with perceptual calibration\n");
     report.push_str("- **8 experimental** ultra-realistic presets\n\n");
     report.push_str("The engine is production-ready for research-grade UI material rendering.\n");
@@ -744,7 +831,10 @@ mod tests {
         let result = validate_perceptual_accuracy();
 
         assert!(!result.reference_materials.is_empty());
-        assert_eq!(result.reference_materials.len(), result.delta_e_scores.len());
+        assert_eq!(
+            result.reference_materials.len(),
+            result.delta_e_scores.len()
+        );
         assert!(result.mean_delta_e >= 0.0);
     }
 

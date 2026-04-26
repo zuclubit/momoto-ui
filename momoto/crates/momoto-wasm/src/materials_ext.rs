@@ -5,19 +5,18 @@
 // Exposes missing items from momoto-materials NOT already in lib.rs.
 // =============================================================================
 
-use wasm_bindgen::prelude::*;
 use serde_wasm_bindgen;
+use wasm_bindgen::prelude::*;
 
 // =============================================================================
 // REFRACTION SYSTEM
 // =============================================================================
 
 use momoto_materials::glass_physics::refraction_index::{
-    RefractionParams as CoreRefractionParams,
-    RefractionPresets as CoreRefractionPresets,
-    calculate_refraction as core_calculate_refraction,
     apply_refraction_to_color as core_apply_refraction_to_color,
+    calculate_refraction as core_calculate_refraction,
     generate_distortion_map as core_generate_distortion_map,
+    RefractionParams as CoreRefractionParams, RefractionPresets as CoreRefractionPresets,
 };
 
 #[wasm_bindgen]
@@ -45,37 +44,55 @@ impl RefractionParams {
     }
 
     pub fn clear() -> Self {
-        Self { inner: CoreRefractionPresets::clear() }
+        Self {
+            inner: CoreRefractionPresets::clear(),
+        }
     }
 
     pub fn frosted() -> Self {
-        Self { inner: CoreRefractionPresets::frosted() }
+        Self {
+            inner: CoreRefractionPresets::frosted(),
+        }
     }
 
     pub fn thick() -> Self {
-        Self { inner: CoreRefractionPresets::thick() }
+        Self {
+            inner: CoreRefractionPresets::thick(),
+        }
     }
 
     pub fn subtle() -> Self {
-        Self { inner: CoreRefractionPresets::subtle() }
+        Self {
+            inner: CoreRefractionPresets::subtle(),
+        }
     }
 
     #[wasm_bindgen(js_name = "highIndex")]
     pub fn high_index() -> Self {
-        Self { inner: CoreRefractionPresets::high_index() }
+        Self {
+            inner: CoreRefractionPresets::high_index(),
+        }
     }
 
     #[wasm_bindgen(getter)]
-    pub fn index(&self) -> f64 { self.inner.index }
+    pub fn index(&self) -> f64 {
+        self.inner.index
+    }
 
     #[wasm_bindgen(getter, js_name = "distortionStrength")]
-    pub fn distortion_strength(&self) -> f64 { self.inner.distortion_strength }
+    pub fn distortion_strength(&self) -> f64 {
+        self.inner.distortion_strength
+    }
 
     #[wasm_bindgen(getter, js_name = "chromaticAberration")]
-    pub fn chromatic_aberration(&self) -> f64 { self.inner.chromatic_aberration }
+    pub fn chromatic_aberration(&self) -> f64 {
+        self.inner.chromatic_aberration
+    }
 
     #[wasm_bindgen(getter, js_name = "edgeLensing")]
-    pub fn edge_lensing(&self) -> f64 { self.inner.edge_lensing }
+    pub fn edge_lensing(&self) -> f64 {
+        self.inner.edge_lensing
+    }
 }
 
 /// Calculate refraction at a position with incident angle. Returns [offset_x, offset_y, hue_shift, brightness_factor].
@@ -87,7 +104,12 @@ pub fn calculate_refraction(
     incident_angle: f64,
 ) -> Box<[f64]> {
     let result = core_calculate_refraction(&params.inner, x, y, incident_angle);
-    Box::new([result.offset_x, result.offset_y, result.hue_shift, result.brightness_factor])
+    Box::new([
+        result.offset_x,
+        result.offset_y,
+        result.hue_shift,
+        result.brightness_factor,
+    ])
 }
 
 /// Apply refraction correction to an OKLCH color.
@@ -132,12 +154,9 @@ pub fn generate_distortion_map(
 // =============================================================================
 
 use momoto_materials::glass_physics::light_model::{
-    LightSource as CoreLightSource,
-    LightingEnvironment as CoreLightingEnvironment,
-    Vec3 as CoreVec3,
-    calculate_lighting as core_calculate_lighting,
-    derive_gradient as core_derive_gradient,
-    gradient_to_css as core_gradient_to_css,
+    calculate_lighting as core_calculate_lighting, derive_gradient as core_derive_gradient,
+    gradient_to_css as core_gradient_to_css, LightSource as CoreLightSource,
+    LightingEnvironment as CoreLightingEnvironment, Vec3 as CoreVec3,
 };
 
 #[wasm_bindgen]
@@ -150,33 +169,47 @@ impl LightSource {
     /// Create a light source. Color is specified as OKLCH (l, c, h).
     #[wasm_bindgen(constructor)]
     pub fn new(
-        dir_x: f64, dir_y: f64, dir_z: f64,
+        dir_x: f64,
+        dir_y: f64,
+        dir_z: f64,
         intensity: f64,
-        color_l: f64, color_c: f64, color_h: f64,
+        color_l: f64,
+        color_c: f64,
+        color_h: f64,
     ) -> Self {
         use momoto_core::space::oklch::OKLCH as CoreOKLCH;
         Self {
             inner: CoreLightSource {
                 direction: CoreVec3::new(dir_x, dir_y, dir_z),
                 intensity,
-                color: CoreOKLCH { l: color_l, c: color_c, h: color_h },
+                color: CoreOKLCH {
+                    l: color_l,
+                    c: color_c,
+                    h: color_h,
+                },
             },
         }
     }
 
     #[wasm_bindgen(js_name = "defaultKeyLight")]
     pub fn default_key_light() -> Self {
-        Self { inner: CoreLightSource::default_key_light() }
+        Self {
+            inner: CoreLightSource::default_key_light(),
+        }
     }
 
     #[wasm_bindgen(js_name = "defaultFillLight")]
     pub fn default_fill_light() -> Self {
-        Self { inner: CoreLightSource::default_fill_light() }
+        Self {
+            inner: CoreLightSource::default_fill_light(),
+        }
     }
 
     #[wasm_bindgen(js_name = "dramaticTopLight")]
     pub fn dramatic_top_light() -> Self {
-        Self { inner: CoreLightSource::dramatic_top_light() }
+        Self {
+            inner: CoreLightSource::dramatic_top_light(),
+        }
     }
 }
 
@@ -189,7 +222,9 @@ pub struct LightingEnvironment {
 impl LightingEnvironment {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
-        Self { inner: CoreLightingEnvironment::default() }
+        Self {
+            inner: CoreLightingEnvironment::default(),
+        }
     }
 }
 
@@ -212,7 +247,8 @@ pub fn calculate_lighting(
         "diffuse": result.diffuse,
         "specular": result.specular,
         "total": result.total,
-    })).map_err(|e| JsValue::from_str(&e.to_string()))
+    }))
+    .map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// Derive a gradient from a lighting environment. Returns JSON array.
@@ -224,15 +260,17 @@ pub fn derive_gradient(
     samples: usize,
 ) -> Result<JsValue, JsValue> {
     let gradient = core_derive_gradient(&env.inner, surface_curvature, shininess, samples);
-    let json_arr: Vec<serde_json::Value> = gradient.iter().map(|r| {
-        serde_json::json!({
-            "diffuse": r.diffuse,
-            "specular": r.specular,
-            "total": r.total,
+    let json_arr: Vec<serde_json::Value> = gradient
+        .iter()
+        .map(|r| {
+            serde_json::json!({
+                "diffuse": r.diffuse,
+                "specular": r.specular,
+                "total": r.total,
+            })
         })
-    }).collect();
-    serde_wasm_bindgen::to_value(&json_arr)
-        .map_err(|e| JsValue::from_str(&e.to_string()))
+        .collect();
+    serde_wasm_bindgen::to_value(&json_arr).map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// Convert a lighting gradient to CSS stops. Returns JSON array of [{position, l, c, h}, ...].
@@ -248,36 +286,40 @@ pub fn gradient_to_css(
 ) -> Result<JsValue, JsValue> {
     use momoto_core::space::oklch::OKLCH as CoreOKLCH;
     let gradient = core_derive_gradient(&env.inner, surface_curvature, shininess, samples);
-    let base_color = CoreOKLCH { l: base_l, c: base_c, h: base_h };
+    let base_color = CoreOKLCH {
+        l: base_l,
+        c: base_c,
+        h: base_h,
+    };
     let stops = core_gradient_to_css(&gradient, base_color);
-    let json: Vec<serde_json::Value> = stops.iter().map(|(pos, color)| {
-        serde_json::json!({
-            "position": pos,
-            "l": color.l,
-            "c": color.c,
-            "h": color.h,
+    let json: Vec<serde_json::Value> = stops
+        .iter()
+        .map(|(pos, color)| {
+            serde_json::json!({
+                "position": pos,
+                "l": color.l,
+                "c": color.c,
+                "h": color.h,
+            })
         })
-    }).collect();
-    serde_wasm_bindgen::to_value(&json)
-        .map_err(|e| JsValue::from_str(&e.to_string()))
+        .collect();
+    serde_wasm_bindgen::to_value(&json).map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 // =============================================================================
 // AMBIENT SHADOWS
 // =============================================================================
 
-use momoto_materials::shadow_engine::{
-    AmbientShadowParams as CoreAmbientShadowParams,
-    AmbientShadowPresets as CoreAmbientShadowPresets,
-    calculate_ambient_shadow as core_calculate_ambient_shadow,
-    calculate_multi_scale_ambient as core_multi_scale_ambient,
-    ElevationTransition as CoreElevationTransition,
-    ElevationPresets as CoreElevationPresets,
-    InteractiveState as CoreInteractiveState,
-    calculate_interactive_shadow as core_interactive_shadow,
-};
 use momoto_materials::shadow_engine::ambient_shadow::to_css as ambient_to_css;
 use momoto_materials::shadow_engine::elevation_shadow::to_css as elevation_to_css;
+use momoto_materials::shadow_engine::{
+    calculate_ambient_shadow as core_calculate_ambient_shadow,
+    calculate_interactive_shadow as core_interactive_shadow,
+    calculate_multi_scale_ambient as core_multi_scale_ambient,
+    AmbientShadowParams as CoreAmbientShadowParams,
+    AmbientShadowPresets as CoreAmbientShadowPresets, ElevationPresets as CoreElevationPresets,
+    ElevationTransition as CoreElevationTransition, InteractiveState as CoreInteractiveState,
+};
 
 #[wasm_bindgen]
 pub struct AmbientShadowParams {
@@ -287,12 +329,7 @@ pub struct AmbientShadowParams {
 #[wasm_bindgen]
 impl AmbientShadowParams {
     #[wasm_bindgen(constructor)]
-    pub fn new(
-        base_opacity: f64,
-        blur_radius: f64,
-        offset_y: f64,
-        spread: f64,
-    ) -> Self {
+    pub fn new(base_opacity: f64, blur_radius: f64, offset_y: f64, spread: f64) -> Self {
         Self {
             inner: CoreAmbientShadowParams {
                 base_opacity,
@@ -305,19 +342,27 @@ impl AmbientShadowParams {
     }
 
     pub fn standard() -> Self {
-        Self { inner: CoreAmbientShadowPresets::standard() }
+        Self {
+            inner: CoreAmbientShadowPresets::standard(),
+        }
     }
 
     pub fn elevated() -> Self {
-        Self { inner: CoreAmbientShadowPresets::elevated() }
+        Self {
+            inner: CoreAmbientShadowPresets::elevated(),
+        }
     }
 
     pub fn subtle() -> Self {
-        Self { inner: CoreAmbientShadowPresets::subtle() }
+        Self {
+            inner: CoreAmbientShadowPresets::subtle(),
+        }
     }
 
     pub fn dramatic() -> Self {
-        Self { inner: CoreAmbientShadowPresets::dramatic() }
+        Self {
+            inner: CoreAmbientShadowPresets::dramatic(),
+        }
     }
 }
 
@@ -331,7 +376,11 @@ pub fn calculate_ambient_shadow(
     elevation: f64,
 ) -> String {
     use momoto_core::space::oklch::OKLCH as CoreOKLCH;
-    let background = CoreOKLCH { l: bg_l, c: bg_c, h: bg_h };
+    let background = CoreOKLCH {
+        l: bg_l,
+        c: bg_c,
+        h: bg_h,
+    };
     let shadow = core_calculate_ambient_shadow(&params.inner, background, elevation);
     ambient_to_css(&shadow)
 }
@@ -346,9 +395,14 @@ pub fn calculate_multi_scale_ambient(
     elevation: f64,
 ) -> String {
     use momoto_core::space::oklch::OKLCH as CoreOKLCH;
-    let background = CoreOKLCH { l: bg_l, c: bg_c, h: bg_h };
+    let background = CoreOKLCH {
+        l: bg_l,
+        c: bg_c,
+        h: bg_h,
+    };
     let shadows = core_multi_scale_ambient(&params.inner, background, elevation);
-    shadows.iter()
+    shadows
+        .iter()
         .map(|s| ambient_to_css(s))
         .collect::<Vec<_>>()
         .join(", ")
@@ -429,7 +483,11 @@ pub fn calculate_interactive_shadow(
         2 => CoreInteractiveState::Active,
         _ => CoreInteractiveState::Focus,
     };
-    let background = CoreOKLCH { l: bg_l, c: bg_c, h: bg_h };
+    let background = CoreOKLCH {
+        l: bg_l,
+        c: bg_c,
+        h: bg_h,
+    };
     let shadow = core_interactive_shadow(
         &transition.inner,
         interaction_state,
@@ -443,9 +501,7 @@ pub fn calculate_interactive_shadow(
 // ELEVATION (Material Design)
 // =============================================================================
 
-use momoto_materials::elevation::{
-    Elevation as CoreElevation,
-};
+use momoto_materials::elevation::Elevation as CoreElevation;
 
 #[wasm_bindgen(js_name = "elevationDp")]
 pub fn elevation_dp(level: u8) -> f64 {
@@ -478,8 +534,7 @@ pub fn elevation_tint_opacity(level: u8) -> f64 {
 // =============================================================================
 
 use momoto_materials::glass_physics::spectral_coherence::{
-    FlickerValidator as CoreFlickerValidator,
-    FlickerConfig as CoreFlickerConfig,
+    FlickerConfig as CoreFlickerConfig, FlickerValidator as CoreFlickerValidator,
 };
 
 #[wasm_bindgen]
@@ -491,15 +546,21 @@ pub struct FlickerValidator {
 impl FlickerValidator {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
-        Self { inner: CoreFlickerValidator::new(CoreFlickerConfig::default()) }
+        Self {
+            inner: CoreFlickerValidator::new(CoreFlickerConfig::default()),
+        }
     }
 
     pub fn strict() -> Self {
-        Self { inner: CoreFlickerValidator::strict() }
+        Self {
+            inner: CoreFlickerValidator::strict(),
+        }
     }
 
     pub fn relaxed() -> Self {
-        Self { inner: CoreFlickerValidator::relaxed() }
+        Self {
+            inner: CoreFlickerValidator::relaxed(),
+        }
     }
 
     #[wasm_bindgen(js_name = "withThresholds")]
@@ -520,10 +581,8 @@ impl FlickerValidator {
 // =============================================================================
 
 use momoto_materials::glass_physics::temporal::interpolation::{
-    InterpolationMode as CoreInterpolationMode,
-    RateLimiter as CoreRateLimiter,
-    RateLimitConfig as CoreRateLimitConfig,
-    ExponentialMovingAverage as CoreEMA,
+    ExponentialMovingAverage as CoreEMA, InterpolationMode as CoreInterpolationMode,
+    RateLimitConfig as CoreRateLimitConfig, RateLimiter as CoreRateLimiter,
 };
 
 /// Interpolation mode enum for JS.
@@ -572,10 +631,7 @@ impl RateLimiter {
     #[wasm_bindgen(constructor)]
     pub fn new(initial: f64, max_rate: f64, smooth: bool) -> Self {
         Self {
-            inner: CoreRateLimiter::new(initial, CoreRateLimitConfig {
-                max_rate,
-                smooth,
-            }),
+            inner: CoreRateLimiter::new(initial, CoreRateLimitConfig { max_rate, smooth }),
         }
     }
 
@@ -617,7 +673,9 @@ pub struct ExponentialMovingAverage {
 impl ExponentialMovingAverage {
     #[wasm_bindgen(constructor)]
     pub fn new(alpha: f64) -> Self {
-        Self { inner: CoreEMA::new(alpha) }
+        Self {
+            inner: CoreEMA::new(alpha),
+        }
     }
 
     pub fn update(&mut self, value: f64) -> f64 {
@@ -639,12 +697,9 @@ impl ExponentialMovingAverage {
 // =============================================================================
 
 use momoto_materials::glass_physics::temporal::materials::{
-    TemporalDielectric as CoreTemporalDielectric,
-    TemporalThinFilm as CoreTemporalThinFilm,
-    TemporalConductor as CoreTemporalConductor,
-    DielectricEvolution as CoreDielectricEvolution,
-    ThinFilmEvolution as CoreThinFilmEvolution,
-    ConductorEvolution as CoreConductorEvolution,
+    ConductorEvolution as CoreConductorEvolution, DielectricEvolution as CoreDielectricEvolution,
+    TemporalConductor as CoreTemporalConductor, TemporalDielectric as CoreTemporalDielectric,
+    TemporalThinFilm as CoreTemporalThinFilm, ThinFilmEvolution as CoreThinFilmEvolution,
 };
 
 #[wasm_bindgen]
@@ -657,13 +712,17 @@ impl TemporalDielectric {
     /// Create with drying paint preset.
     #[wasm_bindgen(js_name = "dryingPaint")]
     pub fn drying_paint() -> Self {
-        Self { inner: CoreTemporalDielectric::drying_paint() }
+        Self {
+            inner: CoreTemporalDielectric::drying_paint(),
+        }
     }
 
     /// Create with weathering glass preset.
     #[wasm_bindgen(js_name = "weatheringGlass")]
     pub fn weathering_glass() -> Self {
-        Self { inner: CoreTemporalDielectric::weathering_glass() }
+        Self {
+            inner: CoreTemporalDielectric::weathering_glass(),
+        }
     }
 }
 
@@ -677,7 +736,9 @@ impl TemporalThinFilm {
     /// Create with soap bubble preset.
     #[wasm_bindgen(js_name = "soapBubble")]
     pub fn soap_bubble() -> Self {
-        Self { inner: CoreTemporalThinFilm::soap_bubble() }
+        Self {
+            inner: CoreTemporalThinFilm::soap_bubble(),
+        }
     }
 }
 
@@ -691,7 +752,9 @@ impl TemporalConductor {
     /// Create with heated gold preset.
     #[wasm_bindgen(js_name = "heatedGold")]
     pub fn heated_gold() -> Self {
-        Self { inner: CoreTemporalConductor::heated_gold() }
+        Self {
+            inner: CoreTemporalConductor::heated_gold(),
+        }
     }
 }
 
@@ -700,8 +763,7 @@ impl TemporalConductor {
 // =============================================================================
 
 use momoto_materials::glass_physics::neural_constraints::{
-    ConstraintValidator as CoreConstraintValidator,
-    ConstraintConfig as CoreConstraintConfig,
+    ConstraintConfig as CoreConstraintConfig, ConstraintValidator as CoreConstraintValidator,
 };
 
 #[wasm_bindgen]
@@ -713,7 +775,9 @@ pub struct ConstraintValidator {
 impl ConstraintValidator {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
-        Self { inner: CoreConstraintValidator::new() }
+        Self {
+            inner: CoreConstraintValidator::new(),
+        }
     }
 
     #[wasm_bindgen(js_name = "withConfig")]
@@ -740,19 +804,18 @@ impl ConstraintValidator {
 // =============================================================================
 
 use momoto_materials::glass_physics::unified_bsdf::{
-    BSDFContext as CoreBSDFContext,
-    DielectricBSDF as CoreDielectricBSDF,
-    ConductorBSDF as CoreConductorBSDF,
-    ThinFilmBSDF as CoreThinFilmBSDF,
-    LambertianBSDF as CoreLambertianBSDF,
-    LayeredBSDF as CoreLayeredBSDF,
-    Vector3,
-    BSDF,
+    BSDFContext as CoreBSDFContext, ConductorBSDF as CoreConductorBSDF,
+    DielectricBSDF as CoreDielectricBSDF, LambertianBSDF as CoreLambertianBSDF,
+    LayeredBSDF as CoreLayeredBSDF, ThinFilmBSDF as CoreThinFilmBSDF, Vector3, BSDF,
 };
 
 fn make_bsdf_context(
-    wi_x: f64, wi_y: f64, wi_z: f64,
-    wo_x: f64, wo_y: f64, wo_z: f64,
+    wi_x: f64,
+    wi_y: f64,
+    wi_z: f64,
+    wo_x: f64,
+    wo_y: f64,
+    wo_z: f64,
 ) -> CoreBSDFContext {
     CoreBSDFContext {
         wi: Vector3::new(wi_x, wi_y, wi_z),
@@ -774,35 +837,48 @@ pub struct DielectricBSDF {
 impl DielectricBSDF {
     #[wasm_bindgen(constructor)]
     pub fn new(ior: f64, roughness: f64) -> Self {
-        Self { inner: CoreDielectricBSDF::new(ior, roughness) }
+        Self {
+            inner: CoreDielectricBSDF::new(ior, roughness),
+        }
     }
 
     pub fn glass() -> Self {
-        Self { inner: CoreDielectricBSDF::glass() }
+        Self {
+            inner: CoreDielectricBSDF::glass(),
+        }
     }
 
     pub fn water() -> Self {
-        Self { inner: CoreDielectricBSDF::water() }
+        Self {
+            inner: CoreDielectricBSDF::water(),
+        }
     }
 
     pub fn diamond() -> Self {
-        Self { inner: CoreDielectricBSDF::diamond() }
+        Self {
+            inner: CoreDielectricBSDF::diamond(),
+        }
     }
 
     #[wasm_bindgen(js_name = "frostedGlass")]
     pub fn frosted_glass() -> Self {
-        Self { inner: CoreDielectricBSDF::frosted_glass() }
+        Self {
+            inner: CoreDielectricBSDF::frosted_glass(),
+        }
     }
 
     pub fn evaluate(
         &self,
-        wi_x: f64, wi_y: f64, wi_z: f64,
-        wo_x: f64, wo_y: f64, wo_z: f64,
+        wi_x: f64,
+        wi_y: f64,
+        wi_z: f64,
+        wo_x: f64,
+        wo_y: f64,
+        wo_z: f64,
     ) -> Result<JsValue, JsValue> {
         let ctx = make_bsdf_context(wi_x, wi_y, wi_z, wo_x, wo_y, wo_z);
         let response = self.inner.evaluate(&ctx);
-        serde_wasm_bindgen::to_value(&response)
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+        serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 
     #[wasm_bindgen(js_name = "validateEnergy")]
@@ -813,7 +889,8 @@ impl DielectricBSDF {
             "conserved": validation.conserved,
             "error": validation.error,
             "details": validation.details,
-        })).map_err(|e| JsValue::from_str(&e.to_string()))
+        }))
+        .map_err(|e| JsValue::from_str(&e.to_string()))
     }
 }
 
@@ -826,24 +903,49 @@ pub struct ConductorBSDF {
 impl ConductorBSDF {
     #[wasm_bindgen(constructor)]
     pub fn new(n: f64, k: f64, roughness: f64) -> Self {
-        Self { inner: CoreConductorBSDF::new(n, k, roughness) }
+        Self {
+            inner: CoreConductorBSDF::new(n, k, roughness),
+        }
     }
 
-    pub fn gold() -> Self { Self { inner: CoreConductorBSDF::gold() } }
-    pub fn silver() -> Self { Self { inner: CoreConductorBSDF::silver() } }
-    pub fn copper() -> Self { Self { inner: CoreConductorBSDF::copper() } }
-    pub fn aluminum() -> Self { Self { inner: CoreConductorBSDF::aluminum() } }
-    pub fn chrome() -> Self { Self { inner: CoreConductorBSDF::chrome() } }
+    pub fn gold() -> Self {
+        Self {
+            inner: CoreConductorBSDF::gold(),
+        }
+    }
+    pub fn silver() -> Self {
+        Self {
+            inner: CoreConductorBSDF::silver(),
+        }
+    }
+    pub fn copper() -> Self {
+        Self {
+            inner: CoreConductorBSDF::copper(),
+        }
+    }
+    pub fn aluminum() -> Self {
+        Self {
+            inner: CoreConductorBSDF::aluminum(),
+        }
+    }
+    pub fn chrome() -> Self {
+        Self {
+            inner: CoreConductorBSDF::chrome(),
+        }
+    }
 
     pub fn evaluate(
         &self,
-        wi_x: f64, wi_y: f64, wi_z: f64,
-        wo_x: f64, wo_y: f64, wo_z: f64,
+        wi_x: f64,
+        wi_y: f64,
+        wi_z: f64,
+        wo_x: f64,
+        wo_y: f64,
+        wo_z: f64,
     ) -> Result<JsValue, JsValue> {
         let ctx = make_bsdf_context(wi_x, wi_y, wi_z, wo_x, wo_y, wo_z);
         let response = self.inner.evaluate(&ctx);
-        serde_wasm_bindgen::to_value(&response)
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+        serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 
     #[wasm_bindgen(js_name = "validateEnergy")]
@@ -854,7 +956,8 @@ impl ConductorBSDF {
             "conserved": validation.conserved,
             "error": validation.error,
             "details": validation.details,
-        })).map_err(|e| JsValue::from_str(&e.to_string()))
+        }))
+        .map_err(|e| JsValue::from_str(&e.to_string()))
     }
 }
 
@@ -867,31 +970,44 @@ pub struct ThinFilmBSDF {
 impl ThinFilmBSDF {
     #[wasm_bindgen(constructor)]
     pub fn new(substrate_ior: f64, film_ior: f64, film_thickness: f64) -> Self {
-        Self { inner: CoreThinFilmBSDF::new(substrate_ior, film_ior, film_thickness) }
+        Self {
+            inner: CoreThinFilmBSDF::new(substrate_ior, film_ior, film_thickness),
+        }
     }
 
     #[wasm_bindgen(js_name = "soapBubble")]
     pub fn soap_bubble(thickness: f64) -> Self {
-        Self { inner: CoreThinFilmBSDF::soap_bubble(thickness) }
+        Self {
+            inner: CoreThinFilmBSDF::soap_bubble(thickness),
+        }
     }
 
     #[wasm_bindgen(js_name = "oilOnWater")]
     pub fn oil_on_water(thickness: f64) -> Self {
-        Self { inner: CoreThinFilmBSDF::oil_on_water(thickness) }
+        Self {
+            inner: CoreThinFilmBSDF::oil_on_water(thickness),
+        }
     }
 
     #[wasm_bindgen(js_name = "arCoating")]
-    pub fn ar_coating() -> Self { Self { inner: CoreThinFilmBSDF::ar_coating() } }
+    pub fn ar_coating() -> Self {
+        Self {
+            inner: CoreThinFilmBSDF::ar_coating(),
+        }
+    }
 
     pub fn evaluate(
         &self,
-        wi_x: f64, wi_y: f64, wi_z: f64,
-        wo_x: f64, wo_y: f64, wo_z: f64,
+        wi_x: f64,
+        wi_y: f64,
+        wi_z: f64,
+        wo_x: f64,
+        wo_y: f64,
+        wo_z: f64,
     ) -> Result<JsValue, JsValue> {
         let ctx = make_bsdf_context(wi_x, wi_y, wi_z, wo_x, wo_y, wo_z);
         let response = self.inner.evaluate(&ctx);
-        serde_wasm_bindgen::to_value(&response)
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+        serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 }
 
@@ -904,21 +1020,34 @@ pub struct LambertianBSDF {
 impl LambertianBSDF {
     #[wasm_bindgen(constructor)]
     pub fn new(albedo: f64) -> Self {
-        Self { inner: CoreLambertianBSDF::new(albedo) }
+        Self {
+            inner: CoreLambertianBSDF::new(albedo),
+        }
     }
 
-    pub fn white() -> Self { Self { inner: CoreLambertianBSDF::white() } }
-    pub fn gray() -> Self { Self { inner: CoreLambertianBSDF::gray() } }
+    pub fn white() -> Self {
+        Self {
+            inner: CoreLambertianBSDF::white(),
+        }
+    }
+    pub fn gray() -> Self {
+        Self {
+            inner: CoreLambertianBSDF::gray(),
+        }
+    }
 
     pub fn evaluate(
         &self,
-        wi_x: f64, wi_y: f64, wi_z: f64,
-        wo_x: f64, wo_y: f64, wo_z: f64,
+        wi_x: f64,
+        wi_y: f64,
+        wi_z: f64,
+        wo_x: f64,
+        wo_y: f64,
+        wo_z: f64,
     ) -> Result<JsValue, JsValue> {
         let ctx = make_bsdf_context(wi_x, wi_y, wi_z, wo_x, wo_y, wo_z);
         let response = self.inner.evaluate(&ctx);
-        serde_wasm_bindgen::to_value(&response)
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+        serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 }
 
@@ -931,27 +1060,42 @@ pub struct LayeredBSDF {
 impl LayeredBSDF {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
-        Self { inner: CoreLayeredBSDF::new() }
+        Self {
+            inner: CoreLayeredBSDF::new(),
+        }
     }
 
     /// Add a dielectric layer.
     #[wasm_bindgen(js_name = "pushDielectric")]
     pub fn push_dielectric(mut self, ior: f64, roughness: f64) -> LayeredBSDF {
-        self.inner = self.inner.push(Box::new(CoreDielectricBSDF::new(ior, roughness)));
+        self.inner = self
+            .inner
+            .push(Box::new(CoreDielectricBSDF::new(ior, roughness)));
         self
     }
 
     /// Add a conductor layer.
     #[wasm_bindgen(js_name = "pushConductor")]
     pub fn push_conductor(mut self, n: f64, k: f64, roughness: f64) -> LayeredBSDF {
-        self.inner = self.inner.push(Box::new(CoreConductorBSDF::new(n, k, roughness)));
+        self.inner = self
+            .inner
+            .push(Box::new(CoreConductorBSDF::new(n, k, roughness)));
         self
     }
 
     /// Add a thin film layer.
     #[wasm_bindgen(js_name = "pushThinFilm")]
-    pub fn push_thin_film(mut self, substrate_ior: f64, film_ior: f64, thickness: f64) -> LayeredBSDF {
-        self.inner = self.inner.push(Box::new(CoreThinFilmBSDF::new(substrate_ior, film_ior, thickness)));
+    pub fn push_thin_film(
+        mut self,
+        substrate_ior: f64,
+        film_ior: f64,
+        thickness: f64,
+    ) -> LayeredBSDF {
+        self.inner = self.inner.push(Box::new(CoreThinFilmBSDF::new(
+            substrate_ior,
+            film_ior,
+            thickness,
+        )));
         self
     }
 
@@ -969,13 +1113,16 @@ impl LayeredBSDF {
 
     pub fn evaluate(
         &self,
-        wi_x: f64, wi_y: f64, wi_z: f64,
-        wo_x: f64, wo_y: f64, wo_z: f64,
+        wi_x: f64,
+        wi_y: f64,
+        wi_z: f64,
+        wo_x: f64,
+        wo_y: f64,
+        wo_z: f64,
     ) -> Result<JsValue, JsValue> {
         let ctx = make_bsdf_context(wi_x, wi_y, wi_z, wo_x, wo_y, wo_z);
         let response = self.inner.evaluate(&ctx);
-        serde_wasm_bindgen::to_value(&response)
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+        serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 
     #[wasm_bindgen(js_name = "validateEnergy")]
@@ -986,7 +1133,8 @@ impl LayeredBSDF {
             "conserved": validation.conserved,
             "error": validation.error,
             "details": validation.details,
-        })).map_err(|e| JsValue::from_str(&e.to_string()))
+        }))
+        .map_err(|e| JsValue::from_str(&e.to_string()))
     }
 }
 
@@ -995,10 +1143,8 @@ impl LayeredBSDF {
 // =============================================================================
 
 use momoto_materials::glass_physics::pbr_api::v1::{
-    Material as CorePBRMaterial,
-    MaterialBuilder as CoreMaterialBuilder,
-    MaterialPreset as CoreMaterialPreset,
-    EvaluationContext as CoreEvaluationContext,
+    EvaluationContext as CoreEvaluationContext, Material as CorePBRMaterial,
+    MaterialBuilder as CoreMaterialBuilder, MaterialPreset as CoreMaterialPreset,
 };
 
 #[wasm_bindgen]
@@ -1022,19 +1168,22 @@ impl PBRMaterial {
             "oil_slick" | "oilSlick" => CoreMaterialPreset::OilSlick,
             _ => return Err(JsValue::from_str(&format!("Unknown preset: {}", preset))),
         };
-        Ok(PBRMaterial { inner: CorePBRMaterial::from_preset(p) })
+        Ok(PBRMaterial {
+            inner: CorePBRMaterial::from_preset(p),
+        })
     }
 
     pub fn builder() -> PBRMaterialBuilder {
-        PBRMaterialBuilder { inner: CoreMaterialBuilder::new() }
+        PBRMaterialBuilder {
+            inner: CoreMaterialBuilder::new(),
+        }
     }
 
     /// Evaluate the material with default context.
     pub fn evaluate(&self) -> Result<JsValue, JsValue> {
         let ctx = CoreEvaluationContext::default();
         let response = self.inner.evaluate(&ctx);
-        serde_wasm_bindgen::to_value(&response)
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+        serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 
     /// Evaluate with custom incident angle (cos_theta = angle from normal).
@@ -1045,8 +1194,7 @@ impl PBRMaterial {
         let mut ctx = CoreEvaluationContext::default();
         ctx.wi = Vector3::new(sin_theta, 0.0, cos_theta).into();
         let response = self.inner.evaluate(&ctx);
-        serde_wasm_bindgen::to_value(&response)
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+        serde_wasm_bindgen::to_value(&response).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 }
 
@@ -1070,7 +1218,12 @@ impl PBRMaterialBuilder {
     }
 
     #[wasm_bindgen(js_name = "addThinFilm")]
-    pub fn add_thin_film(mut self, film_ior: f64, substrate_ior: f64, thickness_nm: f64) -> PBRMaterialBuilder {
+    pub fn add_thin_film(
+        mut self,
+        film_ior: f64,
+        substrate_ior: f64,
+        thickness_nm: f64,
+    ) -> PBRMaterialBuilder {
         self.inner = self.inner.thin_film(film_ior, substrate_ior, thickness_nm);
         self
     }
@@ -1086,7 +1239,9 @@ impl PBRMaterialBuilder {
     }
 
     pub fn build(self) -> PBRMaterial {
-        PBRMaterial { inner: self.inner.build() }
+        PBRMaterial {
+            inner: self.inner.build(),
+        }
     }
 }
 
@@ -1095,10 +1250,8 @@ impl PBRMaterialBuilder {
 // =============================================================================
 
 use momoto_materials::glass_physics::temporal::interpolation::{
+    ease_in_out as core_ease_in_out, remap as core_remap, smootherstep as core_smootherstep,
     smoothstep as core_smoothstep,
-    smootherstep as core_smootherstep,
-    ease_in_out as core_ease_in_out,
-    remap as core_remap,
 };
 
 #[wasm_bindgen]
@@ -1126,8 +1279,7 @@ pub fn remap(value: f64, in_min: f64, in_max: f64, out_min: f64, out_max: f64) -
 // =============================================================================
 
 use momoto_materials::glass_physics::batch::{
-    BatchMaterialInput as CoreBatchMaterialInput,
-    evaluate_batch as core_evaluate_batch,
+    evaluate_batch as core_evaluate_batch, BatchMaterialInput as CoreBatchMaterialInput,
 };
 
 /// Evaluate materials in batch. Arrays must be same length.
@@ -1149,14 +1301,13 @@ pub fn evaluate_material_batch(
     }
 
     match core_evaluate_batch(&input) {
-        Ok(results) => {
-            serde_wasm_bindgen::to_value(&serde_json::json!({
-                "count": results.count,
-                "opacity": results.opacity,
-                "blur": results.blur,
-                "fresnel_normal": results.fresnel_normal,
-            })).map_err(|e| JsValue::from_str(&e.to_string()))
-        }
+        Ok(results) => serde_wasm_bindgen::to_value(&serde_json::json!({
+            "count": results.count,
+            "opacity": results.opacity,
+            "blur": results.blur,
+            "fresnel_normal": results.fresnel_normal,
+        }))
+        .map_err(|e| JsValue::from_str(&e.to_string())),
         Err(e) => Err(JsValue::from_str(&e)),
     }
 }
@@ -1166,36 +1317,23 @@ pub fn evaluate_material_batch(
 // =============================================================================
 
 use momoto_materials::glass_physics::perceptual_loss::{
-    LabColor,
-    Illuminant,
-    delta_e_76 as core_delta_e_76,
-    delta_e_94 as core_delta_e_94,
-    delta_e_2000 as core_delta_e_2000,
-    rgb_to_lab as core_rgb_to_lab,
-    lab_to_rgb as core_lab_to_rgb,
+    delta_e_2000 as core_delta_e_2000, delta_e_76 as core_delta_e_76,
+    delta_e_94 as core_delta_e_94, lab_to_rgb as core_lab_to_rgb, rgb_to_lab as core_rgb_to_lab,
+    Illuminant, LabColor,
 };
 
 #[wasm_bindgen(js_name = "deltaE76")]
-pub fn delta_e_76(
-    l1: f64, a1: f64, b1: f64,
-    l2: f64, a2: f64, b2: f64,
-) -> f64 {
+pub fn delta_e_76(l1: f64, a1: f64, b1: f64, l2: f64, a2: f64, b2: f64) -> f64 {
     core_delta_e_76(LabColor::new(l1, a1, b1), LabColor::new(l2, a2, b2))
 }
 
 #[wasm_bindgen(js_name = "deltaE94")]
-pub fn delta_e_94(
-    l1: f64, a1: f64, b1: f64,
-    l2: f64, a2: f64, b2: f64,
-) -> f64 {
+pub fn delta_e_94(l1: f64, a1: f64, b1: f64, l2: f64, a2: f64, b2: f64) -> f64 {
     core_delta_e_94(LabColor::new(l1, a1, b1), LabColor::new(l2, a2, b2))
 }
 
 #[wasm_bindgen(js_name = "deltaE2000")]
-pub fn delta_e_2000(
-    l1: f64, a1: f64, b1: f64,
-    l2: f64, a2: f64, b2: f64,
-) -> f64 {
+pub fn delta_e_2000(l1: f64, a1: f64, b1: f64, l2: f64, a2: f64, b2: f64) -> f64 {
     core_delta_e_2000(LabColor::new(l1, a1, b1), LabColor::new(l2, a2, b2))
 }
 
@@ -1215,7 +1353,7 @@ pub fn lab_to_rgb(l: f64, a: f64, b: f64) -> Box<[f64]> {
 pub fn delta_e_2000_batch(lab_pairs: &[f64]) -> Result<Box<[f64]>, JsValue> {
     if lab_pairs.len() % 6 != 0 {
         return Err(JsValue::from_str(
-            "Input must be multiple of 6: [L1, a1, b1, L2, a2, b2, ...]"
+            "Input must be multiple of 6: [L1, a1, b1, L2, a2, b2, ...]",
         ));
     }
     let count = lab_pairs.len() / 6;
@@ -1224,7 +1362,11 @@ pub fn delta_e_2000_batch(lab_pairs: &[f64]) -> Result<Box<[f64]>, JsValue> {
         let base = i * 6;
         results.push(core_delta_e_2000(
             LabColor::new(lab_pairs[base], lab_pairs[base + 1], lab_pairs[base + 2]),
-            LabColor::new(lab_pairs[base + 3], lab_pairs[base + 4], lab_pairs[base + 5]),
+            LabColor::new(
+                lab_pairs[base + 3],
+                lab_pairs[base + 4],
+                lab_pairs[base + 5],
+            ),
         ));
     }
     Ok(results.into_boxed_slice())
@@ -1235,8 +1377,7 @@ pub fn delta_e_2000_batch(lab_pairs: &[f64]) -> Result<Box<[f64]>, JsValue> {
 // =============================================================================
 
 use momoto_materials::css_enhanced::{
-    render_enhanced_css as core_render_enhanced_css,
-    render_premium_css as core_render_premium_css,
+    render_enhanced_css as core_render_enhanced_css, render_premium_css as core_render_premium_css,
 };
 
 /// Render enhanced CSS for an evaluated material with a render config.
@@ -1250,9 +1391,7 @@ pub fn render_enhanced_css(
 
 /// Render premium CSS with default config.
 #[wasm_bindgen(js_name = "renderPremiumCss")]
-pub fn render_premium_css(
-    material: &super::EvaluatedMaterial,
-) -> String {
+pub fn render_premium_css(material: &super::EvaluatedMaterial) -> String {
     core_render_premium_css(material.to_core())
 }
 
@@ -1267,17 +1406,19 @@ use momoto_materials::glass_physics::enhanced_presets::QualityTier;
 #[wasm_bindgen(js_name = "getEnhancedGlassPresets")]
 pub fn get_enhanced_glass_presets() -> Result<JsValue, JsValue> {
     let presets = enhanced_presets::all_presets();
-    let json: Vec<serde_json::Value> = presets.iter().map(|p| {
-        serde_json::json!({
-            "name": p.name,
-            "ior": p.ior,
-            "roughness": p.roughness,
-            "thickness": p.thickness,
-            "absorption": p.absorption,
+    let json: Vec<serde_json::Value> = presets
+        .iter()
+        .map(|p| {
+            serde_json::json!({
+                "name": p.name,
+                "ior": p.ior,
+                "roughness": p.roughness,
+                "thickness": p.thickness,
+                "absorption": p.absorption,
+            })
         })
-    }).collect();
-    serde_wasm_bindgen::to_value(&json)
-        .map_err(|e| JsValue::from_str(&e.to_string()))
+        .collect();
+    serde_wasm_bindgen::to_value(&json).map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 /// Get presets by quality tier. Tier: "fast", "standard", "high", "ultra_high", "experimental", "reference".
@@ -1290,20 +1431,27 @@ pub fn get_presets_by_quality(tier: &str) -> Result<JsValue, JsValue> {
         "ultra_high" | "ultraHigh" => QualityTier::UltraHigh,
         "experimental" => QualityTier::Experimental,
         "reference" => QualityTier::Reference,
-        _ => return Err(JsValue::from_str(&format!("Unknown quality tier: {}", tier))),
+        _ => {
+            return Err(JsValue::from_str(&format!(
+                "Unknown quality tier: {}",
+                tier
+            )))
+        }
     };
     let presets = enhanced_presets::presets_by_quality(qt);
-    let json: Vec<serde_json::Value> = presets.iter().map(|p| {
-        serde_json::json!({
-            "name": p.name,
-            "ior": p.ior,
-            "roughness": p.roughness,
-            "thickness": p.thickness,
-            "absorption": p.absorption,
+    let json: Vec<serde_json::Value> = presets
+        .iter()
+        .map(|p| {
+            serde_json::json!({
+                "name": p.name,
+                "ior": p.ior,
+                "roughness": p.roughness,
+                "thickness": p.thickness,
+                "absorption": p.absorption,
+            })
         })
-    }).collect();
-    serde_wasm_bindgen::to_value(&json)
-        .map_err(|e| JsValue::from_str(&e.to_string()))
+        .collect();
+    serde_wasm_bindgen::to_value(&json).map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 // =============================================================================
@@ -1334,9 +1482,7 @@ pub fn evaluate_dielectric_batch(
     roughnesses: &[f64],
     cos_thetas: &[f64],
 ) -> Box<[f64]> {
-    use momoto_materials::glass_physics::unified_bsdf::{
-        DielectricBSDF, BSDF, BSDFContext,
-    };
+    use momoto_materials::glass_physics::unified_bsdf::{BSDFContext, DielectricBSDF, BSDF};
 
     let n = iors.len().min(roughnesses.len()).min(cos_thetas.len());
     let mut out = Vec::with_capacity(n * 3);
@@ -1356,9 +1502,7 @@ pub fn evaluate_dielectric_batch(
 /// Evaluate a single dielectric material. Returns `[reflectance, transmittance, absorption]`.
 #[wasm_bindgen(js_name = "evaluateDielectricBSDF")]
 pub fn evaluate_dielectric_bsdf(ior: f64, roughness: f64, cos_theta: f64) -> Box<[f64]> {
-    use momoto_materials::glass_physics::unified_bsdf::{
-        DielectricBSDF, BSDF, BSDFContext,
-    };
+    use momoto_materials::glass_physics::unified_bsdf::{BSDFContext, DielectricBSDF, BSDF};
 
     let bsdf = DielectricBSDF::new(ior, roughness);
     let ctx = BSDFContext::new_simple(cos_theta.clamp(0.0, 1.0));
@@ -1408,12 +1552,7 @@ pub fn cook_torrance_brdf(
 ///
 /// BRDF value ≥ 0 (includes 1/π normalisation). At roughness=0 returns 1/π (Lambert).
 #[wasm_bindgen(js_name = "orenNayarBRDF")]
-pub fn oren_nayar_brdf(
-    n_dot_l: f64,
-    n_dot_v: f64,
-    l_dot_v: f64,
-    roughness: f64,
-) -> f64 {
+pub fn oren_nayar_brdf(n_dot_l: f64, n_dot_v: f64, l_dot_v: f64, roughness: f64) -> f64 {
     use momoto_materials::glass_physics::microfacet::oren_nayar_eval;
     oren_nayar_eval(n_dot_l, n_dot_v, l_dot_v, roughness)
 }
@@ -1437,7 +1576,7 @@ pub fn evaluate_microfacet_bsdf(
     cos_theta: f64,
 ) -> Box<[f64]> {
     use momoto_materials::glass_physics::microfacet::MicrofacetBSDF;
-    use momoto_materials::glass_physics::unified_bsdf::{BSDF, BSDFContext};
+    use momoto_materials::glass_physics::unified_bsdf::{BSDFContext, BSDF};
 
     let bsdf = MicrofacetBSDF::new(roughness, metallic, f0, 0.8);
     let ctx = BSDFContext::new_simple(cos_theta.clamp(0.0, 1.0));

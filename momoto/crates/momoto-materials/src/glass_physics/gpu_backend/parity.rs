@@ -114,7 +114,7 @@ impl GpuCpuParityTest {
         // Generate random materials
         for _ in 0..self.config.test_count {
             materials.push(MaterialGpuData {
-                ior: 1.0 + next_rand(&mut seed) * 1.5, // 1.0 - 2.5
+                ior: 1.0 + next_rand(&mut seed) * 1.5,  // 1.0 - 2.5
                 cos_theta: next_rand(&mut seed),        // 0.0 - 1.0
                 absorption: next_rand(&mut seed) * 0.5, // 0.0 - 0.5
                 thickness: next_rand(&mut seed) * 20.0, // 0.0 - 20.0 mm
@@ -244,7 +244,13 @@ impl GpuCpuParityTest {
         if violations.is_empty() {
             ParityResult::pass(count, max_delta_e, avg_delta_e)
         } else {
-            ParityResult::fail(count, violations.len(), max_delta_e, avg_delta_e, violations)
+            ParityResult::fail(
+                count,
+                violations.len(),
+                max_delta_e,
+                avg_delta_e,
+                violations,
+            )
         }
     }
 

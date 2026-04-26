@@ -9,8 +9,8 @@ use crate::glass_physics::metrology::{
 };
 
 use super::common::{
-    EnvironmentConditions, InstrumentConfig, LightSource, LightSourceType, NoiseModel,
-    Resolution, SimpleRng,
+    EnvironmentConditions, InstrumentConfig, LightSource, LightSourceType, NoiseModel, Resolution,
+    SimpleRng,
 };
 
 // ============================================================================
@@ -170,7 +170,10 @@ impl VirtualSpectrophotometer {
         let biased = self.config.bias.apply_spectral(averaged, wavelength_nm);
 
         // Apply noise (signal-dependent for photometric measurements)
-        let (noisy, noise_std) = self.config.noise_model.apply(biased, &mut || self.rng.next());
+        let (noisy, noise_std) = self
+            .config
+            .noise_model
+            .apply(biased, &mut || self.rng.next());
 
         // Clamp and quantize
         let clamped = noisy.clamp(0.0, 1.0);
@@ -309,7 +312,10 @@ impl VirtualSpectrophotometer {
 
             // Apply bias and noise
             let biased = self.config.bias.apply_spectral(averaged, wl);
-            let (noisy, noise_std) = self.config.noise_model.apply(biased, &mut || self.rng.next());
+            let (noisy, noise_std) = self
+                .config
+                .noise_model
+                .apply(biased, &mut || self.rng.next());
             let clamped = noisy.clamp(0.0, 1.0);
 
             wavelengths.push(wl);
@@ -366,7 +372,10 @@ impl VirtualSpectrophotometer {
 
             // Apply measurement
             let biased = self.config.bias.apply_spectral(transmittance, wl);
-            let (noisy, noise_std) = self.config.noise_model.apply(biased, &mut || self.rng.next());
+            let (noisy, noise_std) = self
+                .config
+                .noise_model
+                .apply(biased, &mut || self.rng.next());
             let t_clamped = noisy.clamp(1e-6, 1.0);
 
             // Convert to absorbance: A = -log10(T)
@@ -398,7 +407,11 @@ impl VirtualSpectrophotometer {
         };
 
         let mut traceability = TraceabilityChain::new();
-        traceability.record_measurement(&self.config.name, "Absorbance scan", MeasurementId::generate());
+        traceability.record_measurement(
+            &self.config.name,
+            "Absorbance scan",
+            MeasurementId::generate(),
+        );
 
         SpectroResult {
             measurement_type: SpectroMeasurementType::Absorbance,
@@ -460,8 +473,7 @@ impl SpectroResult {
                 let t = (wavelength_nm - self.wavelengths[i])
                     / (self.wavelengths[i + 1] - self.wavelengths[i]);
                 return Some(
-                    self.measurements.values[i] * (1.0 - t)
-                        + self.measurements.values[i + 1] * t,
+                    self.measurements.values[i] * (1.0 - t) + self.measurements.values[i + 1] * t,
                 );
             }
         }
@@ -786,8 +798,8 @@ mod tests {
 
     #[test]
     fn test_measurement_geometries() {
-        let mut spectro = VirtualSpectrophotometer::ideal()
-            .with_geometry(SpectroGeometry::D8Specular);
+        let mut spectro =
+            VirtualSpectrophotometer::ideal().with_geometry(SpectroGeometry::D8Specular);
 
         assert!(matches!(spectro.geometry, SpectroGeometry::D8Specular));
 

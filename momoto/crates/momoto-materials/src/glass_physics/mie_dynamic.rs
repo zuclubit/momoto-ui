@@ -29,7 +29,7 @@
 
 use std::f64::consts::PI;
 
-use super::mie_lut::{mie_fast, mie_asymmetry_g};
+use super::mie_lut::{mie_asymmetry_g, mie_fast};
 
 // ============================================================================
 // SIZE DISTRIBUTIONS
@@ -39,9 +39,7 @@ use super::mie_lut::{mie_fast, mie_asymmetry_g};
 #[derive(Debug, Clone)]
 pub enum SizeDistribution {
     /// Single particle size
-    Monodisperse {
-        radius_um: f64,
-    },
+    Monodisperse { radius_um: f64 },
     /// Log-normal distribution (common for natural aerosols)
     LogNormal {
         geometric_mean_um: f64,
@@ -49,14 +47,14 @@ pub enum SizeDistribution {
     },
     /// Gamma distribution
     Gamma {
-        shape: f64,        // α
-        scale_um: f64,     // β
+        shape: f64,    // α
+        scale_um: f64, // β
     },
     /// Bimodal distribution (e.g., smoke with fine and coarse modes)
     Bimodal {
         mode1: Box<SizeDistribution>,
         mode2: Box<SizeDistribution>,
-        weight1: f64,  // Weight of first mode (0-1)
+        weight1: f64, // Weight of first mode (0-1)
     },
 }
 
@@ -70,13 +68,7 @@ impl SizeDistribution {
     }
 
     /// Create bimodal distribution
-    pub fn bimodal(
-        mean1: f64,
-        std1: f64,
-        mean2: f64,
-        std2: f64,
-        weight1: f64,
-    ) -> Self {
+    pub fn bimodal(mean1: f64, std1: f64, mean2: f64, std2: f64, weight1: f64) -> Self {
         Self::Bimodal {
             mode1: Box::new(Self::LogNormal {
                 geometric_mean_um: mean1,
@@ -101,7 +93,10 @@ impl SizeDistribution {
                     0.0
                 }
             }
-            Self::LogNormal { geometric_mean_um, geometric_std } => {
+            Self::LogNormal {
+                geometric_mean_um,
+                geometric_std,
+            } => {
                 if r <= 0.0 {
                     return 0.0;
                 }
@@ -119,9 +114,11 @@ impl SizeDistribution {
                 let gamma_alpha = gamma_function(alpha);
                 (r.powf(alpha - 1.0) * (-r / beta).exp()) / (beta.powf(alpha) * gamma_alpha)
             }
-            Self::Bimodal { mode1, mode2, weight1 } => {
-                weight1 * mode1.pdf(r) + (1.0 - weight1) * mode2.pdf(r)
-            }
+            Self::Bimodal {
+                mode1,
+                mode2,
+                weight1,
+            } => weight1 * mode1.pdf(r) + (1.0 - weight1) * mode2.pdf(r),
         }
     }
 
@@ -129,13 +126,16 @@ impl SizeDistribution {
     pub fn mean_radius(&self) -> f64 {
         match self {
             Self::Monodisperse { radius_um } => *radius_um,
-            Self::LogNormal { geometric_mean_um, geometric_std } => {
-                geometric_mean_um * (0.5 * geometric_std * geometric_std).exp()
-            }
+            Self::LogNormal {
+                geometric_mean_um,
+                geometric_std,
+            } => geometric_mean_um * (0.5 * geometric_std * geometric_std).exp(),
             Self::Gamma { shape, scale_um } => shape * scale_um,
-            Self::Bimodal { mode1, mode2, weight1 } => {
-                weight1 * mode1.mean_radius() + (1.0 - weight1) * mode2.mean_radius()
-            }
+            Self::Bimodal {
+                mode1,
+                mode2,
+                weight1,
+            } => weight1 * mode1.mean_radius() + (1.0 - weight1) * mode2.mean_radius(),
         }
     }
 
@@ -239,7 +239,10 @@ impl DynamicMieParams {
 
         // Apply growth and coalescence
         match &self.size_distribution {
-            SizeDistribution::LogNormal { geometric_mean_um, geometric_std } => {
+            SizeDistribution::LogNormal {
+                geometric_mean_um,
+                geometric_std,
+            } => {
                 let new_mean = geometric_mean_um + self.growth_rate * t;
                 let new_std = geometric_std * (1.0 + self.coalescence_rate * t);
                 SizeDistribution::LogNormal {
@@ -247,11 +250,9 @@ impl DynamicMieParams {
                     geometric_std: new_std.clamp(0.1, 2.0),
                 }
             }
-            SizeDistribution::Monodisperse { radius_um } => {
-                SizeDistribution::Monodisperse {
-                    radius_um: (radius_um + self.growth_rate * t).max(0.01),
-                }
-            }
+            SizeDistribution::Monodisperse { radius_um } => SizeDistribution::Monodisperse {
+                radius_um: (radius_um + self.growth_rate * t).max(0.01),
+            },
             _ => self.size_distribution.clone(),
         }
     }
@@ -299,7 +300,7 @@ pub fn polydisperse_phase(
         let x = params.size_parameter(*r, wavelength_nm);
         let phase = mie_fast(cos_theta, x, m);
 
-        total_phase += phase * pdf * r;  // r factor for volume weighting
+        total_phase += phase * pdf * r; // r factor for volume weighting
         total_weight += pdf * r;
     }
 
@@ -387,7 +388,7 @@ pub fn temporal_phase(
         size_distribution: evolved,
         anisotropy: params.anisotropy,
         orientation: params.orientation,
-        growth_rate: 0.0,  // Don't double-evolve
+        growth_rate: 0.0, // Don't double-evolve
         coalescence_rate: 0.0,
     };
 
@@ -418,25 +419,21 @@ pub mod dynamic_presets {
     /// Stratocumulus cloud droplets
     pub fn stratocumulus() -> DynamicMieParams {
         DynamicMieParams::new(
-            1.33,  // Water
-            1.0,   // Air
+            1.33, // Water
+            1.0,  // Air
             SizeDistribution::log_normal(8.0, 0.35),
         )
     }
 
     /// Fog droplets
     pub fn fog() -> DynamicMieParams {
-        DynamicMieParams::new(
-            1.33,
-            1.0,
-            SizeDistribution::log_normal(4.0, 0.25),
-        )
+        DynamicMieParams::new(1.33, 1.0, SizeDistribution::log_normal(4.0, 0.25))
     }
 
     /// Smoke particles (bimodal)
     pub fn smoke() -> DynamicMieParams {
         DynamicMieParams::new(
-            1.5,   // Soot
+            1.5, // Soot
             1.0,
             SizeDistribution::bimodal(0.1, 0.5, 2.0, 0.3, 0.7),
         )
@@ -445,8 +442,8 @@ pub mod dynamic_presets {
     /// Milk particles (fat globules)
     pub fn milk() -> DynamicMieParams {
         DynamicMieParams::new(
-            1.46,  // Fat
-            1.33,  // Water
+            1.46, // Fat
+            1.33, // Water
             SizeDistribution::log_normal(0.5, 0.4),
         )
     }
@@ -454,8 +451,8 @@ pub mod dynamic_presets {
     /// Blood cells (bimodal: RBC and platelets)
     pub fn blood() -> DynamicMieParams {
         DynamicMieParams::new(
-            1.40,  // Hemoglobin
-            1.35,  // Plasma
+            1.40, // Hemoglobin
+            1.35, // Plasma
             SizeDistribution::bimodal(3.0, 0.2, 8.0, 0.15, 0.3),
         )
     }
@@ -463,37 +460,33 @@ pub mod dynamic_presets {
     /// Dust particles (desert aerosol)
     pub fn dust() -> DynamicMieParams {
         DynamicMieParams::new(
-            1.53,  // Silica
+            1.53, // Silica
             1.0,
             SizeDistribution::log_normal(2.0, 0.6),
-        ).with_anisotropy(0.2, [0.0, 0.0, 1.0])  // Slightly elongated
+        )
+        .with_anisotropy(0.2, [0.0, 0.0, 1.0]) // Slightly elongated
     }
 
     /// Ice crystals (cirrus cloud)
     pub fn ice_crystals() -> DynamicMieParams {
         DynamicMieParams::new(
-            1.31,  // Ice
+            1.31, // Ice
             1.0,
             SizeDistribution::log_normal(20.0, 0.5),
-        ).with_anisotropy(0.4, [0.0, 0.0, 1.0])  // Elongated crystals
+        )
+        .with_anisotropy(0.4, [0.0, 0.0, 1.0]) // Elongated crystals
     }
 
     /// Evolving fog (condensation)
     pub fn condensing_fog() -> DynamicMieParams {
-        DynamicMieParams::new(
-            1.33,
-            1.0,
-            SizeDistribution::log_normal(1.0, 0.3),
-        ).with_temporal(0.1, 0.01)  // Growing droplets
+        DynamicMieParams::new(1.33, 1.0, SizeDistribution::log_normal(1.0, 0.3))
+            .with_temporal(0.1, 0.01) // Growing droplets
     }
 
     /// Evaporating mist
     pub fn evaporating_mist() -> DynamicMieParams {
-        DynamicMieParams::new(
-            1.33,
-            1.0,
-            SizeDistribution::log_normal(5.0, 0.3),
-        ).with_temporal(-0.05, 0.0)  // Shrinking droplets
+        DynamicMieParams::new(1.33, 1.0, SizeDistribution::log_normal(5.0, 0.3))
+            .with_temporal(-0.05, 0.0) // Shrinking droplets
     }
 
     /// Get all dynamic presets
@@ -563,8 +556,10 @@ pub fn extinction_coefficient(params: &DynamicMieParams, wavelength_nm: f64) -> 
         // Extinction efficiency (approximation)
         let q_ext = if x < 0.3 {
             // Rayleigh regime
-            8.0 / 3.0 * x.powi(4) * ((params.relative_ior().powi(2) - 1.0) /
-                (params.relative_ior().powi(2) + 2.0)).powi(2)
+            8.0 / 3.0
+                * x.powi(4)
+                * ((params.relative_ior().powi(2) - 1.0) / (params.relative_ior().powi(2) + 2.0))
+                    .powi(2)
         } else {
             // Larger particles: Q_ext ≈ 2 (geometric limit)
             2.0 - 4.0 / x
@@ -631,7 +626,7 @@ pub fn to_css_smoke_effect(params: &DynamicMieParams, density: f64) -> String {
 pub fn dynamic_mie_memory() -> usize {
     std::mem::size_of::<DynamicMieParams>()
         + std::mem::size_of::<SizeDistribution>() * 2  // For bimodal
-        + 64  // Sample array typical size
+        + 64 // Sample array typical size
 }
 
 // ============================================================================
@@ -652,7 +647,8 @@ mod tests {
 
         // PDF should integrate to ~1
         let radii = dist.sample_radii(100);
-        let sum: f64 = radii.windows(2)
+        let sum: f64 = radii
+            .windows(2)
             .map(|w| {
                 let r_mid = (w[0] + w[1]) / 2.0;
                 let dr = w[1] - w[0];
@@ -660,7 +656,11 @@ mod tests {
             })
             .sum();
 
-        assert!((sum - 1.0).abs() < 0.3, "PDF should integrate to ~1: {}", sum);
+        assert!(
+            (sum - 1.0).abs() < 0.3,
+            "PDF should integrate to ~1: {}",
+            sum
+        );
     }
 
     #[test]
@@ -670,7 +670,7 @@ mod tests {
         // Should have two peaks
         let pdf_1 = dist.pdf(1.0);
         let pdf_10 = dist.pdf(10.0);
-        let pdf_5 = dist.pdf(5.0);  // Between peaks
+        let pdf_5 = dist.pdf(5.0); // Between peaks
 
         assert!(pdf_1 > pdf_5, "First peak should be higher than valley");
         assert!(pdf_10 > pdf_5, "Second peak should be higher than valley");
@@ -712,7 +712,8 @@ mod tests {
         assert!(
             (phase_t0 - phase_t50).abs() > 0.0001 || phase_t0 != phase_t50,
             "Phase should change over time: t0={}, t50={}",
-            phase_t0, phase_t50
+            phase_t0,
+            phase_t50
         );
     }
 
@@ -757,7 +758,8 @@ mod tests {
             assert!(
                 g >= 0.0 && g <= 1.0,
                 "{} asymmetry should be in [0,1]: {}",
-                name, g
+                name,
+                g
             );
         }
     }

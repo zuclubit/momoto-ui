@@ -210,16 +210,27 @@ impl LutVsReferenceComparison {
     /// Get error bin for histogram
     fn error_bin(error: f64) -> usize {
         let abs_error = error.abs();
-        if abs_error < 0.0001 { 0 }
-        else if abs_error < 0.001 { 1 }
-        else if abs_error < 0.005 { 2 }
-        else if abs_error < 0.01 { 3 }
-        else if abs_error < 0.02 { 4 }
-        else if abs_error < 0.05 { 5 }
-        else if abs_error < 0.1 { 6 }
-        else if abs_error < 0.2 { 7 }
-        else if abs_error < 0.5 { 8 }
-        else { 9 }
+        if abs_error < 0.0001 {
+            0
+        } else if abs_error < 0.001 {
+            1
+        } else if abs_error < 0.005 {
+            2
+        } else if abs_error < 0.01 {
+            3
+        } else if abs_error < 0.02 {
+            4
+        } else if abs_error < 0.05 {
+            5
+        } else if abs_error < 0.1 {
+            6
+        } else if abs_error < 0.2 {
+            7
+        } else if abs_error < 0.5 {
+            8
+        } else {
+            9
+        }
     }
 }
 
@@ -343,12 +354,7 @@ impl ReferenceRenderer {
     // ========================================================================
 
     /// Evaluate metal material with complex IOR
-    pub fn evaluate_metal(
-        &self,
-        n: f64,
-        k: f64,
-        cos_theta: f64,
-    ) -> ReferenceRenderResult {
+    pub fn evaluate_metal(&self, n: f64, k: f64, cos_theta: f64) -> ReferenceRenderResult {
         let start = Instant::now();
         let wavelengths = self.config.wavelengths();
         let n_bands = wavelengths.len();
@@ -599,10 +605,7 @@ pub fn compare_lut_vs_reference(
 }
 
 /// Compare Fresnel approximations against full equations
-pub fn compare_fresnel_approximations(
-    ior: f64,
-    n_angles: usize,
-) -> LutVsReferenceComparison {
+pub fn compare_fresnel_approximations(ior: f64, n_angles: usize) -> LutVsReferenceComparison {
     let mut lut_results = Vec::with_capacity(n_angles);
     let mut ref_results = Vec::with_capacity(n_angles);
     let mut worst_angle = 0.0;
@@ -791,8 +794,8 @@ pub fn thin_film_stack_transfer_matrix(
         let cos_layer = (1.0 - sin_layer * sin_layer).sqrt();
 
         // Interface reflectance
-        let r_interface = (n_prev * cos_theta - n_layer * cos_layer)
-            / (n_prev * cos_theta + n_layer * cos_layer);
+        let r_interface =
+            (n_prev * cos_theta - n_layer * cos_layer) / (n_prev * cos_theta + n_layer * cos_layer);
 
         // Phase in this layer
         let delta = 2.0 * PI * n_layer * thickness * cos_layer / wavelength_nm;
@@ -842,9 +845,7 @@ fn cie_x_bar(wavelength: f64) -> f64 {
     let t2 = (wavelength - 599.8) * if wavelength < 599.8 { 0.0264 } else { 0.0323 };
     let t3 = (wavelength - 501.1) * if wavelength < 501.1 { 0.0490 } else { 0.0382 };
 
-    0.362 * (-0.5 * t1 * t1).exp()
-        + 1.056 * (-0.5 * t2 * t2).exp()
-        - 0.065 * (-0.5 * t3 * t3).exp()
+    0.362 * (-0.5 * t1 * t1).exp() + 1.056 * (-0.5 * t2 * t2).exp() - 0.065 * (-0.5 * t3 * t3).exp()
 }
 
 /// CIE 1931 2-degree observer y-bar function
@@ -852,8 +853,7 @@ fn cie_y_bar(wavelength: f64) -> f64 {
     let t1 = (wavelength - 568.8) * if wavelength < 568.8 { 0.0213 } else { 0.0247 };
     let t2 = (wavelength - 530.9) * if wavelength < 530.9 { 0.0613 } else { 0.0322 };
 
-    0.821 * (-0.5 * t1 * t1).exp()
-        + 0.286 * (-0.5 * t2 * t2).exp()
+    0.821 * (-0.5 * t1 * t1).exp() + 0.286 * (-0.5 * t2 * t2).exp()
 }
 
 /// CIE 1931 2-degree observer z-bar function
@@ -861,8 +861,7 @@ fn cie_z_bar(wavelength: f64) -> f64 {
     let t1 = (wavelength - 437.0) * if wavelength < 437.0 { 0.0845 } else { 0.0278 };
     let t2 = (wavelength - 459.0) * if wavelength < 459.0 { 0.0385 } else { 0.0725 };
 
-    1.217 * (-0.5 * t1 * t1).exp()
-        + 0.681 * (-0.5 * t2 * t2).exp()
+    1.217 * (-0.5 * t1 * t1).exp() + 0.681 * (-0.5 * t2 * t2).exp()
 }
 
 /// Convert XYZ to sRGB
@@ -933,7 +932,11 @@ mod tests {
 
         // Also test with approximate values (n≈0.4, k≈2.4) - should still be high
         let r_gold_approx = fresnel_conductor_full(1.0, 0.4, 2.4);
-        assert!(r_gold_approx > 0.75, "Gold reflectance {} should be > 0.75", r_gold_approx);
+        assert!(
+            r_gold_approx > 0.75,
+            "Gold reflectance {} should be > 0.75",
+            r_gold_approx
+        );
     }
 
     #[test]
@@ -962,7 +965,11 @@ mod tests {
 
         // R + T + A should be very close to 1
         let total = result.reflectance + result.transmittance + result.absorption;
-        assert!((total - 1.0).abs() < 0.01, "Energy not conserved: {}", total);
+        assert!(
+            (total - 1.0).abs() < 0.01,
+            "Energy not conserved: {}",
+            total
+        );
     }
 
     #[test]

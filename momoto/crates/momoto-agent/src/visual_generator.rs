@@ -10,12 +10,12 @@
 
 #![allow(dead_code)]
 
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
 use momoto_core::color::Color;
-use momoto_core::space::oklch::OKLCH;
 use momoto_core::perception::ContrastMetric;
-use momoto_metrics::{WCAGMetric, APCAMetric};
+use momoto_core::space::oklch::OKLCH;
+use momoto_metrics::{APCAMetric, WCAGMetric};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // ============================================================================
 // Error Types
@@ -269,20 +269,37 @@ impl ValidationReport {
     /// - Neural improvement (10%)
     /// - Gamut integrity (10%)
     pub fn compute_overall_score(&self) -> f64 {
-        let wcag_score = if self.wcag.aa_normal_pass { 1.0 }
-                         else if self.wcag.aa_large_pass { 0.6 }
-                         else { 0.0 };
+        let wcag_score = if self.wcag.aa_normal_pass {
+            1.0
+        } else if self.wcag.aa_large_pass {
+            0.6
+        } else {
+            0.0
+        };
 
-        let apca_score = if self.apca.body_text_pass { 1.0 }
-                         else if self.apca.heading_pass { 0.7 }
-                         else if self.apca.ui_component_pass { 0.4 }
-                         else { 0.0 };
+        let apca_score = if self.apca.body_text_pass {
+            1.0
+        } else if self.apca.heading_pass {
+            0.7
+        } else if self.apca.ui_component_pass {
+            0.4
+        } else {
+            0.0
+        };
 
-        let perceptual_score = if self.perceptual.is_distinguishable { 1.0 } else { 0.0 };
+        let perceptual_score = if self.perceptual.is_distinguishable {
+            1.0
+        } else {
+            0.0
+        };
 
         let neural_score = (self.neural.perceptual_improvement).clamp(0.0, 1.0);
 
-        let gamut_score = if !self.perceptual.gamut_clipped { 1.0 } else { 0.5 };
+        let gamut_score = if !self.perceptual.gamut_clipped {
+            1.0
+        } else {
+            0.5
+        };
 
         0.30 * wcag_score
             + 0.30 * apca_score
@@ -494,8 +511,7 @@ fn compute_wcag(color: &Color) -> WCAGValidation {
     let best_ratio = ratio_on_white.max(ratio_on_black);
 
     let aa_normal = WCAGMetric.evaluate(*color, white);
-    let aa_normal_pass = aa_normal.value >= 4.5
-        || WCAGMetric.evaluate(*color, black).value >= 4.5;
+    let aa_normal_pass = aa_normal.value >= 4.5 || WCAGMetric.evaluate(*color, black).value >= 4.5;
 
     let ratio_for_report = if ratio_on_white >= ratio_on_black {
         ratio_on_white
@@ -512,15 +528,23 @@ fn compute_wcag(color: &Color) -> WCAGValidation {
         issues.push(ValidationIssue {
             severity: "error".to_string(),
             code: "WCAG_AA_FAIL".to_string(),
-            message: format!("Contrast ratio {:.2}:1 fails WCAG AA (4.5:1 required)", ratio_for_report),
-            suggestion: Some("Increase lightness difference or use a darker/lighter color".to_string()),
+            message: format!(
+                "Contrast ratio {:.2}:1 fails WCAG AA (4.5:1 required)",
+                ratio_for_report
+            ),
+            suggestion: Some(
+                "Increase lightness difference or use a darker/lighter color".to_string(),
+            ),
         });
     }
     if !aaa_normal_pass && aa_normal_pass {
         issues.push(ValidationIssue {
             severity: "warning".to_string(),
             code: "WCAG_AAA_FAIL".to_string(),
-            message: format!("Contrast ratio {:.2}:1 fails WCAG AAA (7.0:1 required)", ratio_for_report),
+            message: format!(
+                "Contrast ratio {:.2}:1 fails WCAG AAA (7.0:1 required)",
+                ratio_for_report
+            ),
             suggestion: Some("Adjust lightness toward extremes for AAA compliance".to_string()),
         });
     }
@@ -566,7 +590,10 @@ fn compute_apca(color: &Color) -> APCAValidation {
         issues.push(ValidationIssue {
             severity: "warning".to_string(),
             code: "APCA_HEADING_FAIL".to_string(),
-            message: format!("APCA Lc {:.1} insufficient for headings (60.0 required)", abs_lc),
+            message: format!(
+                "APCA Lc {:.1} insufficient for headings (60.0 required)",
+                abs_lc
+            ),
             suggestion: None,
         });
     }
@@ -717,7 +744,8 @@ impl AIVisualGenerator {
 
         // Phase 2: Gamut check & mapping
         let oklch = OKLCH::from_color(&primary_color);
-        let (working_color, gamut_clipped) = if config.phases.gamut_mapping && !oklch.is_in_gamut() {
+        let (working_color, gamut_clipped) = if config.phases.gamut_mapping && !oklch.is_in_gamut()
+        {
             warnings.push(format!(
                 "Primary color {} has chroma {:.4} exceeding sRGB gamut; mapped to boundary",
                 config.primary_hex, oklch.c
@@ -738,12 +766,15 @@ impl AIVisualGenerator {
         let (corrected_color, neural_metrics) = if config.phases.neural_correction {
             apply_neural_correction(&working_color)
         } else {
-            (working_color, NeuralCorrectionMetrics {
-                corrections_applied: 0,
-                avg_delta_e_reduction: 0.0,
-                perceptual_improvement: 0.0,
-                processing_ms: 0,
-            })
+            (
+                working_color,
+                NeuralCorrectionMetrics {
+                    corrections_applied: 0,
+                    avg_delta_e_reduction: 0.0,
+                    perceptual_improvement: 0.0,
+                    processing_ms: 0,
+                },
+            )
         };
 
         // Phase 4: WCAG validation
@@ -761,7 +792,11 @@ impl AIVisualGenerator {
         };
 
         // Enforce contrast threshold
-        let required_ratio = if config.target_wcag_level == "aaa" { 7.0 } else { 4.5 };
+        let required_ratio = if config.target_wcag_level == "aaa" {
+            7.0
+        } else {
+            4.5
+        };
         if config.phases.wcag_check && !wcag.aa_normal_pass && !wcag.aa_large_pass {
             // Warn but don't error — some palettes intentionally contain mid-tones
             warnings.push(format!(
@@ -857,7 +892,9 @@ impl AIVisualGenerator {
                             severity: "error".to_string(),
                             code: "INVALID_COLOR".to_string(),
                             message: format!("Cannot parse color: {}", primary_hex),
-                            suggestion: Some("Use a valid 6-digit hex color (e.g., #0066cc)".to_string()),
+                            suggestion: Some(
+                                "Use a valid 6-digit hex color (e.g., #0066cc)".to_string(),
+                            ),
                         }],
                     },
                     apca: APCAValidation {
@@ -929,7 +966,10 @@ impl AIVisualGenerator {
         let light_vars = {
             let mut s = palette_to_css_vars(palette, prefix);
             let oklch = OKLCH::from_color(primary);
-            s.push_str(&format!("  --{}-oklch: oklch({:.4} {:.4} {:.1});\n", prefix, oklch.l, oklch.c, oklch.h));
+            s.push_str(&format!(
+                "  --{}-oklch: oklch({:.4} {:.4} {:.1});\n",
+                prefix, oklch.l, oklch.c, oklch.h
+            ));
             s
         };
 
@@ -937,11 +977,9 @@ impl AIVisualGenerator {
         let dark_vars = if config.mode_config.dark_mode {
             let oklch = OKLCH::from_color(primary);
             // Dark mode primary should be at ~80% lightness for vibrancy on dark surfaces
-            let dark_primary = OKLCH::new(
-                (oklch.l + 0.4).min(0.95),
-                oklch.c * 0.85,
-                oklch.h,
-            ).map_to_gamut().to_color();
+            let dark_primary = OKLCH::new((oklch.l + 0.4).min(0.95), oklch.c * 0.85, oklch.h)
+                .map_to_gamut()
+                .to_color();
             let dark_palette = oklch_tonal_palette(&dark_primary, 9);
             palette_to_css_vars(&dark_palette, prefix)
         } else {
@@ -1045,7 +1083,11 @@ mod tests {
 
     #[test]
     fn test_generate_css_vars() {
-        let palette = vec!["#000000".to_string(), "#888888".to_string(), "#ffffff".to_string()];
+        let palette = vec![
+            "#000000".to_string(),
+            "#888888".to_string(),
+            "#ffffff".to_string(),
+        ];
         let css = AIVisualGenerator::generate_css_vars(&palette, "primary");
         assert!(css.contains("--primary-"));
     }

@@ -14,8 +14,8 @@
 // =============================================================================
 
 use momoto_core::color::Color;
-use momoto_core::space::oklch::OKLCH;
 use momoto_core::luminance::relative_luminance_srgb;
+use momoto_core::space::oklch::OKLCH;
 
 // =============================================================================
 // Constraint types
@@ -58,16 +58,10 @@ pub enum ConstraintKind {
     InGamut,
 
     /// L (lightness) must be within [min, max].
-    LightnessRange {
-        min: f64,
-        max: f64,
-    },
+    LightnessRange { min: f64, max: f64 },
 
     /// C (chroma) must be within [min, max].
-    ChromaRange {
-        min: f64,
-        max: f64,
-    },
+    ChromaRange { min: f64, max: f64 },
 }
 
 // =============================================================================
@@ -188,7 +182,11 @@ impl ConstraintSolver {
         constraints: Vec<ColorConstraint>,
         config: SolverConfig,
     ) -> Self {
-        Self { colors, constraints, config }
+        Self {
+            colors,
+            constraints,
+            config,
+        }
     }
 
     /// Create a solver with default configuration.
@@ -298,7 +296,11 @@ impl ConstraintSolver {
                 violation * violation * 0.01 // Scale to similar magnitude as WCAG
             }
 
-            ConstraintKind::HarmonyAngle { other_idx, expected_delta_h, tolerance } => {
+            ConstraintKind::HarmonyAngle {
+                other_idx,
+                expected_delta_h,
+                tolerance,
+            } => {
                 if *other_idx >= colors.len() {
                     return 0.0;
                 }
@@ -312,11 +314,19 @@ impl ConstraintSolver {
 
             ConstraintKind::InGamut => {
                 let c_color = color.to_color();
-                c_color.srgb.iter().map(|&v| {
-                    if v < 0.0 { (-v).powi(2) }
-                    else if v > 1.0 { (v - 1.0).powi(2) }
-                    else { 0.0 }
-                }).sum::<f64>()
+                c_color
+                    .srgb
+                    .iter()
+                    .map(|&v| {
+                        if v < 0.0 {
+                            (-v).powi(2)
+                        } else if v > 1.0 {
+                            (v - 1.0).powi(2)
+                        } else {
+                            0.0
+                        }
+                    })
+                    .sum::<f64>()
             }
 
             ConstraintKind::LightnessRange { min, max } => {
@@ -372,30 +382,50 @@ impl ConstraintSolver {
             if penalty > 1e-6 {
                 let description = match &constraint.kind {
                     ConstraintKind::MinContrast { other_idx, target } => {
-                        let ratio = wcag_contrast(self.colors[constraint.color_idx], self.colors[*other_idx]);
-                        format!("WCAG contrast {:.2} < {:.2} (colors {} vs {})",
-                            ratio, target, constraint.color_idx, other_idx)
+                        let ratio = wcag_contrast(
+                            self.colors[constraint.color_idx],
+                            self.colors[*other_idx],
+                        );
+                        format!(
+                            "WCAG contrast {:.2} < {:.2} (colors {} vs {})",
+                            ratio, target, constraint.color_idx, other_idx
+                        )
                     }
                     ConstraintKind::MinAPCA { other_idx, target } => {
-                        let lc = apca_lc(self.colors[constraint.color_idx], self.colors[*other_idx]);
-                        format!("APCA Lc {:.1} < {:.1} (colors {} vs {})",
-                            lc, target, constraint.color_idx, other_idx)
+                        let lc =
+                            apca_lc(self.colors[constraint.color_idx], self.colors[*other_idx]);
+                        format!(
+                            "APCA Lc {:.1} < {:.1} (colors {} vs {})",
+                            lc, target, constraint.color_idx, other_idx
+                        )
                     }
-                    ConstraintKind::HarmonyAngle { other_idx, expected_delta_h, tolerance } => {
-                        let actual = (self.colors[*other_idx].h - self.colors[constraint.color_idx].h).rem_euclid(360.0);
-                        format!("Harmony angle {:.1}° vs expected {}°±{}° (colors {} vs {})",
-                            actual, expected_delta_h, tolerance, constraint.color_idx, other_idx)
+                    ConstraintKind::HarmonyAngle {
+                        other_idx,
+                        expected_delta_h,
+                        tolerance,
+                    } => {
+                        let actual = (self.colors[*other_idx].h
+                            - self.colors[constraint.color_idx].h)
+                            .rem_euclid(360.0);
+                        format!(
+                            "Harmony angle {:.1}° vs expected {}°±{}° (colors {} vs {})",
+                            actual, expected_delta_h, tolerance, constraint.color_idx, other_idx
+                        )
                     }
                     ConstraintKind::InGamut => {
                         format!("Color {} out of sRGB gamut", constraint.color_idx)
                     }
                     ConstraintKind::LightnessRange { min, max } => {
-                        format!("Lightness {:.2} not in [{:.2}, {:.2}]",
-                            self.colors[constraint.color_idx].l, min, max)
+                        format!(
+                            "Lightness {:.2} not in [{:.2}, {:.2}]",
+                            self.colors[constraint.color_idx].l, min, max
+                        )
                     }
                     ConstraintKind::ChromaRange { min, max } => {
-                        format!("Chroma {:.3} not in [{:.3}, {:.3}]",
-                            self.colors[constraint.color_idx].c, min, max)
+                        format!(
+                            "Chroma {:.3} not in [{:.3}, {:.3}]",
+                            self.colors[constraint.color_idx].c, min, max
+                        )
                     }
                 };
 
@@ -450,36 +480,43 @@ fn apca_lc(text: OKLCH, bg: OKLCH) -> f64 {
 mod tests {
     use super::*;
 
-    fn light() -> OKLCH { OKLCH::new(0.95, 0.05, 60.0) }
-    fn dark() -> OKLCH { OKLCH::new(0.15, 0.05, 60.0) }
+    fn light() -> OKLCH {
+        OKLCH::new(0.95, 0.05, 60.0)
+    }
+    fn dark() -> OKLCH {
+        OKLCH::new(0.15, 0.05, 60.0)
+    }
 
     #[test]
     fn test_trivial_convergence() {
         // Colors already satisfy WCAG AA (contrast ratio is very high)
         let colors = vec![light(), dark()];
-        let constraints = vec![
-            ColorConstraint {
-                color_idx: 0,
-                kind: ConstraintKind::MinContrast { other_idx: 1, target: 4.5 },
+        let constraints = vec![ColorConstraint {
+            color_idx: 0,
+            kind: ConstraintKind::MinContrast {
+                other_idx: 1,
+                target: 4.5,
             },
-        ];
+        }];
 
         let mut solver = ConstraintSolver::with_defaults(colors, constraints);
         let result = solver.solve();
 
         // Should converge immediately (constraints already satisfied)
-        assert!(result.final_penalty < 0.1, "Penalty: {}", result.final_penalty);
+        assert!(
+            result.final_penalty < 0.1,
+            "Penalty: {}",
+            result.final_penalty
+        );
     }
 
     #[test]
     fn test_gamut_constraint() {
         let colors = vec![OKLCH::new(0.5, 0.5, 200.0)]; // Very high chroma
-        let constraints = vec![
-            ColorConstraint {
-                color_idx: 0,
-                kind: ConstraintKind::InGamut,
-            },
-        ];
+        let constraints = vec![ColorConstraint {
+            color_idx: 0,
+            kind: ConstraintKind::InGamut,
+        }];
 
         let mut solver = ConstraintSolver::with_defaults(colors, constraints);
         let result = solver.solve();
@@ -495,12 +532,10 @@ mod tests {
     #[test]
     fn test_lightness_range() {
         let colors = vec![OKLCH::new(0.3, 0.1, 200.0)];
-        let constraints = vec![
-            ColorConstraint {
-                color_idx: 0,
-                kind: ConstraintKind::LightnessRange { min: 0.7, max: 1.0 },
-            },
-        ];
+        let constraints = vec![ColorConstraint {
+            color_idx: 0,
+            kind: ConstraintKind::LightnessRange { min: 0.7, max: 1.0 },
+        }];
 
         let mut solver = ConstraintSolver::with_defaults(colors, constraints);
         let result = solver.solve();
@@ -525,12 +560,13 @@ mod tests {
     fn test_no_oscillation() {
         // Penalty should not increase once we accept a step
         let colors = vec![OKLCH::new(0.6, 0.12, 30.0), OKLCH::new(0.7, 0.12, 30.0)];
-        let constraints = vec![
-            ColorConstraint {
-                color_idx: 0,
-                kind: ConstraintKind::MinContrast { other_idx: 1, target: 2.0 },
+        let constraints = vec![ColorConstraint {
+            color_idx: 0,
+            kind: ConstraintKind::MinContrast {
+                other_idx: 1,
+                target: 2.0,
             },
-        ];
+        }];
 
         let mut solver = ConstraintSolver::with_defaults(colors, constraints);
         let result = solver.solve();

@@ -251,10 +251,18 @@ pub fn delta_e_2000(lab1: [f64; 3], lab2: [f64; 3]) -> f64 {
     let c_bar_prime = (c1_prime + c2_prime) / 2.0;
 
     let h1_prime = b1.atan2(a1_prime).to_degrees();
-    let h1_prime = if h1_prime < 0.0 { h1_prime + 360.0 } else { h1_prime };
+    let h1_prime = if h1_prime < 0.0 {
+        h1_prime + 360.0
+    } else {
+        h1_prime
+    };
 
     let h2_prime = b2.atan2(a2_prime).to_degrees();
-    let h2_prime = if h2_prime < 0.0 { h2_prime + 360.0 } else { h2_prime };
+    let h2_prime = if h2_prime < 0.0 {
+        h2_prime + 360.0
+    } else {
+        h2_prime
+    };
 
     // Calculate delta values
     let delta_l_prime = l2 - l1;
@@ -271,8 +279,8 @@ pub fn delta_e_2000(lab1: [f64; 3], lab2: [f64; 3]) -> f64 {
         h_diff + 360.0
     };
 
-    let delta_h_prime_rad = 2.0 * (c1_prime * c2_prime).sqrt()
-        * (delta_h_prime.to_radians() / 2.0).sin();
+    let delta_h_prime_rad =
+        2.0 * (c1_prime * c2_prime).sqrt() * (delta_h_prime.to_radians() / 2.0).sin();
 
     // Calculate H'bar
     let h_bar_prime = if c1_prime * c2_prime == 0.0 {
@@ -286,8 +294,7 @@ pub fn delta_e_2000(lab1: [f64; 3], lab2: [f64; 3]) -> f64 {
     };
 
     // Calculate T
-    let t = 1.0
-        - 0.17 * (h_bar_prime - 30.0).to_radians().cos()
+    let t = 1.0 - 0.17 * (h_bar_prime - 30.0).to_radians().cos()
         + 0.24 * (2.0 * h_bar_prime).to_radians().cos()
         + 0.32 * (3.0 * h_bar_prime + 6.0).to_radians().cos()
         - 0.20 * (4.0 * h_bar_prime - 63.0).to_radians().cos();
@@ -334,9 +341,9 @@ pub fn xyz_to_lab(xyz: [f64; 3]) -> [f64; 3] {
     let fz = f(xyz[2] / zn);
 
     [
-        116.0 * fy - 16.0,     // L*
-        500.0 * (fx - fy),     // a*
-        200.0 * (fy - fz),     // b*
+        116.0 * fy - 16.0, // L*
+        500.0 * (fx - fy), // a*
+        200.0 * (fy - fz), // b*
     ]
 }
 
@@ -468,7 +475,11 @@ impl FlickerValidator {
             }
         }
 
-        let avg_diff = if count > 0 { total_diff / count as f64 } else { 0.0 };
+        let avg_diff = if count > 0 {
+            total_diff / count as f64
+        } else {
+            0.0
+        };
         (max_diff, avg_diff)
     }
 
@@ -533,8 +544,8 @@ mod tests {
         let lab = xyz_to_lab(xyz);
 
         assert!((lab[0] - 100.0).abs() < 0.1); // L* = 100
-        assert!(lab[1].abs() < 0.1);           // a* = 0
-        assert!(lab[2].abs() < 0.1);           // b* = 0
+        assert!(lab[1].abs() < 0.1); // a* = 0
+        assert!(lab[2].abs() < 0.1); // b* = 0
     }
 
     #[test]
@@ -555,10 +566,22 @@ mod tests {
     fn test_flicker_status_from_delta_e() {
         let config = FlickerConfig::default();
 
-        assert_eq!(FlickerStatus::from_delta_e(0.1, &config), FlickerStatus::Stable);
-        assert_eq!(FlickerStatus::from_delta_e(0.3, &config), FlickerStatus::Minor);
-        assert_eq!(FlickerStatus::from_delta_e(0.7, &config), FlickerStatus::Warning);
-        assert_eq!(FlickerStatus::from_delta_e(1.5, &config), FlickerStatus::Exceeded);
+        assert_eq!(
+            FlickerStatus::from_delta_e(0.1, &config),
+            FlickerStatus::Stable
+        );
+        assert_eq!(
+            FlickerStatus::from_delta_e(0.3, &config),
+            FlickerStatus::Minor
+        );
+        assert_eq!(
+            FlickerStatus::from_delta_e(0.7, &config),
+            FlickerStatus::Warning
+        );
+        assert_eq!(
+            FlickerStatus::from_delta_e(1.5, &config),
+            FlickerStatus::Exceeded
+        );
     }
 
     #[test]
@@ -596,10 +619,7 @@ mod tests {
             FrameComparison::new(0, 1, 0.1, 0.05, 0.02, &config),
             &config,
         );
-        report.add_comparison(
-            FrameComparison::new(1, 2, 0.3, 0.1, 0.05, &config),
-            &config,
-        );
+        report.add_comparison(FrameComparison::new(1, 2, 0.3, 0.1, 0.05, &config), &config);
 
         assert_eq!(report.total_frames, 2);
         assert_eq!(report.stable_count, 1);

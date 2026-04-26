@@ -25,9 +25,9 @@ pub struct NeuralAuditor {
 impl Default for NeuralAuditor {
     fn default() -> Self {
         Self {
-            max_correction_share: 0.05,     // 5%
-            max_single_correction: 0.10,    // 10%
-            alert_threshold: 0.80,          // 80% of limit
+            max_correction_share: 0.05,  // 5%
+            max_single_correction: 0.10, // 10%
+            alert_threshold: 0.80,       // 80% of limit
             strict_mode: true,
         }
     }
@@ -42,8 +42,8 @@ impl NeuralAuditor {
     /// Create reference-level auditor (strictest).
     pub fn reference_level() -> Self {
         Self {
-            max_correction_share: 0.02,     // 2%
-            max_single_correction: 0.05,    // 5%
+            max_correction_share: 0.02,  // 2%
+            max_single_correction: 0.05, // 5%
             alert_threshold: 0.80,
             strict_mode: true,
         }
@@ -52,8 +52,8 @@ impl NeuralAuditor {
     /// Create industrial-level auditor.
     pub fn industrial_level() -> Self {
         Self {
-            max_correction_share: 0.05,     // 5%
-            max_single_correction: 0.10,    // 10%
+            max_correction_share: 0.05,  // 5%
+            max_single_correction: 0.10, // 10%
             alert_threshold: 0.80,
             strict_mode: true,
         }
@@ -62,8 +62,8 @@ impl NeuralAuditor {
     /// Create research-level auditor (more lenient).
     pub fn research_level() -> Self {
         Self {
-            max_correction_share: 0.10,     // 10%
-            max_single_correction: 0.20,    // 20%
+            max_correction_share: 0.10,  // 10%
+            max_single_correction: 0.20, // 20%
             alert_threshold: 0.80,
             strict_mode: false,
         }
@@ -121,8 +121,7 @@ impl NeuralAuditor {
                 category: FindingCategory::SingleCorrectionExceeded,
                 message: format!(
                     "Max correction {:.4} exceeds limit {:.2}",
-                    stats.max_correction_magnitude,
-                    self.max_single_correction
+                    stats.max_correction_magnitude, self.max_single_correction
                 ),
                 actual_value: stats.max_correction_magnitude,
                 threshold: self.max_single_correction,
@@ -152,7 +151,9 @@ impl NeuralAuditor {
         let passed = if self.strict_mode {
             findings.is_empty()
         } else {
-            findings.iter().all(|f| f.severity != FindingSeverity::Critical)
+            findings
+                .iter()
+                .all(|f| f.severity != FindingSeverity::Critical)
         };
 
         NeuralAuditResult {
@@ -179,27 +180,23 @@ impl NeuralAuditor {
         let mut recommendations = Vec::new();
 
         if stats.correction_share > self.max_correction_share * 0.5 {
-            recommendations.push(
-                "Consider improving physical model to reduce neural dependence".to_string(),
-            );
+            recommendations
+                .push("Consider improving physical model to reduce neural dependence".to_string());
         }
 
         if stats.corrections_applied as f64 / stats.total_evaluations.max(1) as f64 > 0.8 {
-            recommendations.push(
-                "High correction rate suggests systematic model deficiency".to_string(),
-            );
+            recommendations
+                .push("High correction rate suggests systematic model deficiency".to_string());
         }
 
         if stats.max_correction_magnitude > self.max_single_correction * 0.8 {
-            recommendations.push(
-                "Large corrections may indicate edge cases needing attention".to_string(),
-            );
+            recommendations
+                .push("Large corrections may indicate edge cases needing attention".to_string());
         }
 
         if !stats.violations.is_empty() {
-            recommendations.push(
-                "Review violation contexts to identify problematic scenarios".to_string(),
-            );
+            recommendations
+                .push("Review violation contexts to identify problematic scenarios".to_string());
         }
 
         recommendations
@@ -425,12 +422,14 @@ mod tests {
         stats.mean_correction_magnitude = max_mag * 0.5;
 
         for _ in 0..violations {
-            stats.violations.push(crate::glass_physics::certification::NeuralViolation {
-                timestamp: 0,
-                correction_magnitude: max_mag,
-                threshold: max_mag * 0.5,
-                context: "Test".to_string(),
-            });
+            stats
+                .violations
+                .push(crate::glass_physics::certification::NeuralViolation {
+                    timestamp: 0,
+                    correction_magnitude: max_mag,
+                    threshold: max_mag * 0.5,
+                    context: "Test".to_string(),
+                });
         }
 
         stats
@@ -468,10 +467,10 @@ mod tests {
         let result = auditor.audit(&stats);
 
         assert!(!result.passed);
-        assert!(result.findings.iter().any(|f| matches!(
-            f.category,
-            FindingCategory::ShareExceeded
-        )));
+        assert!(result
+            .findings
+            .iter()
+            .any(|f| matches!(f.category, FindingCategory::ShareExceeded)));
     }
 
     #[test]
@@ -482,10 +481,10 @@ mod tests {
         let result = auditor.audit(&stats);
 
         assert!(!result.passed);
-        assert!(result.findings.iter().any(|f| matches!(
-            f.category,
-            FindingCategory::SingleCorrectionExceeded
-        )));
+        assert!(result
+            .findings
+            .iter()
+            .any(|f| matches!(f.category, FindingCategory::SingleCorrectionExceeded)));
     }
 
     #[test]
@@ -496,10 +495,10 @@ mod tests {
         let result = auditor.audit(&stats);
 
         assert!(!result.passed);
-        assert!(result.findings.iter().any(|f| matches!(
-            f.category,
-            FindingCategory::RecordedViolations
-        )));
+        assert!(result
+            .findings
+            .iter()
+            .any(|f| matches!(f.category, FindingCategory::RecordedViolations)));
     }
 
     #[test]
@@ -568,7 +567,10 @@ mod tests {
 
         // Non-strict: pass if no critical findings
         // High severity finding exists but might still pass depending on implementation
-        assert!(result.findings.iter().any(|f| f.severity == FindingSeverity::High));
+        assert!(result
+            .findings
+            .iter()
+            .any(|f| f.severity == FindingSeverity::High));
     }
 
     #[test]

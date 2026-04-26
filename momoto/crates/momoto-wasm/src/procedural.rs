@@ -9,8 +9,7 @@
 use wasm_bindgen::prelude::*;
 
 use momoto_materials::glass_physics::perlin_noise::{
-    PerlinNoise as CorePerlinNoise,
-    presets as noise_presets,
+    presets as noise_presets, PerlinNoise as CorePerlinNoise,
 };
 
 // =============================================================================
@@ -49,22 +48,30 @@ impl ProceduralNoise {
 
     /// Preset: frosted glass (6 octaves — high detail).
     pub fn frosted() -> Self {
-        Self { inner: noise_presets::frosted_glass() }
+        Self {
+            inner: noise_presets::frosted_glass(),
+        }
     }
 
     /// Preset: regular glass (3 octaves — balanced).
     pub fn regular() -> Self {
-        Self { inner: noise_presets::regular_glass() }
+        Self {
+            inner: noise_presets::regular_glass(),
+        }
     }
 
     /// Preset: clear glass (1 octave — minimal texture).
     pub fn clear() -> Self {
-        Self { inner: noise_presets::clear_glass() }
+        Self {
+            inner: noise_presets::clear_glass(),
+        }
     }
 
     /// Preset: thick glass (4 octaves — more visible texture).
     pub fn thick() -> Self {
-        Self { inner: noise_presets::thick_glass() }
+        Self {
+            inner: noise_presets::thick_glass(),
+        }
     }
 
     /// Sample fractional Brownian motion noise at (x, y).
@@ -235,7 +242,8 @@ mod tests {
         for &v in field.iter() {
             assert!(
                 v >= base_ior - variation - 1e-10 && v <= base_ior + variation + 1e-10,
-                "IOR {} out of expected range", v
+                "IOR {} out of expected range",
+                v
             );
         }
     }

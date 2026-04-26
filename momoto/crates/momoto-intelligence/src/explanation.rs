@@ -44,7 +44,10 @@ impl RecommendationExplanation {
         if !self.reasoning.is_empty() {
             md.push_str("### Reasoning\n\n");
             for point in &self.reasoning {
-                md.push_str(&format!("- **{}**: {}\n", point.category, point.explanation));
+                md.push_str(&format!(
+                    "- **{}**: {}\n",
+                    point.category, point.explanation
+                ));
             }
             md.push('\n');
         }
@@ -66,12 +69,19 @@ impl RecommendationExplanation {
         }
 
         md.push_str("### Technical Details\n\n");
-        md.push_str(&format!("- Color change: `{}` → `{}`\n",
-            self.technical.original_color, self.technical.recommended_color));
-        md.push_str(&format!("- Contrast ratio: {:.2} → {:.2}\n",
-            self.technical.original_contrast, self.technical.new_contrast));
-        md.push_str(&format!("- Quality score: {:.0}% → {:.0}%\n",
-            self.technical.original_quality * 100.0, self.technical.new_quality * 100.0));
+        md.push_str(&format!(
+            "- Color change: `{}` → `{}`\n",
+            self.technical.original_color, self.technical.recommended_color
+        ));
+        md.push_str(&format!(
+            "- Contrast ratio: {:.2} → {:.2}\n",
+            self.technical.original_contrast, self.technical.new_contrast
+        ));
+        md.push_str(&format!(
+            "- Quality score: {:.0}% → {:.0}%\n",
+            self.technical.original_quality * 100.0,
+            self.technical.new_quality * 100.0
+        ));
 
         md
     }
@@ -173,19 +183,31 @@ pub struct OklchChanges {
 impl OklchChanges {
     /// Create new changes
     pub fn new(delta_l: f64, delta_c: f64, delta_h: f64) -> Self {
-        Self { delta_l, delta_c, delta_h }
+        Self {
+            delta_l,
+            delta_c,
+            delta_h,
+        }
     }
 
     /// Describe the primary change
     pub fn describe(&self) -> String {
         let l_change = if self.delta_l.abs() > 0.01 {
-            if self.delta_l > 0.0 { "lighter" } else { "darker" }
+            if self.delta_l > 0.0 {
+                "lighter"
+            } else {
+                "darker"
+            }
         } else {
             ""
         };
 
         let c_change = if self.delta_c.abs() > 0.01 {
-            if self.delta_c > 0.0 { "more saturated" } else { "less saturated" }
+            if self.delta_c > 0.0 {
+                "more saturated"
+            } else {
+                "less saturated"
+            }
         } else {
             ""
         };
@@ -265,7 +287,9 @@ impl ExplanationBuilder {
     /// Build the explanation
     pub fn build(self) -> RecommendationExplanation {
         RecommendationExplanation {
-            summary: self.summary.unwrap_or_else(|| "Color recommendation".to_string()),
+            summary: self
+                .summary
+                .unwrap_or_else(|| "Color recommendation".to_string()),
             reasoning: self.reasoning,
             problem_addressed: self.problem.unwrap_or_default(),
             benefits: self.benefits,
@@ -300,8 +324,14 @@ impl ExplanationGenerator {
         let ratio_improvement = new_ratio - original_ratio;
 
         let summary = if new_ratio >= target_ratio && original_ratio < target_ratio {
-            format!("Adjust color to achieve {} contrast compliance",
-                if target_ratio >= 7.0 { "WCAG AAA" } else { "WCAG AA" })
+            format!(
+                "Adjust color to achieve {} contrast compliance",
+                if target_ratio >= 7.0 {
+                    "WCAG AAA"
+                } else {
+                    "WCAG AA"
+                }
+            )
         } else {
             format!("Improve contrast ratio by {:.1}:1", ratio_improvement)
         };
@@ -324,12 +354,17 @@ impl ExplanationGenerator {
                     "WCAG requires a minimum contrast ratio of {:.1}:1 for this content type. \
                      The recommended color achieves {:.2}:1.",
                     target_ratio, new_ratio
-                )
-            ).with_importance(5)
+                ),
+            )
+            .with_importance(5),
         );
 
         if oklch_changes.delta_l.abs() > 0.01 {
-            let direction = if oklch_changes.delta_l > 0.0 { "Increasing" } else { "Decreasing" };
+            let direction = if oklch_changes.delta_l > 0.0 {
+                "Increasing"
+            } else {
+                "Decreasing"
+            };
             builder = builder.reasoning(
                 ReasoningPoint::new(
                     "Perceptual",
@@ -342,8 +377,12 @@ impl ExplanationGenerator {
         }
 
         // Add benefits
-        builder = builder.benefit("Meets accessibility requirements")
-            .benefit(format!("Improves readability with {:.1}:1 contrast", new_ratio));
+        builder = builder
+            .benefit("Meets accessibility requirements")
+            .benefit(format!(
+                "Improves readability with {:.1}:1 contrast",
+                new_ratio
+            ));
 
         if oklch_changes.delta_h.abs() < 5.0 {
             builder = builder.benefit("Preserves original color identity (hue unchanged)");
@@ -353,14 +392,22 @@ impl ExplanationGenerator {
         if oklch_changes.delta_l.abs() > 0.15 {
             builder = builder.trade_off(format!(
                 "Noticeable {} change may affect visual hierarchy",
-                if oklch_changes.delta_l > 0.0 { "lightening" } else { "darkening" }
+                if oklch_changes.delta_l > 0.0 {
+                    "lightening"
+                } else {
+                    "darkening"
+                }
             ));
         }
 
         if oklch_changes.delta_c.abs() > 0.05 {
             builder = builder.trade_off(format!(
                 "Saturation {} may affect brand consistency",
-                if oklch_changes.delta_c > 0.0 { "increase" } else { "decrease" }
+                if oklch_changes.delta_c > 0.0 {
+                    "increase"
+                } else {
+                    "decrease"
+                }
             ));
         }
 
@@ -388,15 +435,13 @@ impl ExplanationGenerator {
         oklch_changes: OklchChanges,
     ) -> RecommendationExplanation {
         let improvement = after_score.overall - before_score.overall;
-        let summary = format!(
-            "Improve color quality by {:.0}%",
-            improvement * 100.0
-        );
+        let summary = format!("Improve color quality by {:.0}%", improvement * 100.0);
 
         let problem = format!(
             "The current color {} has a quality score of {:.0}%, \
              which could be improved for better perceptual qualities.",
-            original_color, before_score.overall * 100.0
+            original_color,
+            before_score.overall * 100.0
         );
 
         let mut builder = ExplanationBuilder::new()
@@ -412,8 +457,9 @@ impl ExplanationGenerator {
                         "Compliance score improves from {:.0}% to {:.0}%",
                         before_score.compliance * 100.0,
                         after_score.compliance * 100.0
-                    )
-                ).with_importance(5)
+                    ),
+                )
+                .with_importance(5),
             );
         }
 
@@ -425,17 +471,24 @@ impl ExplanationGenerator {
                         "Perceptual quality improves from {:.0}% to {:.0}%",
                         before_score.perceptual * 100.0,
                         after_score.perceptual * 100.0
-                    )
-                ).with_importance(4)
+                    ),
+                )
+                .with_importance(4),
             );
         }
 
         // Benefits
         builder = builder
-            .benefit(format!("Overall quality: {:.0}% → {:.0}%",
-                before_score.overall * 100.0, after_score.overall * 100.0))
-            .benefit(format!("Assessment: {} → {}",
-                before_score.assessment(), after_score.assessment()));
+            .benefit(format!(
+                "Overall quality: {:.0}% → {:.0}%",
+                before_score.overall * 100.0,
+                after_score.overall * 100.0
+            ))
+            .benefit(format!(
+                "Assessment: {} → {}",
+                before_score.assessment(),
+                after_score.assessment()
+            ));
 
         // Technical details
         let technical = TechnicalDetails {
@@ -466,13 +519,22 @@ impl ExplanationGenerator {
                 format!("Critical: Improve {} for {}", original_color, context)
             }
             PriorityAssessment::High => {
-                format!("Recommended: Adjust {} for better {}", original_color, context)
+                format!(
+                    "Recommended: Adjust {} for better {}",
+                    original_color, context
+                )
             }
             PriorityAssessment::Medium => {
-                format!("Suggestion: Consider adjusting {} for {}", original_color, context)
+                format!(
+                    "Suggestion: Consider adjusting {} for {}",
+                    original_color, context
+                )
             }
             PriorityAssessment::Low => {
-                format!("Optional: Minor improvement available for {}", original_color)
+                format!(
+                    "Optional: Minor improvement available for {}",
+                    original_color
+                )
             }
         };
 
@@ -491,8 +553,9 @@ impl ExplanationGenerator {
                 builder = builder.reasoning(
                     ReasoningPoint::new(
                         &component.category(),
-                        format!("{} impact: {:.0}%", component.name, component.value * 100.0)
-                    ).with_importance((component.value * 5.0) as u8)
+                        format!("{} impact: {:.0}%", component.name, component.value * 100.0),
+                    )
+                    .with_importance((component.value * 5.0) as u8),
                 );
             }
         }
@@ -505,9 +568,7 @@ impl ExplanationGenerator {
 
         // Effort-based trade-offs
         if score.effort < 0.7 {
-            builder = builder.trade_off(
-                "Implementation requires more than trivial changes"
-            );
+            builder = builder.trade_off("Implementation requires more than trivial changes");
         }
 
         let technical = TechnicalDetails {
@@ -569,15 +630,8 @@ mod tests {
         let generator = ExplanationGenerator::new();
         let changes = OklchChanges::new(-0.15, 0.0, 0.0);
 
-        let explanation = generator.generate_contrast_improvement(
-            "#888888",
-            "#5a5a5a",
-            "#ffffff",
-            3.5,
-            7.2,
-            7.0,
-            changes,
-        );
+        let explanation = generator
+            .generate_contrast_improvement("#888888", "#5a5a5a", "#ffffff", 3.5, 7.2, 7.0, changes);
 
         assert!(explanation.summary.contains("AAA"));
         assert!(!explanation.reasoning.is_empty());

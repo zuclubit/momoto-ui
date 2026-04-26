@@ -788,7 +788,11 @@ impl MetricPlugin for SamMetricPlugin {
             return std::f64::consts::PI;
         }
 
-        let dot: f64 = measured.iter().zip(rendered.iter()).map(|(m, r)| m * r).sum();
+        let dot: f64 = measured
+            .iter()
+            .zip(rendered.iter())
+            .map(|(m, r)| m * r)
+            .sum();
 
         let mag_m: f64 = measured.iter().map(|m| m * m).sum::<f64>().sqrt();
         let mag_r: f64 = rendered.iter().map(|r| r * r).sum::<f64>().sqrt();
@@ -906,12 +910,8 @@ mod tests {
 
     #[test]
     fn test_spectral_measurement_interpolation() {
-        let measurement = SpectralMeasurement::new(
-            "test",
-            vec![400.0, 500.0, 600.0],
-            vec![0.1, 0.5, 0.9],
-            0.0,
-        );
+        let measurement =
+            SpectralMeasurement::new("test", vec![400.0, 500.0, 600.0], vec![0.1, 0.5, 0.9], 0.0);
 
         assert!((measurement.interpolate(400.0) - 0.1).abs() < 1e-10);
         assert!((measurement.interpolate(500.0) - 0.5).abs() < 1e-10);

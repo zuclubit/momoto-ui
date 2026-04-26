@@ -16,12 +16,12 @@
 
 use std::time::Instant;
 
+use super::combined_effects::{presets as combined_presets, CombinedMaterial};
+use super::perceptual_loss::{delta_e_2000, rgb_to_lab, Illuminant};
 use super::simd_batch::{
-    SimdBatchInput, SimdBatchResult, SimdConfig,
-    fresnel_schlick_scalar, beer_lambert_scalar, henyey_greenstein_scalar,
+    beer_lambert_scalar, fresnel_schlick_scalar, henyey_greenstein_scalar, SimdBatchInput,
+    SimdBatchResult, SimdConfig,
 };
-use super::combined_effects::{CombinedMaterial, presets as combined_presets};
-use super::perceptual_loss::{rgb_to_lab, delta_e_2000, Illuminant};
 
 // ============================================================================
 // CONFIGURATION
@@ -134,7 +134,10 @@ impl ParallelBatchEvaluator {
             use_luts: true,
         };
 
-        Self { config, simd_config }
+        Self {
+            config,
+            simd_config,
+        }
     }
 
     /// Evaluate batch in parallel
@@ -166,27 +169,41 @@ impl ParallelBatchEvaluator {
 
             // Fresnel
             result.fresnel[base] = fresnel_schlick_scalar(input.cos_theta[base], input.ior[base]);
-            result.fresnel[base + 1] = fresnel_schlick_scalar(input.cos_theta[base + 1], input.ior[base + 1]);
-            result.fresnel[base + 2] = fresnel_schlick_scalar(input.cos_theta[base + 2], input.ior[base + 2]);
-            result.fresnel[base + 3] = fresnel_schlick_scalar(input.cos_theta[base + 3], input.ior[base + 3]);
+            result.fresnel[base + 1] =
+                fresnel_schlick_scalar(input.cos_theta[base + 1], input.ior[base + 1]);
+            result.fresnel[base + 2] =
+                fresnel_schlick_scalar(input.cos_theta[base + 2], input.ior[base + 2]);
+            result.fresnel[base + 3] =
+                fresnel_schlick_scalar(input.cos_theta[base + 3], input.ior[base + 3]);
 
             // Beer-Lambert
-            result.transmittance[base] = beer_lambert_scalar(input.absorption[base], input.thickness[base]);
-            result.transmittance[base + 1] = beer_lambert_scalar(input.absorption[base + 1], input.thickness[base + 1]);
-            result.transmittance[base + 2] = beer_lambert_scalar(input.absorption[base + 2], input.thickness[base + 2]);
-            result.transmittance[base + 3] = beer_lambert_scalar(input.absorption[base + 3], input.thickness[base + 3]);
+            result.transmittance[base] =
+                beer_lambert_scalar(input.absorption[base], input.thickness[base]);
+            result.transmittance[base + 1] =
+                beer_lambert_scalar(input.absorption[base + 1], input.thickness[base + 1]);
+            result.transmittance[base + 2] =
+                beer_lambert_scalar(input.absorption[base + 2], input.thickness[base + 2]);
+            result.transmittance[base + 3] =
+                beer_lambert_scalar(input.absorption[base + 3], input.thickness[base + 3]);
 
             // Henyey-Greenstein
             result.phase[base] = henyey_greenstein_scalar(input.cos_theta[base], input.g[base]);
-            result.phase[base + 1] = henyey_greenstein_scalar(input.cos_theta[base + 1], input.g[base + 1]);
-            result.phase[base + 2] = henyey_greenstein_scalar(input.cos_theta[base + 2], input.g[base + 2]);
-            result.phase[base + 3] = henyey_greenstein_scalar(input.cos_theta[base + 3], input.g[base + 3]);
+            result.phase[base + 1] =
+                henyey_greenstein_scalar(input.cos_theta[base + 1], input.g[base + 1]);
+            result.phase[base + 2] =
+                henyey_greenstein_scalar(input.cos_theta[base + 2], input.g[base + 2]);
+            result.phase[base + 3] =
+                henyey_greenstein_scalar(input.cos_theta[base + 3], input.g[base + 3]);
 
             // Combined
-            result.combined[base] = result.fresnel[base] * result.transmittance[base] * result.phase[base];
-            result.combined[base + 1] = result.fresnel[base + 1] * result.transmittance[base + 1] * result.phase[base + 1];
-            result.combined[base + 2] = result.fresnel[base + 2] * result.transmittance[base + 2] * result.phase[base + 2];
-            result.combined[base + 3] = result.fresnel[base + 3] * result.transmittance[base + 3] * result.phase[base + 3];
+            result.combined[base] =
+                result.fresnel[base] * result.transmittance[base] * result.phase[base];
+            result.combined[base + 1] =
+                result.fresnel[base + 1] * result.transmittance[base + 1] * result.phase[base + 1];
+            result.combined[base + 2] =
+                result.fresnel[base + 2] * result.transmittance[base + 2] * result.phase[base + 2];
+            result.combined[base + 3] =
+                result.fresnel[base + 3] * result.transmittance[base + 3] * result.phase[base + 3];
         }
 
         // Handle remainder
@@ -239,19 +256,28 @@ impl ParallelBatchEvaluator {
                             let base = i * 4;
 
                             f_out[base] = fresnel_schlick_scalar(cos_theta[base], ior[base]);
-                            f_out[base + 1] = fresnel_schlick_scalar(cos_theta[base + 1], ior[base + 1]);
-                            f_out[base + 2] = fresnel_schlick_scalar(cos_theta[base + 2], ior[base + 2]);
-                            f_out[base + 3] = fresnel_schlick_scalar(cos_theta[base + 3], ior[base + 3]);
+                            f_out[base + 1] =
+                                fresnel_schlick_scalar(cos_theta[base + 1], ior[base + 1]);
+                            f_out[base + 2] =
+                                fresnel_schlick_scalar(cos_theta[base + 2], ior[base + 2]);
+                            f_out[base + 3] =
+                                fresnel_schlick_scalar(cos_theta[base + 3], ior[base + 3]);
 
                             t_out[base] = beer_lambert_scalar(absorption[base], thickness[base]);
-                            t_out[base + 1] = beer_lambert_scalar(absorption[base + 1], thickness[base + 1]);
-                            t_out[base + 2] = beer_lambert_scalar(absorption[base + 2], thickness[base + 2]);
-                            t_out[base + 3] = beer_lambert_scalar(absorption[base + 3], thickness[base + 3]);
+                            t_out[base + 1] =
+                                beer_lambert_scalar(absorption[base + 1], thickness[base + 1]);
+                            t_out[base + 2] =
+                                beer_lambert_scalar(absorption[base + 2], thickness[base + 2]);
+                            t_out[base + 3] =
+                                beer_lambert_scalar(absorption[base + 3], thickness[base + 3]);
 
                             p_out[base] = henyey_greenstein_scalar(cos_theta[base], g[base]);
-                            p_out[base + 1] = henyey_greenstein_scalar(cos_theta[base + 1], g[base + 1]);
-                            p_out[base + 2] = henyey_greenstein_scalar(cos_theta[base + 2], g[base + 2]);
-                            p_out[base + 3] = henyey_greenstein_scalar(cos_theta[base + 3], g[base + 3]);
+                            p_out[base + 1] =
+                                henyey_greenstein_scalar(cos_theta[base + 1], g[base + 1]);
+                            p_out[base + 2] =
+                                henyey_greenstein_scalar(cos_theta[base + 2], g[base + 2]);
+                            p_out[base + 3] =
+                                henyey_greenstein_scalar(cos_theta[base + 3], g[base + 3]);
 
                             c_out[base] = f_out[base] * t_out[base] * p_out[base];
                             c_out[base + 1] = f_out[base + 1] * t_out[base + 1] * p_out[base + 1];
@@ -317,13 +343,11 @@ impl Default for ParallelBatchEvaluator {
 // ============================================================================
 
 /// Evaluate multiple combined materials in parallel
-pub fn parallel_combined_effects(
-    materials: &[CombinedMaterial],
-    cos_theta: f64,
-) -> Vec<[f64; 3]> {
+pub fn parallel_combined_effects(materials: &[CombinedMaterial], cos_theta: f64) -> Vec<[f64; 3]> {
     if materials.len() < 100 {
         // Sequential for small batches
-        return materials.iter()
+        return materials
+            .iter()
             .map(|m| m.evaluate_rgb(cos_theta))
             .collect();
     }
@@ -363,11 +387,12 @@ pub fn parallel_combined_effects(
 // ============================================================================
 
 /// Compute perceptual loss in parallel across color pairs
-pub fn parallel_perceptual_loss(
-    rendered: &[[f64; 3]],
-    reference: &[[f64; 3]],
-) -> f64 {
-    assert_eq!(rendered.len(), reference.len(), "Arrays must have same length");
+pub fn parallel_perceptual_loss(rendered: &[[f64; 3]], reference: &[[f64; 3]]) -> f64 {
+    assert_eq!(
+        rendered.len(),
+        reference.len(),
+        "Arrays must have same length"
+    );
 
     let n = rendered.len();
     if n == 0 {
@@ -555,14 +580,26 @@ mod tests {
 
         // Results should be identical
         for i in 0..1000 {
-            assert!((seq_result.fresnel[i] - par_result.fresnel[i]).abs() < 1e-10,
-                    "Fresnel mismatch at {}", i);
-            assert!((seq_result.transmittance[i] - par_result.transmittance[i]).abs() < 1e-10,
-                    "Transmittance mismatch at {}", i);
-            assert!((seq_result.phase[i] - par_result.phase[i]).abs() < 1e-10,
-                    "Phase mismatch at {}", i);
-            assert!((seq_result.combined[i] - par_result.combined[i]).abs() < 1e-10,
-                    "Combined mismatch at {}", i);
+            assert!(
+                (seq_result.fresnel[i] - par_result.fresnel[i]).abs() < 1e-10,
+                "Fresnel mismatch at {}",
+                i
+            );
+            assert!(
+                (seq_result.transmittance[i] - par_result.transmittance[i]).abs() < 1e-10,
+                "Transmittance mismatch at {}",
+                i
+            );
+            assert!(
+                (seq_result.phase[i] - par_result.phase[i]).abs() < 1e-10,
+                "Phase mismatch at {}",
+                i
+            );
+            assert!(
+                (seq_result.combined[i] - par_result.combined[i]).abs() < 1e-10,
+                "Combined mismatch at {}",
+                i
+            );
         }
     }
 
@@ -583,9 +620,8 @@ mod tests {
 
     #[test]
     fn test_parallel_combined_effects() {
-        let materials: Vec<CombinedMaterial> = (0..200)
-            .map(|_| combined_presets::glass())
-            .collect();
+        let materials: Vec<CombinedMaterial> =
+            (0..200).map(|_| combined_presets::glass()).collect();
 
         let results = parallel_combined_effects(&materials, 0.8);
 

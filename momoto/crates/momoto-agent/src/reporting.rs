@@ -5,18 +5,12 @@
 
 #![allow(dead_code)]
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
-use momoto_core::{
-    color::Color,
-    luminance::relative_luminance_srgb,
-    space::oklch::OKLCH,
-};
-use momoto_metrics::{
-    wcag::{WCAGLevel, WCAGMetric, TextSize},
-};
 use momoto_core::perception::ContrastMetric;
+use momoto_core::{color::Color, luminance::relative_luminance_srgb, space::oklch::OKLCH};
+use momoto_metrics::wcag::{TextSize, WCAGLevel, WCAGMetric};
 
 // ============================================================================
 // Enumerations
@@ -223,7 +217,10 @@ impl ComprehensiveReport {
     pub fn to_markdown(&self) -> String {
         let mut md = String::with_capacity(4096);
         md.push_str(&format!("# {}\n\n", self.title));
-        md.push_str(&format!("_Generated at Unix time {}_\n\n", self.generated_at));
+        md.push_str(&format!(
+            "_Generated at Unix time {}_\n\n",
+            self.generated_at
+        ));
 
         // Executive summary
         let s = &self.executive_summary;
@@ -235,7 +232,10 @@ impl ComprehensiveReport {
         md.push_str(&format!("| High | {} |\n", s.high));
         md.push_str(&format!("| Medium | {} |\n", s.medium));
         md.push_str(&format!("| Low | {} |\n", s.low));
-        md.push_str(&format!("| Overall score | {:.1}% |\n", s.overall_score * 100.0));
+        md.push_str(&format!(
+            "| Overall score | {:.1}% |\n",
+            s.overall_score * 100.0
+        ));
         md.push_str(&format!("| Pass rate | {:.1}% |\n\n", s.pass_rate * 100.0));
 
         // Sections
@@ -499,10 +499,16 @@ impl ReportGenerator {
                         "Contrast ratio {:.2}:1 is below the WCAG AA minimum of 4.5:1.",
                         ratio
                     ),
-                    if ratio < 2.5 { Severity::Critical } else { Severity::High },
+                    if ratio < 2.5 {
+                        Severity::Critical
+                    } else {
+                        Severity::High
+                    },
                 )
                 .with_color(fg_hex.clone())
-                .with_suggestion("Increase the lightness difference between foreground and background.");
+                .with_suggestion(
+                    "Increase the lightness difference between foreground and background.",
+                );
 
                 report.findings.push(finding);
             }
@@ -574,10 +580,22 @@ impl ReportGenerator {
             .chain(a11y_section.findings.iter())
             .collect();
 
-        let critical = all_findings.iter().filter(|f| f.severity == Severity::Critical).count() as u32;
-        let high = all_findings.iter().filter(|f| f.severity == Severity::High).count() as u32;
-        let medium = all_findings.iter().filter(|f| f.severity == Severity::Medium).count() as u32;
-        let low = all_findings.iter().filter(|f| f.severity == Severity::Low).count() as u32;
+        let critical = all_findings
+            .iter()
+            .filter(|f| f.severity == Severity::Critical)
+            .count() as u32;
+        let high = all_findings
+            .iter()
+            .filter(|f| f.severity == Severity::High)
+            .count() as u32;
+        let medium = all_findings
+            .iter()
+            .filter(|f| f.severity == Severity::Medium)
+            .count() as u32;
+        let low = all_findings
+            .iter()
+            .filter(|f| f.severity == Severity::Low)
+            .count() as u32;
         let issues_found = all_findings.len() as u32;
 
         let pass_rate = if pairs.is_empty() {
@@ -601,7 +619,11 @@ impl ReportGenerator {
 
         // Recommendations
         let mut recommendations: Vec<PrioritizedRecommendation> = Vec::new();
-        for finding in color_section.findings.iter().chain(a11y_section.findings.iter()) {
+        for finding in color_section
+            .findings
+            .iter()
+            .chain(a11y_section.findings.iter())
+        {
             let (effort, improvement) = effort_for_severity(&finding.severity);
             recommendations.push(PrioritizedRecommendation {
                 finding: finding.clone(),
@@ -614,9 +636,7 @@ impl ReportGenerator {
             });
         }
         // Sort by severity descending
-        recommendations.sort_by(|a, b| {
-            b.finding.severity.level().cmp(&a.finding.severity.level())
-        });
+        recommendations.sort_by(|a, b| b.finding.severity.level().cmp(&a.finding.severity.level()));
 
         ComprehensiveReport {
             title: format!("Momoto Comprehensive Report — {} colors", colors.len()),
@@ -672,7 +692,8 @@ impl LogCollector {
 
     /// Append a log entry at the current time.
     pub fn log(&mut self, level: &str, msg: &str) {
-        self.logs.push((current_unix_secs(), level.to_uppercase(), msg.to_string()));
+        self.logs
+            .push((current_unix_secs(), level.to_uppercase(), msg.to_string()));
     }
 
     /// Return the most recent `n` log entries.
@@ -703,7 +724,10 @@ pub struct ProgressTracker {
 impl ProgressTracker {
     /// Create a tracker for a job with `total` items.
     pub fn new(total: u32) -> Self {
-        Self { total, ..Default::default() }
+        Self {
+            total,
+            ..Default::default()
+        }
     }
 
     /// Mark an item as successfully completed.
@@ -808,11 +832,26 @@ impl MetricsDashboard {
         let mut s = String::from("+------------------------+----------+\n");
         s.push_str("| Metric                 | Value    |\n");
         s.push_str("+------------------------+----------+\n");
-        s.push_str(&format!("| Requests/s             | {:>8.2} |\n", m.requests_per_second));
-        s.push_str(&format!("| Avg latency (ms)       | {:>8.2} |\n", m.avg_latency_ms));
-        s.push_str(&format!("| Error rate             | {:>7.2}% |\n", m.error_rate * 100.0));
-        s.push_str(&format!("| Cache hit rate         | {:>7.2}% |\n", m.cache_hit_rate * 100.0));
-        s.push_str(&format!("| Active sessions        | {:>8} |\n", m.active_sessions));
+        s.push_str(&format!(
+            "| Requests/s             | {:>8.2} |\n",
+            m.requests_per_second
+        ));
+        s.push_str(&format!(
+            "| Avg latency (ms)       | {:>8.2} |\n",
+            m.avg_latency_ms
+        ));
+        s.push_str(&format!(
+            "| Error rate             | {:>7.2}% |\n",
+            m.error_rate * 100.0
+        ));
+        s.push_str(&format!(
+            "| Cache hit rate         | {:>7.2}% |\n",
+            m.cache_hit_rate * 100.0
+        ));
+        s.push_str(&format!(
+            "| Active sessions        | {:>8} |\n",
+            m.active_sessions
+        ));
         s.push_str("+------------------------+----------+\n");
         s.push_str(&format!("History snapshots: {}\n", self.history.len()));
         s
@@ -1082,7 +1121,10 @@ mod tests {
         let ascii = dash.render_ascii();
         assert!(ascii.contains("42.00"));
         assert!(ascii.contains("3.50"));
-        dash.record(LiveMetrics { requests_per_second: 100.0, ..Default::default() });
+        dash.record(LiveMetrics {
+            requests_per_second: 100.0,
+            ..Default::default()
+        });
         assert_eq!(dash.history.len(), 2);
     }
 

@@ -27,7 +27,12 @@ async function loadWasm(): Promise<WasmModule> {
   _initPromise = (async () => {
     try {
       const mod = await import('momoto-wasm');
-      await mod.default(); // Initialize WASM memory
+      // `mod.default` is the wasm-pack init function in --target bundler/web formats.
+      // In static-import formats (e.g. Cloudflare-compiled output), the WASM is already
+      // initialized at module evaluation time and `default` may not be a function.
+      if (typeof mod.default === 'function') {
+        await mod.default(); // Initialize WASM memory
+      }
       _wasm = mod;
       return mod;
     } catch (e) {

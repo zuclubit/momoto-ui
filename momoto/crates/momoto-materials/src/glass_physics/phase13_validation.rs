@@ -15,20 +15,19 @@
 
 use super::differentiable::prelude::*;
 use super::differentiable::{
-    DifferentiableDielectric, DifferentiableConductor, DifferentiableThinFilm,
-    DifferentiableLayered, LayerConfig,
+    DifferentiableConductor, DifferentiableDielectric, DifferentiableLayered,
+    DifferentiableThinFilm, LayerConfig,
 };
+use super::gradient_validation::{verify_bsdf_gradients, BatchVerification, VerificationConfig};
 use super::inverse_material::{
-    InverseMaterialSolver, ReferenceData, ReferenceObservation,
-    TemporalFitter, TemporalSequence,
+    InverseMaterialSolver, ReferenceData, ReferenceObservation, TemporalFitter, TemporalSequence,
 };
+use super::spectral_gradients::prelude::*;
+use super::spectral_gradients::{delta_e_2000, Lab};
 #[allow(unused_imports)]
 use super::temporal_differentiable::prelude::*;
-use super::temporal_differentiable::{BPTT, BPTTConfig, EvolutionType};
-use super::spectral_gradients::prelude::*;
-use super::spectral_gradients::{Lab, delta_e_2000};
-use super::gradient_validation::{verify_bsdf_gradients, BatchVerification, VerificationConfig};
-use super::unified_bsdf::{BSDF, BSDFContext, Vector3};
+use super::temporal_differentiable::{BPTTConfig, EvolutionType, BPTT};
+use super::unified_bsdf::{BSDFContext, Vector3, BSDF};
 
 // ============================================================================
 // VALIDATION CONFIGURATION
@@ -104,12 +103,7 @@ impl ValidationTest {
     }
 
     /// Create test with value comparison.
-    pub fn with_value(
-        name: &'static str,
-        measured: f64,
-        target: f64,
-        passed: bool,
-    ) -> Self {
+    pub fn with_value(name: &'static str, measured: f64, target: f64, passed: bool) -> Self {
         Self {
             name,
             passed,
@@ -168,7 +162,11 @@ impl Phase13ValidationReport {
 
         report.push_str(&format!(
             "Overall Status: {}\n",
-            if self.all_passed { "✓ PASSED" } else { "✗ FAILED" }
+            if self.all_passed {
+                "✓ PASSED"
+            } else {
+                "✗ FAILED"
+            }
         ));
         report.push_str(&format!(
             "Tests: {}/{} passed\n\n",
@@ -313,21 +311,23 @@ fn validate_inverse_solver(config: &Phase13ValidationConfig) -> Vec<ValidationTe
 
         let result = solver.solve(&reference, &initial);
 
-        tests.push(if result.converged && result.iterations < config.inverse_max_iterations {
-            ValidationTest::with_value(
-                "Single param inverse convergence",
-                result.iterations as f64,
-                config.inverse_max_iterations as f64,
-                true,
-            )
-        } else {
-            ValidationTest::with_value(
-                "Single param inverse convergence",
-                result.iterations as f64,
-                config.inverse_max_iterations as f64,
-                false,
-            )
-        });
+        tests.push(
+            if result.converged && result.iterations < config.inverse_max_iterations {
+                ValidationTest::with_value(
+                    "Single param inverse convergence",
+                    result.iterations as f64,
+                    config.inverse_max_iterations as f64,
+                    true,
+                )
+            } else {
+                ValidationTest::with_value(
+                    "Single param inverse convergence",
+                    result.iterations as f64,
+                    config.inverse_max_iterations as f64,
+                    false,
+                )
+            },
+        );
     }
 
     // Multi-angle recovery
@@ -386,10 +386,7 @@ fn validate_inverse_solver(config: &Phase13ValidationConfig) -> Vec<ValidationTe
                 format!("iterations={}", result.iterations),
             )
         } else {
-            ValidationTest::fail(
-                "L-BFGS optimizer functional",
-                "No iterations completed",
-            )
+            ValidationTest::fail("L-BFGS optimizer functional", "No iterations completed")
         });
     }
 
@@ -402,10 +399,13 @@ fn validate_temporal_stability(config: &Phase13ValidationConfig) -> Vec<Validati
 
     // BPTT gradient stability
     {
-        let mut bptt = BPTT::with_config(8, BPTTConfig {
-            max_sequence_length: config.temporal_stability_frames,
-            ..Default::default()
-        });
+        let mut bptt = BPTT::with_config(
+            8,
+            BPTTConfig {
+                max_sequence_length: config.temporal_stability_frames,
+                ..Default::default()
+            },
+        );
 
         let mut stable = true;
         for i in 0..config.temporal_stability_frames.min(1000) {
@@ -413,7 +413,10 @@ fn validate_temporal_stability(config: &Phase13ValidationConfig) -> Vec<Validati
             bptt.forward_frame(
                 t,
                 vec![1.5; 8],
-                EvolutionType::Exponential { rate: 0.1, asymptote: 1.0 },
+                EvolutionType::Exponential {
+                    rate: 0.1,
+                    asymptote: 1.0,
+                },
                 0.001,
                 0.01,
             );
@@ -430,13 +433,13 @@ fn validate_temporal_stability(config: &Phase13ValidationConfig) -> Vec<Validati
         tests.push(if stable && bptt.is_stable() {
             ValidationTest::pass(
                 "BPTT gradient stability",
-                format!("stable over {} frames", config.temporal_stability_frames.min(1000)),
+                format!(
+                    "stable over {} frames",
+                    config.temporal_stability_frames.min(1000)
+                ),
             )
         } else {
-            ValidationTest::fail(
-                "BPTT gradient stability",
-                "Gradient instability detected",
-            )
+            ValidationTest::fail("BPTT gradient stability", "Gradient instability detected")
         });
     }
 
@@ -447,11 +450,13 @@ fn validate_temporal_stability(config: &Phase13ValidationConfig) -> Vec<Validati
             let t = i as f64;
             let ior = 1.5 + 0.001 * t;
             let r = ((ior - 1.0) / (ior + 1.0)).powi(2);
-            seq.add_frame(super::inverse_material::temporal_fitting::TemporalFrame::new(
-                t,
-                r,
-                create_test_context(1.0, 550.0),
-            ));
+            seq.add_frame(
+                super::inverse_material::temporal_fitting::TemporalFrame::new(
+                    t,
+                    r,
+                    create_test_context(1.0, 550.0),
+                ),
+            );
         }
 
         let initial = DifferentiableDielectric::new(1.5, 0.1);
@@ -460,19 +465,9 @@ fn validate_temporal_stability(config: &Phase13ValidationConfig) -> Vec<Validati
         let result = fitter.fit(&seq, &initial);
 
         tests.push(if result.rmse() < 0.01 {
-            ValidationTest::with_value(
-                "Temporal fitting accuracy",
-                result.rmse(),
-                0.01,
-                true,
-            )
+            ValidationTest::with_value("Temporal fitting accuracy", result.rmse(), 0.01, true)
         } else {
-            ValidationTest::with_value(
-                "Temporal fitting accuracy",
-                result.rmse(),
-                0.01,
-                false,
-            )
+            ValidationTest::with_value("Temporal fitting accuracy", result.rmse(), 0.01, false)
         });
     }
 
@@ -518,10 +513,7 @@ fn validate_spectral_gradients(_config: &Phase13ValidationConfig) -> Vec<Validat
                 format!("ΔE={:.2}, grad_norm={:.2e}", de, grad.grad_lab1.norm()),
             )
         } else {
-            ValidationTest::fail(
-                "ΔE2000 gradient computation",
-                "Invalid ΔE or gradient",
-            )
+            ValidationTest::fail("ΔE2000 gradient computation", "Invalid ΔE or gradient")
         });
     }
 
@@ -589,7 +581,14 @@ fn validate_api_compatibility() -> Vec<ValidationTest> {
 
         let mut layered = DifferentiableLayered::new();
         layered.add_layer(&coating, &ctx, LayerConfig::default());
-        layered.add_layer(&substrate, &ctx, LayerConfig { weight: 1.0, is_substrate: true });
+        layered.add_layer(
+            &substrate,
+            &ctx,
+            LayerConfig {
+                weight: 1.0,
+                is_substrate: true,
+            },
+        );
 
         let result = layered.compute();
         let valid = result.response.reflectance >= 0.0;
@@ -600,10 +599,7 @@ fn validate_api_compatibility() -> Vec<ValidationTest> {
                 format!("R={:.4}", result.response.reflectance),
             )
         } else {
-            ValidationTest::fail(
-                "Layered composition",
-                "Invalid layered response",
-            )
+            ValidationTest::fail("Layered composition", "Invalid layered response")
         });
     }
 

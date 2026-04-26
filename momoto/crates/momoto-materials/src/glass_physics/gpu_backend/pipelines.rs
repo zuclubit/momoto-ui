@@ -5,9 +5,9 @@
 use std::collections::HashMap;
 
 #[cfg(feature = "gpu")]
-use wgpu;
-#[cfg(feature = "gpu")]
 use std::sync::Arc;
+#[cfg(feature = "gpu")]
+use wgpu;
 
 /// Type of compute pipeline for different BSDFs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -93,10 +93,7 @@ impl ComputePipelineCache {
     }
 
     /// Get or create a bind group layout.
-    pub fn get_bind_group_layout(
-        &mut self,
-        pipeline_type: PipelineType,
-    ) -> &wgpu::BindGroupLayout {
+    pub fn get_bind_group_layout(&mut self, pipeline_type: PipelineType) -> &wgpu::BindGroupLayout {
         if !self.bind_group_layouts.contains_key(&pipeline_type) {
             let layout = self.create_bind_group_layout(pipeline_type);
             self.bind_group_layouts.insert(pipeline_type, layout);
@@ -181,19 +178,21 @@ impl ComputePipelineCache {
         bind_group_layout: &wgpu::BindGroupLayout,
     ) -> wgpu::PipelineLayout {
         if self.pipeline_layout.is_none() {
-            self.pipeline_layout =
-                Some(self.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            self.pipeline_layout = Some(self.device.create_pipeline_layout(
+                &wgpu::PipelineLayoutDescriptor {
                     label: Some("BSDF Pipeline Layout"),
                     bind_group_layouts: &[bind_group_layout],
                     push_constant_ranges: &[],
-                }));
+                },
+            ));
         }
         // Clone the layout (wgpu layouts are reference counted internally)
-        self.device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("BSDF Pipeline Layout"),
-            bind_group_layouts: &[bind_group_layout],
-            push_constant_ranges: &[],
-        })
+        self.device
+            .create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("BSDF Pipeline Layout"),
+                bind_group_layouts: &[bind_group_layout],
+                push_constant_ranges: &[],
+            })
     }
 
     /// Clear cached pipelines.
@@ -230,11 +229,20 @@ mod tests {
 
     #[test]
     fn test_pipeline_type_entry_points() {
-        assert_eq!(PipelineType::Dielectric.entry_point(), "evaluate_dielectric");
+        assert_eq!(
+            PipelineType::Dielectric.entry_point(),
+            "evaluate_dielectric"
+        );
         assert_eq!(PipelineType::Conductor.entry_point(), "evaluate_conductor");
-        assert_eq!(PipelineType::Anisotropic.entry_point(), "evaluate_anisotropic");
+        assert_eq!(
+            PipelineType::Anisotropic.entry_point(),
+            "evaluate_anisotropic"
+        );
         assert_eq!(PipelineType::ThinFilm.entry_point(), "evaluate_thin_film");
-        assert_eq!(PipelineType::NeuralInference.entry_point(), "neural_forward");
+        assert_eq!(
+            PipelineType::NeuralInference.entry_point(),
+            "neural_forward"
+        );
     }
 
     #[test]

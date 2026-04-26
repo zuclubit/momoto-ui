@@ -41,7 +41,12 @@ pub fn get_shader_source(name: &str) -> Option<&'static str> {
 
 /// List all available shader names.
 pub fn available_shaders() -> &'static [&'static str] {
-    &["unified_bsdf", "anisotropic", "thin_film", "neural_inference"]
+    &[
+        "unified_bsdf",
+        "anisotropic",
+        "thin_film",
+        "neural_inference",
+    ]
 }
 
 #[cfg(test)]

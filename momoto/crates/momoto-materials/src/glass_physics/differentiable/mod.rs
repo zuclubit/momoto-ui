@@ -52,41 +52,38 @@
 //! - **Beer-Lambert**: ∂T/∂α = -d × T, ∂T/∂d = -α × T
 //! - **Airy (thin-film)**: ∂R/∂thickness via phase derivative
 
-pub mod traits;
-pub mod gradients;
-pub mod dielectric;
 pub mod conductor;
-pub mod thin_film;
-pub mod layered;
+pub mod dielectric;
+pub mod gradients;
 pub mod jacobian;
+pub mod layered;
+pub mod thin_film;
+pub mod traits;
 
 // Re-exports
 pub use traits::{
-    DifferentiableBSDF, DifferentiableResponse, ParameterGradients,
-    ParameterBounds, GradientConfig, GradientVerification,
+    DifferentiableBSDF, DifferentiableResponse, GradientConfig, GradientVerification,
+    ParameterBounds, ParameterGradients,
 };
 
 pub use gradients::{
-    fresnel_schlick_gradient, fresnel_conductor_gradient,
-    ggx_distribution_gradient, smith_g_gradient,
-    beer_lambert_gradient, thin_film_gradient,
+    beer_lambert_gradient, fresnel_conductor_gradient, fresnel_schlick_gradient,
+    ggx_distribution_gradient, smith_g_gradient, thin_film_gradient,
 };
 
-pub use dielectric::DifferentiableDielectric;
 pub use conductor::DifferentiableConductor;
-pub use thin_film::DifferentiableThinFilm;
-pub use layered::{DifferentiableLayered, LayerConfig};
+pub use dielectric::DifferentiableDielectric;
 pub use jacobian::{Jacobian, JacobianBuilder};
+pub use layered::{DifferentiableLayered, LayerConfig};
+pub use thin_film::DifferentiableThinFilm;
 
 /// Prelude for convenient imports.
 pub mod prelude {
-    pub use super::traits::{
-        DifferentiableBSDF, DifferentiableResponse, ParameterGradients,
-    };
-    pub use super::dielectric::DifferentiableDielectric;
     pub use super::conductor::DifferentiableConductor;
-    pub use super::thin_film::DifferentiableThinFilm;
+    pub use super::dielectric::DifferentiableDielectric;
     pub use super::layered::DifferentiableLayered;
+    pub use super::thin_film::DifferentiableThinFilm;
+    pub use super::traits::{DifferentiableBSDF, DifferentiableResponse, ParameterGradients};
 }
 
 // ============================================================================

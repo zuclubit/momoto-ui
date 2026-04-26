@@ -69,25 +69,25 @@ impl CVDType {
 /// Protanopia (L-cone absent) in linear sRGB.
 /// Red channel is darkened; red–green discrimination is lost.
 const M_PROTAN: [[f64; 3]; 3] = [
-    [0.56667, 0.43333, 0.00000],  // R' = 0.567R + 0.433G
-    [0.55833, 0.44167, 0.00000],  // G' = 0.558R + 0.442G
-    [0.00000, 0.24167, 0.75833],  // B' = 0.242G + 0.758B
+    [0.56667, 0.43333, 0.00000], // R' = 0.567R + 0.433G
+    [0.55833, 0.44167, 0.00000], // G' = 0.558R + 0.442G
+    [0.00000, 0.24167, 0.75833], // B' = 0.242G + 0.758B
 ];
 
 /// Deuteranopia (M-cone absent) in linear sRGB.
 /// Red and green appear similar; green confusion is the most common form.
 const M_DEUTAN: [[f64; 3]; 3] = [
-    [0.62500, 0.37500, 0.00000],  // R' = 0.625R + 0.375G
-    [0.70000, 0.30000, 0.00000],  // G' = 0.700R + 0.300G
-    [0.00000, 0.30000, 0.70000],  // B' = 0.300G + 0.700B
+    [0.62500, 0.37500, 0.00000], // R' = 0.625R + 0.375G
+    [0.70000, 0.30000, 0.00000], // G' = 0.700R + 0.300G
+    [0.00000, 0.30000, 0.70000], // B' = 0.300G + 0.700B
 ];
 
 /// Tritanopia (S-cone absent) in linear sRGB.
 /// Blue–yellow discrimination is lost; rare (~0.01% of population).
 const M_TRITAN: [[f64; 3]; 3] = [
-    [0.95000, 0.05000, 0.00000],  // R' = 0.950R + 0.050G
-    [0.00000, 0.43333, 0.56667],  // G' = 0.433G + 0.567B
-    [0.00000, 0.47500, 0.52500],  // B' = 0.475G + 0.525B
+    [0.95000, 0.05000, 0.00000], // R' = 0.950R + 0.050G
+    [0.00000, 0.43333, 0.56667], // G' = 0.433G + 0.567B
+    [0.00000, 0.47500, 0.52500], // B' = 0.475G + 0.525B
 ];
 
 // =============================================================================
@@ -110,9 +110,9 @@ const M_TRITAN: [[f64; 3]; 3] = [
 pub fn simulate_cvd(color: &Color, cvd: CVDType) -> Color {
     let rgb = color.linear;
     let m = match cvd {
-        CVDType::Protanopia   => &M_PROTAN,
+        CVDType::Protanopia => &M_PROTAN,
         CVDType::Deuteranopia => &M_DEUTAN,
-        CVDType::Tritanopia   => &M_TRITAN,
+        CVDType::Tritanopia => &M_TRITAN,
     };
     let sim = mat3_mul_vec3(m, rgb);
     Color::from_linear(
@@ -139,10 +139,10 @@ pub fn cvd_delta_e(color: &Color, cvd: CVDType) -> f64 {
 
     // OKLCH Euclidean ΔE (scaled to approximate CIE 2000 magnitude)
     let dl = orig_lch.l - sim_lch.l;
-    let da = orig_lch.c * (orig_lch.h.to_radians()).cos()
-           - sim_lch.c * (sim_lch.h.to_radians()).cos();
-    let db = orig_lch.c * (orig_lch.h.to_radians()).sin()
-           - sim_lch.c * (sim_lch.h.to_radians()).sin();
+    let da =
+        orig_lch.c * (orig_lch.h.to_radians()).cos() - sim_lch.c * (sim_lch.h.to_radians()).cos();
+    let db =
+        orig_lch.c * (orig_lch.h.to_radians()).sin() - sim_lch.c * (sim_lch.h.to_radians()).sin();
 
     // Scale factor to match CIE 2000 magnitude (empirical, ~100x)
     100.0 * (dl * dl + da * da + db * db).sqrt()
@@ -165,9 +165,14 @@ pub fn cvd_delta_e(color: &Color, cvd: CVDType) -> f64 {
 ///
 /// Modified foreground color, guaranteed to have contrast ≥ `min_contrast`
 /// against `bg` under the given CVD simulation.
-pub fn suggest_cvd_safe_alternative(fg: &Color, bg: &Color, cvd: CVDType, min_contrast: f64) -> Color {
-    use crate::space::oklch::OKLCH;
+pub fn suggest_cvd_safe_alternative(
+    fg: &Color,
+    bg: &Color,
+    cvd: CVDType,
+    min_contrast: f64,
+) -> Color {
     use crate::luminance::relative_luminance_srgb;
+    use crate::space::oklch::OKLCH;
 
     let mut candidate = *fg;
 
@@ -212,9 +217,17 @@ pub fn suggest_cvd_safe_alternative(fg: &Color, bg: &Color, cvd: CVDType, min_co
         let test = lch.map_to_gamut().to_color();
         if check(&test) {
             candidate = test;
-            if bg_lum < 0.18 { hi = mid } else { lo = mid }
+            if bg_lum < 0.18 {
+                hi = mid
+            } else {
+                lo = mid
+            }
         } else {
-            if bg_lum < 0.18 { lo = mid } else { hi = mid }
+            if bg_lum < 0.18 {
+                lo = mid
+            } else {
+                hi = mid
+            }
         }
     }
 
@@ -290,12 +303,18 @@ mod tests {
     fn test_white_invariant() {
         // White should map to white for all CVD types (Brettel 1997 §3)
         let white = Color::from_srgb8(255, 255, 255);
-        for cvd in [CVDType::Protanopia, CVDType::Deuteranopia, CVDType::Tritanopia] {
+        for cvd in [
+            CVDType::Protanopia,
+            CVDType::Deuteranopia,
+            CVDType::Tritanopia,
+        ] {
             let sim = simulate_cvd(&white, cvd);
             for ch in &sim.srgb {
                 assert!(
                     (*ch - 1.0).abs() < 0.02,
-                    "White not invariant for {:?}: {:?}", cvd, sim.srgb
+                    "White not invariant for {:?}: {:?}",
+                    cvd,
+                    sim.srgb
                 );
             }
         }
@@ -304,12 +323,18 @@ mod tests {
     #[test]
     fn test_black_invariant() {
         let black = Color::from_srgb8(0, 0, 0);
-        for cvd in [CVDType::Protanopia, CVDType::Deuteranopia, CVDType::Tritanopia] {
+        for cvd in [
+            CVDType::Protanopia,
+            CVDType::Deuteranopia,
+            CVDType::Tritanopia,
+        ] {
             let sim = simulate_cvd(&black, cvd);
             for ch in &sim.srgb {
                 assert!(
                     ch.abs() < 0.02,
-                    "Black not invariant for {:?}: {:?}", cvd, sim.srgb
+                    "Black not invariant for {:?}: {:?}",
+                    cvd,
+                    sim.srgb
                 );
             }
         }
@@ -325,12 +350,19 @@ mod tests {
             Color::from_srgb8(128, 64, 32),
         ];
         for color in &colors {
-            for cvd in [CVDType::Protanopia, CVDType::Deuteranopia, CVDType::Tritanopia] {
+            for cvd in [
+                CVDType::Protanopia,
+                CVDType::Deuteranopia,
+                CVDType::Tritanopia,
+            ] {
                 let sim = simulate_cvd(color, cvd);
                 for ch in &sim.srgb {
                     assert!(
                         *ch >= -0.01 && *ch <= 1.01,
-                        "{:?}: channel {} out of gamut for {:?}", cvd, ch, color.srgb
+                        "{:?}: channel {} out of gamut for {:?}",
+                        cvd,
+                        ch,
+                        color.srgb
                     );
                 }
             }
@@ -340,7 +372,11 @@ mod tests {
     #[test]
     fn test_delta_e_non_negative() {
         let red = Color::from_srgb8(255, 0, 0);
-        for cvd in [CVDType::Protanopia, CVDType::Deuteranopia, CVDType::Tritanopia] {
+        for cvd in [
+            CVDType::Protanopia,
+            CVDType::Deuteranopia,
+            CVDType::Tritanopia,
+        ] {
             let de = cvd_delta_e(&red, cvd);
             assert!(de >= 0.0, "ΔE negative: {}", de);
         }

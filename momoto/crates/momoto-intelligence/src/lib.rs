@@ -103,12 +103,12 @@
 
 pub mod adaptive;
 pub mod advanced_scoring;
+pub mod constraints;
 pub mod context;
 pub mod explanation;
 pub mod harmony;
 pub mod recommendation;
 pub mod scoring;
-pub mod constraints;
 
 // ============================================================================
 // Convenient Re-exports
@@ -125,33 +125,30 @@ pub use recommendation::{Modification, Recommendation, RecommendationEngine};
 
 // Advanced scoring types
 pub use advanced_scoring::{
-    AdvancedScore, AdvancedScorer, ConfidenceCalculator, EffortEstimator,
-    EffortLevel, ImpactCalculator, ImpactWeights, PriorityAssessment,
-    ScoreBreakdown, ScoreComponent,
+    AdvancedScore, AdvancedScorer, ConfidenceCalculator, EffortEstimator, EffortLevel,
+    ImpactCalculator, ImpactWeights, PriorityAssessment, ScoreBreakdown, ScoreComponent,
 };
 
 // Explanation types
 pub use explanation::{
-    ExplanationBuilder, ExplanationGenerator, OklchChanges,
-    ReasoningPoint, RecommendationExplanation, TechnicalDetails,
+    ExplanationBuilder, ExplanationGenerator, OklchChanges, ReasoningPoint,
+    RecommendationExplanation, TechnicalDetails,
 };
 
 // Adaptive pipeline types
 pub use adaptive::{
-    BranchCondition, BranchEvaluator, ComparisonOp, ConvergenceConfig,
-    ConvergenceDetector, ConvergenceStatus, CostEstimate, CostEstimator,
-    StepRecommendation, StepSelector,
+    BranchCondition, BranchEvaluator, ComparisonOp, ConvergenceConfig, ConvergenceDetector,
+    ConvergenceStatus, CostEstimate, CostEstimator, StepRecommendation, StepSelector,
 };
 
 // Harmony types
 pub use harmony::{
-    HarmonyType, Palette,
-    generate_palette, harmony_score, shades, temperature_palette,
-    hex_to_oklch, oklch_to_hex, design_system_palette,
+    design_system_palette, generate_palette, harmony_score, hex_to_oklch, oklch_to_hex, shades,
+    temperature_palette, HarmonyType, Palette,
 };
 
 // Constraint solver types
 pub use constraints::{
-    ColorConstraint, ConstraintKind, ConstraintSolver, SolverResult,
-    ConstraintViolation, SolverConfig,
+    ColorConstraint, ConstraintKind, ConstraintSolver, ConstraintViolation, SolverConfig,
+    SolverResult,
 };

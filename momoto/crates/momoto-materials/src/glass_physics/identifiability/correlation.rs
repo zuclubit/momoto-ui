@@ -32,7 +32,11 @@ impl CorrelationCluster {
 
     /// Get non-representative members (candidates for freezing).
     pub fn non_representatives(&self) -> Vec<usize> {
-        self.members.iter().filter(|&&m| m != self.representative).copied().collect()
+        self.members
+            .iter()
+            .filter(|&&m| m != self.representative)
+            .copied()
+            .collect()
     }
 }
 
@@ -235,7 +239,10 @@ impl CorrelationAnalysis {
 // ============================================================================
 
 /// Find clusters of correlated parameters using union-find.
-pub fn find_correlation_clusters(matrix: &ParameterCorrelationMatrix, threshold: f64) -> Vec<CorrelationCluster> {
+pub fn find_correlation_clusters(
+    matrix: &ParameterCorrelationMatrix,
+    threshold: f64,
+) -> Vec<CorrelationCluster> {
     let n = matrix.n;
     if n == 0 {
         return Vec::new();
@@ -269,7 +276,8 @@ pub fn find_correlation_clusters(matrix: &ParameterCorrelationMatrix, threshold:
     }
 
     // Build clusters
-    let mut cluster_map: std::collections::HashMap<usize, Vec<usize>> = std::collections::HashMap::new();
+    let mut cluster_map: std::collections::HashMap<usize, Vec<usize>> =
+        std::collections::HashMap::new();
     for i in 0..n {
         let root = find(&mut parent, i);
         cluster_map.entry(root).or_insert_with(Vec::new).push(i);
@@ -300,7 +308,11 @@ pub fn find_correlation_clusters(matrix: &ParameterCorrelationMatrix, threshold:
             }
         }
 
-        let avg_correlation = if count > 0 { sum_corr / count as f64 } else { 1.0 };
+        let avg_correlation = if count > 0 {
+            sum_corr / count as f64
+        } else {
+            1.0
+        };
 
         clusters.push(CorrelationCluster {
             members,
@@ -372,10 +384,7 @@ mod tests {
     #[test]
     fn test_correlation_matrix_perfect() {
         // Perfect positive correlation
-        let cov = vec![
-            vec![1.0, 1.0],
-            vec![1.0, 1.0],
-        ];
+        let cov = vec![vec![1.0, 1.0], vec![1.0, 1.0]];
         let corr = ParameterCorrelationMatrix::from_covariance(&cov);
 
         assert!((corr.get(0, 1) - 1.0).abs() < 0.01);
@@ -438,15 +447,14 @@ mod tests {
         let clusters = find_correlation_clusters(&matrix, 0.5);
 
         // Parameters 0 and 1 should be in same cluster
-        assert!(clusters.iter().any(|c| c.members.len() == 2 && c.members.contains(&0) && c.members.contains(&1)));
+        assert!(clusters
+            .iter()
+            .any(|c| c.members.len() == 2 && c.members.contains(&0) && c.members.contains(&1)));
     }
 
     #[test]
     fn test_compute_vif() {
-        let cov = vec![
-            vec![1.0, 0.0],
-            vec![0.0, 1.0],
-        ];
+        let cov = vec![vec![1.0, 0.0], vec![0.0, 1.0]];
         let vif = compute_vif(&cov);
 
         // Uncorrelated: VIF should be 1

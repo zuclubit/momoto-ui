@@ -5,8 +5,8 @@
 
 #![allow(dead_code)]
 
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // ============================================================================
 // Primitive types
@@ -92,12 +92,20 @@ pub struct WorkflowSpec {
 impl WorkflowSpec {
     /// Create a new sequential workflow.
     pub fn sequential(name: impl Into<String>, steps: Vec<WorkflowStepSpec>) -> Self {
-        Self { name: name.into(), steps, parallel: false }
+        Self {
+            name: name.into(),
+            steps,
+            parallel: false,
+        }
     }
 
     /// Create a new parallel-eligible workflow.
     pub fn parallel(name: impl Into<String>, steps: Vec<WorkflowStepSpec>) -> Self {
-        Self { name: name.into(), steps, parallel: true }
+        Self {
+            name: name.into(),
+            steps,
+            parallel: true,
+        }
     }
 }
 
@@ -195,12 +203,16 @@ pub struct BatchOperation {
 impl BatchOperation {
     /// Create a new batch with the given ID.
     pub fn new(operation_id: impl Into<String>) -> Self {
-        Self { operation_id: operation_id.into(), operations: Vec::new() }
+        Self {
+            operation_id: operation_id.into(),
+            operations: Vec::new(),
+        }
     }
 
     /// Append an operation.
     pub fn add(mut self, query_type: &str, params_json: &str) -> Self {
-        self.operations.push((query_type.to_string(), params_json.to_string()));
+        self.operations
+            .push((query_type.to_string(), params_json.to_string()));
         self
     }
 }
@@ -515,7 +527,10 @@ fn topological_sort(steps: &[WorkflowStepSpec]) -> Vec<WorkflowStepSpec> {
         in_degree.entry(step.step_id.clone()).or_insert(0);
         for dep in &step.depends_on {
             *in_degree.entry(step.step_id.clone()).or_insert(0) += 1;
-            adjacency.entry(dep.clone()).or_default().push(step.step_id.clone());
+            adjacency
+                .entry(dep.clone())
+                .or_default()
+                .push(step.step_id.clone());
         }
     }
 
@@ -566,7 +581,8 @@ fn builtin_templates() -> Vec<WorkflowTemplate> {
     vec![
         WorkflowTemplate {
             name: "accessibility_audit".to_string(),
-            description: "Validate a foreground/background pair for WCAG AA compliance.".to_string(),
+            description: "Validate a foreground/background pair for WCAG AA compliance."
+                .to_string(),
             spec: WorkflowSpec::sequential(
                 "accessibility_audit",
                 vec![
@@ -666,7 +682,9 @@ struct WorkflowStore {
 }
 
 impl WorkflowStore {
-    fn new() -> Self { Self::default() }
+    fn new() -> Self {
+        Self::default()
+    }
 
     fn insert_status(&mut self, status: WorkflowStatus) {
         self.statuses.insert(status.workflow_id.clone(), status);
@@ -719,7 +737,9 @@ impl BotAPI {
             QueryType::Improve => self.handle_improve(&query),
             QueryType::Analyze => self.handle_analyze(&query),
             QueryType::Convert => self.handle_convert(&query),
-            QueryType::Batch => Ok(format!("{{\"message\":\"use submit_batch for batch ops\"}}")),
+            QueryType::Batch => Ok(format!(
+                "{{\"message\":\"use submit_batch for batch ops\"}}"
+            )),
             QueryType::GenerateReport => self.handle_generate_report(&query),
             QueryType::ExecuteWorkflow => self.handle_execute_workflow(&query),
             QueryType::GetStatus => {
@@ -738,14 +758,17 @@ impl BotAPI {
 
     /// Retrieve current status for a workflow by ID.
     pub fn get_workflow_status(&self, workflow_id: &str) -> WorkflowStatus {
-        self.store.get_status(workflow_id).cloned().unwrap_or(WorkflowStatus {
-            workflow_id: workflow_id.to_string(),
-            status_type: WorkflowStatusType::Pending,
-            progress: 0.0,
-            started_at: None,
-            completed_at: None,
-            error: Some("Workflow not found".to_string()),
-        })
+        self.store
+            .get_status(workflow_id)
+            .cloned()
+            .unwrap_or(WorkflowStatus {
+                workflow_id: workflow_id.to_string(),
+                status_type: WorkflowStatusType::Pending,
+                progress: 0.0,
+                started_at: None,
+                completed_at: None,
+                error: Some("Workflow not found".to_string()),
+            })
     }
 
     /// Execute a batch of heterogeneous operations.
@@ -802,13 +825,20 @@ impl BotAPI {
     // ------------------------------------------------------------------
 
     fn handle_validate(&self, query: &BotQuery) -> Result<String, String> {
-        let color = query.params.get("color").or_else(|| query.params.get("foreground"))
+        let color = query
+            .params
+            .get("color")
+            .or_else(|| query.params.get("foreground"))
             .cloned()
             .unwrap_or_else(|| "#000000".to_string());
-        let bg = query.params.get("background").cloned().unwrap_or_else(|| "#ffffff".to_string());
+        let bg = query
+            .params
+            .get("background")
+            .cloned()
+            .unwrap_or_else(|| "#ffffff".to_string());
 
         use momoto_core::{color::Color, perception::ContrastMetric};
-        use momoto_metrics::wcag::{WCAGLevel, WCAGMetric, TextSize};
+        use momoto_metrics::wcag::{TextSize, WCAGLevel, WCAGMetric};
 
         let fg_c = Color::from_hex(&color).unwrap_or_else(|_| Color::from_srgb8(0, 0, 0));
         let bg_c = Color::from_hex(&bg).unwrap_or_else(|_| Color::from_srgb8(255, 255, 255));
@@ -822,11 +852,14 @@ impl BotAPI {
                      else if passes_aa { "AA" } else { "FAIL" },
             "foreground": color,
             "background": bg,
-        }).to_string())
+        })
+        .to_string())
     }
 
     fn handle_recommend(&self, query: &BotQuery) -> Result<String, String> {
-        let background = query.params.get("background")
+        let background = query
+            .params
+            .get("background")
             .cloned()
             .unwrap_or_else(|| "#ffffff".to_string());
         use momoto_core::{color::Color, luminance::relative_luminance_srgb};
@@ -841,11 +874,19 @@ impl BotAPI {
     }
 
     fn handle_score(&self, query: &BotQuery) -> Result<String, String> {
-        let fg = query.params.get("foreground").cloned().unwrap_or_else(|| "#000000".to_string());
-        let bg = query.params.get("background").cloned().unwrap_or_else(|| "#ffffff".to_string());
+        let fg = query
+            .params
+            .get("foreground")
+            .cloned()
+            .unwrap_or_else(|| "#000000".to_string());
+        let bg = query
+            .params
+            .get("background")
+            .cloned()
+            .unwrap_or_else(|| "#ffffff".to_string());
 
         use momoto_core::{color::Color, perception::ContrastMetric};
-        use momoto_metrics::wcag::{WCAGLevel, WCAGMetric, TextSize};
+        use momoto_metrics::wcag::{TextSize, WCAGLevel, WCAGMetric};
 
         let fg_c = Color::from_hex(&fg).unwrap_or_else(|_| Color::from_srgb8(0, 0, 0));
         let bg_c = Color::from_hex(&bg).unwrap_or_else(|_| Color::from_srgb8(255, 255, 255));
@@ -859,16 +900,25 @@ impl BotAPI {
             "passes": passes,
             "foreground": fg,
             "background": bg,
-        }).to_string())
+        })
+        .to_string())
     }
 
     fn handle_improve(&self, query: &BotQuery) -> Result<String, String> {
-        let fg = query.params.get("foreground").cloned().unwrap_or_else(|| "#888888".to_string());
-        let bg = query.params.get("background").cloned().unwrap_or_else(|| "#ffffff".to_string());
+        let fg = query
+            .params
+            .get("foreground")
+            .cloned()
+            .unwrap_or_else(|| "#888888".to_string());
+        let bg = query
+            .params
+            .get("background")
+            .cloned()
+            .unwrap_or_else(|| "#ffffff".to_string());
 
-        use momoto_core::{color::Color, luminance::relative_luminance_srgb, space::oklch::OKLCH};
-        use momoto_metrics::wcag::{WCAGLevel, WCAGMetric, TextSize};
         use momoto_core::perception::ContrastMetric;
+        use momoto_core::{color::Color, luminance::relative_luminance_srgb, space::oklch::OKLCH};
+        use momoto_metrics::wcag::{TextSize, WCAGLevel, WCAGMetric};
 
         let bg_c = Color::from_hex(&bg).unwrap_or_else(|_| Color::from_srgb8(255, 255, 255));
         let bg_lum = relative_luminance_srgb(&bg_c).value();
@@ -881,7 +931,9 @@ impl BotAPI {
         for _ in 0..20 {
             let candidate = oklch.to_color();
             let ratio = WCAGMetric.evaluate(candidate, bg_c).value;
-            if ratio >= target_ratio { break; }
+            if ratio >= target_ratio {
+                break;
+            }
             if bg_lum > 0.5 {
                 oklch = oklch.darken(0.05);
             } else {
@@ -900,18 +952,31 @@ impl BotAPI {
             "ratio": new_ratio,
             "passes": passes,
             "background": bg,
-        }).to_string())
+        })
+        .to_string())
     }
 
     fn handle_analyze(&self, query: &BotQuery) -> Result<String, String> {
-        let color = query.params.get("color").cloned().unwrap_or_else(|| "#000000".to_string());
+        let color = query
+            .params
+            .get("color")
+            .cloned()
+            .unwrap_or_else(|| "#000000".to_string());
         let report = crate::reporting::ReportGenerator::analyze_color(&color);
         serde_json::to_string(&report).map_err(|e| e.to_string())
     }
 
     fn handle_convert(&self, query: &BotQuery) -> Result<String, String> {
-        let color = query.params.get("color").cloned().unwrap_or_else(|| "#000000".to_string());
-        let target = query.params.get("target_space").map(|s| s.as_str()).unwrap_or("oklch");
+        let color = query
+            .params
+            .get("color")
+            .cloned()
+            .unwrap_or_else(|| "#000000".to_string());
+        let target = query
+            .params
+            .get("target_space")
+            .map(|s| s.as_str())
+            .unwrap_or("oklch");
 
         use momoto_core::{color::Color, space::oklch::OKLCH};
 
@@ -925,17 +990,17 @@ impl BotAPI {
                     "L": ok.l,
                     "C": ok.c,
                     "H": ok.h,
-                }).to_string())
+                })
+                .to_string())
             }
-            "srgb" => {
-                Ok(serde_json::json!({
-                    "space": "srgb",
-                    "color": color,
-                    "r": (c.srgb[0] * 255.0).round() as u8,
-                    "g": (c.srgb[1] * 255.0).round() as u8,
-                    "b": (c.srgb[2] * 255.0).round() as u8,
-                }).to_string())
-            }
+            "srgb" => Ok(serde_json::json!({
+                "space": "srgb",
+                "color": color,
+                "r": (c.srgb[0] * 255.0).round() as u8,
+                "g": (c.srgb[1] * 255.0).round() as u8,
+                "b": (c.srgb[2] * 255.0).round() as u8,
+            })
+            .to_string()),
             other => Err(format!("Unknown target space: {}", other)),
         }
     }
@@ -945,11 +1010,18 @@ impl BotAPI {
         let colors: Vec<String> = if colors_raw.is_empty() {
             vec![]
         } else {
-            colors_raw.split(',').map(|s| s.trim().to_string()).collect()
+            colors_raw
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .collect()
         };
         let color_refs: Vec<&str> = colors.iter().map(|s| s.as_str()).collect();
         let report = crate::reporting::ReportGenerator::generate_comprehensive(&color_refs, &[]);
-        let format = query.params.get("format").map(|s| s.as_str()).unwrap_or("json");
+        let format = query
+            .params
+            .get("format")
+            .map(|s| s.as_str())
+            .unwrap_or("json");
         let config = crate::reporting::ReportConfig {
             format: match format {
                 "markdown" | "md" => crate::reporting::ReportFormat::Markdown,
@@ -967,7 +1039,11 @@ impl BotAPI {
         let wf = match &query.workflow {
             Some(w) => w.clone(),
             None => {
-                let name = query.params.get("workflow_name").cloned().unwrap_or_default();
+                let name = query
+                    .params
+                    .get("workflow_name")
+                    .cloned()
+                    .unwrap_or_default();
                 let templates = builtin_templates();
                 match templates.into_iter().find(|t| t.name == name) {
                     Some(t) => t.instantiate(&query.params),
@@ -1011,7 +1087,11 @@ impl BotAPI {
         }
 
         let finished = current_unix_secs();
-        let progress = if total == 0 { 1.0 } else { completed as f64 / total as f64 };
+        let progress = if total == 0 {
+            1.0
+        } else {
+            completed as f64 / total as f64
+        };
 
         // Mark as completed
         self.store.insert_status(WorkflowStatus {
@@ -1125,8 +1205,7 @@ mod tests {
     #[test]
     fn test_bot_api_analyze() {
         let mut api = BotAPI::new();
-        let q = BotQuery::new("q3", "s1", QueryType::Analyze)
-            .with_param("color", "#0066cc");
+        let q = BotQuery::new("q3", "s1", QueryType::Analyze).with_param("color", "#0066cc");
         let resp = api.submit_query(q);
         assert!(resp.success);
         let val: serde_json::Value = serde_json::from_str(&resp.result.unwrap()).unwrap();
@@ -1174,7 +1253,10 @@ mod tests {
     fn test_batch_operation() {
         let mut api = BotAPI::new();
         let batch = BatchOperation::new("batch-001")
-            .add("validate", r##"{"foreground":"#000000","background":"#ffffff"}"##)
+            .add(
+                "validate",
+                r##"{"foreground":"#000000","background":"#ffffff"}"##,
+            )
             .add("analyze", r##"{"color":"#ff6600"}"##);
         let resp = api.submit_batch(batch);
         assert_eq!(resp.total, 2);
@@ -1184,7 +1266,10 @@ mod tests {
     #[test]
     fn test_workflow_template_instantiate() {
         let templates = builtin_templates();
-        let tmpl = templates.iter().find(|t| t.name == "accessibility_audit").unwrap();
+        let tmpl = templates
+            .iter()
+            .find(|t| t.name == "accessibility_audit")
+            .unwrap();
         let mut params = HashMap::new();
         params.insert("foreground".to_string(), "#000000".to_string());
         params.insert("background".to_string(), "#ffffff".to_string());
@@ -1239,11 +1324,9 @@ mod tests {
         let mut api = BotAPI::new();
         let wf = WorkflowSpec::sequential(
             "simple",
-            vec![WorkflowStepSpec::new("step1", QueryType::Analyze)
-                .with_param("color", "#0066cc")],
+            vec![WorkflowStepSpec::new("step1", QueryType::Analyze).with_param("color", "#0066cc")],
         );
-        let q = BotQuery::new("q-wf", "s1", QueryType::ExecuteWorkflow)
-            .with_workflow(wf);
+        let q = BotQuery::new("q-wf", "s1", QueryType::ExecuteWorkflow).with_workflow(wf);
         let resp = api.submit_query(q);
         assert!(resp.success);
         let val: serde_json::Value = serde_json::from_str(&resp.result.unwrap()).unwrap();

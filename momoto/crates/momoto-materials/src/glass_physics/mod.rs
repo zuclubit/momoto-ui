@@ -96,12 +96,12 @@ pub mod refraction_index;
 
 // PBR Phase 4 - Advanced Features
 pub mod lut_compression; // ✅ PBR Phase 4 - LUT compression for memory optimization
-pub mod thin_film_advanced; // ✅ PBR Phase 4 - Transfer matrix multi-layer thin-film
 pub mod metal_temp; // ✅ PBR Phase 4 - Temperature-dependent metal IOR + oxidation
 pub mod mie_dynamic; // ✅ PBR Phase 4 - Dynamic Mie with polydisperse/anisotropic scattering
 pub mod scattering; // ✅ PBR Phase 1 - Henyey-Greenstein phase function with LUT
 pub mod spectral_fresnel; // ✅ PBR Phase 1 - RGB spectral Fresnel evaluation
 pub mod thin_film; // ✅ PBR Phase 3 - Thin-film interference for iridescent effects
+pub mod thin_film_advanced; // ✅ PBR Phase 4 - Transfer matrix multi-layer thin-film
 pub mod transmittance; // ✅ NEW - Formal context system for environment-aware evaluation
 
 // Sprint 6 - Unified Spectral Pipeline
@@ -110,11 +110,11 @@ pub mod spectral_pipeline; // ✅ Sprint 6 - End-to-end spectral processing (no 
 mod spectral_pipeline_validation; // ✅ Sprint 6 - Physical validation tests
 
 // Sprint 7 - Performance Optimization
-pub mod spectral_profiling; // ✅ Sprint 7 - Profiling and benchmarking
-pub mod spectral_optimization; // ✅ Sprint 7 - Quality tiers and adaptive spectral sampling
-pub mod spectral_lut; // ✅ Sprint 7 - LUTs for ΔE < 1 with 10x+ speedup
 pub mod spectral_cache; // ✅ Sprint 7 - Deterministic cache for ΔE=0 with O(1) lookup
-pub mod spectral_gpu; // ✅ Sprint 7 - GPU/WebGPU batch evaluation foundation
+pub mod spectral_gpu;
+pub mod spectral_lut; // ✅ Sprint 7 - LUTs for ΔE < 1 with 10x+ speedup
+pub mod spectral_optimization; // ✅ Sprint 7 - Quality tiers and adaptive spectral sampling
+pub mod spectral_profiling; // ✅ Sprint 7 - Profiling and benchmarking // ✅ Sprint 7 - GPU/WebGPU batch evaluation foundation
 
 // GGX Microfacet BRDF — Cook-Torrance + Oren-Nayar
 pub mod microfacet; // ✅ FASE D - GGX NDF, Smith G2, Cook-Torrance, Oren-Nayar
@@ -140,9 +140,8 @@ pub use light_model::{
 };
 
 pub use fresnel::{
-    brewster_angle, calculate_view_angle, edge_intensity, fresnel_full,
-    fresnel_outer_glow_params, fresnel_schlick, generate_fresnel_gradient,
-    to_css_fresnel_gradient, to_css_luminous_border,
+    brewster_angle, calculate_view_angle, edge_intensity, fresnel_full, fresnel_outer_glow_params,
+    fresnel_schlick, generate_fresnel_gradient, to_css_fresnel_gradient, to_css_luminous_border,
 };
 
 pub use blinn_phong::{
@@ -163,476 +162,406 @@ pub use context::{
 
 // PBR Phase 1 - Dispersion models
 pub use dispersion::{
-    CauchyDispersion, Dispersion, DispersionModel, SellmeierDispersion,
-    f0_from_ior, f0_rgb, chromatic_aberration_strength, wavelengths,
+    chromatic_aberration_strength, f0_from_ior, f0_rgb, wavelengths, CauchyDispersion, Dispersion,
+    DispersionModel, SellmeierDispersion,
 };
 
 // PBR Phase 1 - Scattering phase functions
 pub use scattering::{
-    henyey_greenstein, hg_fast, double_henyey_greenstein,
-    HenyeyGreensteinLUT, ScatteringParams, sample_hg,
-    presets as scattering_presets,
+    double_henyey_greenstein, henyey_greenstein, hg_fast, presets as scattering_presets, sample_hg,
+    HenyeyGreensteinLUT, ScatteringParams,
 };
 
 // PBR Phase 1 - Spectral Fresnel
 pub use spectral_fresnel::{
-    fresnel_rgb, fresnel_rgb_fast, fresnel_rgb_lut,
-    edge_intensity_rgb, SpectralFresnelResult, SpectralFresnelLUT,
-    to_css_chromatic_fresnel, to_css_chromatic_border,
+    edge_intensity_rgb, fresnel_rgb, fresnel_rgb_fast, fresnel_rgb_lut, to_css_chromatic_border,
+    to_css_chromatic_fresnel, SpectralFresnelLUT, SpectralFresnelResult,
 };
 
 // PBR Phase 1 - Enhanced material presets
 pub use enhanced_presets::{
-    EnhancedGlassMaterial, QualityTier,
-    crown_glass, flint_glass, fused_silica, diamond, frosted_glass,
-    opal_glass, polycarbonate, pmma, water, sapphire, ice, milk_glass,
-    all_presets, presets_by_quality,
+    all_presets, crown_glass, diamond, flint_glass, frosted_glass, fused_silica, ice, milk_glass,
+    opal_glass, pmma, polycarbonate, presets_by_quality, sapphire, water, EnhancedGlassMaterial,
+    QualityTier,
 };
 
 // PBR Phase 2 - Double Henyey-Greenstein LUT
 pub use dhg_lut::{
-    dhg_fast, dhg_preset, scattering_params_for_preset, total_dhg_memory,
-    DoubleHGLUT, CompactDHGLUT, DHGPreset,
+    dhg_fast, dhg_preset, scattering_params_for_preset, total_dhg_memory, CompactDHGLUT, DHGPreset,
+    DoubleHGLUT,
 };
 
 // PBR Phase 2 - Quality Tier System
 pub use quality_tiers::{
-    select_tier, DeviceCapabilities, MaterialComplexity, QualityConfig,
-    TierFeatures, TierMetrics,
+    select_tier, DeviceCapabilities, MaterialComplexity, QualityConfig, TierFeatures, TierMetrics,
 };
 
 // PBR Phase 2 - Validation and Benchmarks
 pub use phase2_validation::{
-    compare_dhg_vs_hg, compare_dhg_lut_vs_direct, compare_sellmeier_vs_cauchy,
-    benchmark_quality_tiers, memory_analysis, full_phase2_report,
-    ComparisonResult, TierBenchmark,
+    benchmark_quality_tiers, compare_dhg_lut_vs_direct, compare_dhg_vs_hg,
+    compare_sellmeier_vs_cauchy, full_phase2_report, memory_analysis, ComparisonResult,
+    TierBenchmark,
 };
 
 // PBR Phase 3 - Complex IOR for Metals
 pub use complex_ior::{
-    Complex, ComplexIOR, SpectralComplexIOR,
-    fresnel_conductor, fresnel_conductor_unpolarized, fresnel_conductor_schlick,
-    to_css_metallic_gradient, to_css_metallic_surface,
-    metals,
+    fresnel_conductor, fresnel_conductor_schlick, fresnel_conductor_unpolarized, metals,
+    to_css_metallic_gradient, to_css_metallic_surface, Complex, ComplexIOR, SpectralComplexIOR,
 };
 
 // PBR Phase 3 - Mie Scattering Approximation
 pub use mie_lut::{
-    MieParams, MieLUT,
-    rayleigh_phase, rayleigh_efficiency, rayleigh_intensity_rgb,
-    mie_asymmetry_g, mie_phase_hg, mie_efficiencies,
-    mie_fast, mie_particle, mie_particle_rgb,
-    total_mie_memory,
-    particles as mie_particles,
+    mie_asymmetry_g, mie_efficiencies, mie_fast, mie_particle, mie_particle_rgb, mie_phase_hg,
+    particles as mie_particles, rayleigh_efficiency, rayleigh_intensity_rgb, rayleigh_phase,
+    total_mie_memory, MieLUT, MieParams,
 };
 
 // PBR Phase 3 - Thin-Film Interference
 pub use thin_film::{
+    ar_coating_thickness, dominant_wavelength, presets as thin_film_presets, thin_film_to_rgb,
+    to_css_iridescent_gradient, to_css_oil_slick, to_css_soap_bubble, total_thin_film_memory,
     ThinFilm, ThinFilmStack,
-    thin_film_to_rgb, to_css_iridescent_gradient, to_css_soap_bubble, to_css_oil_slick,
-    ar_coating_thickness, dominant_wavelength, total_thin_film_memory,
-    presets as thin_film_presets,
 };
 
 // PBR Phase 3 - Validation and Benchmarks
 pub use phase3_validation::{
-    compare_complex_vs_dielectric_fresnel, compare_metal_schlick_vs_full,
-    compare_mie_lut_vs_direct, compare_rayleigh_vs_mie,
-    benchmark_thin_film, validate_thin_film_physics,
-    phase3_memory_analysis, full_phase3_report,
-    Phase3ComparisonResult, Phase3MemoryAnalysis,
+    benchmark_thin_film, compare_complex_vs_dielectric_fresnel, compare_metal_schlick_vs_full,
+    compare_mie_lut_vs_direct, compare_rayleigh_vs_mie, full_phase3_report, phase3_memory_analysis,
+    validate_thin_film_physics, Phase3ComparisonResult, Phase3MemoryAnalysis,
 };
 
 // PBR Phase 4 - LUT Compression
 pub use lut_compression::{
-    CompressedLUT1D, CompressedLUT2D, SparseLUT1D, DeltaEncodedLUT,
-    HybridEvaluator, EvaluationMethod, CompressedFresnelLUT, CompressedHGLUT,
-    quantize_f32_to_u16, quantize_f32_to_u8,
-    dequantize_u16_to_f32, dequantize_u8_to_f32,
-    CompressionAnalysis, calculate_memory_savings,
+    calculate_memory_savings, dequantize_u16_to_f32, dequantize_u8_to_f32, quantize_f32_to_u16,
+    quantize_f32_to_u8, CompressedFresnelLUT, CompressedHGLUT, CompressedLUT1D, CompressedLUT2D,
+    CompressionAnalysis, DeltaEncodedLUT, EvaluationMethod, HybridEvaluator, SparseLUT1D,
 };
 
 // PBR Phase 4 - Advanced Thin-Film (Transfer Matrix)
 pub use thin_film_advanced::{
-    TransferMatrixFilm, FilmLayer, Matrix2x2,
-    advanced_presets as thin_film_advanced_presets,
+    advanced_presets as thin_film_advanced_presets, FilmLayer, Matrix2x2, TransferMatrixFilm,
 };
 
 // PBR Phase 4 - Temperature-Dependent Metals
 pub use metal_temp::{
-    DrudeParams, OxideLayer, TempOxidizedMetal,
-    drude_metals, oxides, oxidized_presets,
+    drude_metals, oxides, oxidized_presets, DrudeParams, OxideLayer, TempOxidizedMetal,
 };
 
 // PBR Phase 4 - Dynamic Mie Scattering
-pub use mie_dynamic::{
-    SizeDistribution, DynamicMieParams,
-    dynamic_presets,
-};
+pub use mie_dynamic::{dynamic_presets, DynamicMieParams, SizeDistribution};
 
 // PBR Phase 4 - Validation and Benchmarks
 pub use phase4_validation::{
-    benchmark_lut_compression, compare_thin_film_methods,
-    validate_thin_film_advanced, compare_metal_temperatures,
-    validate_oxidation_effects, compare_dynamic_mie_presets,
-    validate_polydisperse_scattering, phase4_memory_analysis,
-    full_phase4_report,
-    CompressionBenchmark, ThinFilmComparisonResult,
-    MetalTempResult, DynamicMieResult, Phase4MemoryAnalysis,
+    benchmark_lut_compression, compare_dynamic_mie_presets, compare_metal_temperatures,
+    compare_thin_film_methods, full_phase4_report, phase4_memory_analysis,
+    validate_oxidation_effects, validate_polydisperse_scattering, validate_thin_film_advanced,
+    CompressionBenchmark, DynamicMieResult, MetalTempResult, Phase4MemoryAnalysis,
+    ThinFilmComparisonResult,
 };
 
 // PBR Phase 5 - Advanced Features
 pub mod differentiable_render; // ✅ PBR Phase 5 - Auto-calibration with differentiable rendering
-pub mod thin_film_dynamic; // ✅ PBR Phase 5 - Dynamic thin-film with physical deformations
 pub mod metal_oxidation_dynamic; // ✅ PBR Phase 5 - Dynamic metal oxidation with time evolution
 pub mod mie_physics; // ✅ PBR Phase 5 - Advanced Mie physics with particle interactions
-pub mod phase5_validation; // ✅ PBR Phase 5 - Validation and benchmarks
+pub mod phase5_validation;
+pub mod thin_film_dynamic; // ✅ PBR Phase 5 - Dynamic thin-film with physical deformations // ✅ PBR Phase 5 - Validation and benchmarks
 
 // PBR Phase 5 - Differentiable Rendering / Auto-Calibration
 pub use differentiable_render::{
-    MaterialParams, ParamGradient, LossConfig, AutoCalibrator,
-    Optimizer, AdamOptimizer, SgdOptimizer,
-    fresnel_schlick_diff, beer_lambert_diff, henyey_greenstein_diff,
-    thin_film_reflectance_diff, forward_dielectric, forward_thin_film, forward_metal,
-    reference_presets,
+    beer_lambert_diff, forward_dielectric, forward_metal, forward_thin_film, fresnel_schlick_diff,
+    henyey_greenstein_diff, reference_presets, thin_film_reflectance_diff, AdamOptimizer,
+    AutoCalibrator, LossConfig, MaterialParams, Optimizer, ParamGradient, SgdOptimizer,
 };
 
 // PBR Phase 5 - Dynamic Thin-Film
 pub use thin_film_dynamic::{
-    DynamicFilmLayer, DynamicThinFilmStack, HeightMap, SubstrateProperties,
-    IridescenceMap,
-    dynamic_presets as thin_film_dynamic_presets,
+    dynamic_presets as thin_film_dynamic_presets, DynamicFilmLayer, DynamicThinFilmStack,
+    HeightMap, IridescenceMap, SubstrateProperties,
 };
 
 // PBR Phase 5 - Dynamic Metal Oxidation
 pub use metal_oxidation_dynamic::{
-    Element, AlloyComposition, OxidationKinetics, OxidationState,
-    OxideStructure, OxideLayerProperties, DynamicOxidizedMetal,
-    OxidationSimulation,
-    oxidation_presets,
-    to_css_oxidized, to_css_oxidation_animation,
+    oxidation_presets, to_css_oxidation_animation, to_css_oxidized, AlloyComposition,
+    DynamicOxidizedMetal, Element, OxidationKinetics, OxidationSimulation, OxidationState,
+    OxideLayerProperties, OxideStructure,
 };
 
 // PBR Phase 5 - Advanced Mie Physics
 pub use mie_physics::{
-    Particle, ParticleSpecies, MediumProperties,
-    ParticleDynamics, ParticleEnsemble, SizeStatistics,
-    ScatteringField, TurbulenceParams,
-    henyey_greenstein as hg_phase, ensemble_phase_function,
-    mie_approximation,
-    ensemble_presets,
-    to_css_scattering, to_css_scattering_animation,
+    ensemble_phase_function, ensemble_presets, henyey_greenstein as hg_phase, mie_approximation,
+    to_css_scattering, to_css_scattering_animation, MediumProperties, Particle, ParticleDynamics,
+    ParticleEnsemble, ParticleSpecies, ScatteringField, SizeStatistics, TurbulenceParams,
 };
 
 // PBR Phase 5 - Validation and Benchmarks
 pub use phase5_validation::{
-    validate_differentiable_gradients, validate_material_params,
-    validate_dynamic_thin_film, validate_metal_oxidation,
-    validate_mie_physics, validate_integration,
-    benchmark_phase5, analyze_memory as phase5_memory_analysis,
-    run_all_validations, generate_validation_report,
-    ValidationResult, BenchmarkResults, MemoryAnalysis,
+    analyze_memory as phase5_memory_analysis, benchmark_phase5, generate_validation_report,
+    run_all_validations, validate_differentiable_gradients, validate_dynamic_thin_film,
+    validate_integration, validate_material_params, validate_metal_oxidation, validate_mie_physics,
+    BenchmarkResults, MemoryAnalysis, ValidationResult,
 };
 
 // PBR Phase 6 - Performance Optimization & Research-Grade Features
-pub mod perceptual_loss; // ✅ PBR Phase 6 - LAB color space & Delta E metrics
-pub mod material_datasets; // ✅ PBR Phase 6 - Reference spectral data for calibration
-pub mod simd_batch; // ✅ PBR Phase 6 - SIMD-accelerated batch evaluation
 pub mod combined_effects; // ✅ PBR Phase 6 - Unified effect compositor
-pub mod phase6_validation; // ✅ PBR Phase 6 - Benchmarks and validation
+pub mod material_datasets; // ✅ PBR Phase 6 - Reference spectral data for calibration
+pub mod perceptual_loss; // ✅ PBR Phase 6 - LAB color space & Delta E metrics
+pub mod phase6_validation;
+pub mod simd_batch; // ✅ PBR Phase 6 - SIMD-accelerated batch evaluation // ✅ PBR Phase 6 - Benchmarks and validation
 
 // PBR Phase 6 - Perceptual Loss Functions
 pub use perceptual_loss::{
-    LabColor, XyzColor, Illuminant,
-    DeltaEFormula, PerceptualLossConfig,
-    rgb_to_xyz, xyz_to_rgb, xyz_to_lab, lab_to_xyz, rgb_to_lab, lab_to_rgb,
-    delta_e_76, delta_e_94, delta_e_2000,
-    perceptual_loss, perceptual_loss_gradient,
+    delta_e_2000, delta_e_76, delta_e_94, lab_to_rgb, lab_to_xyz, perceptual_loss,
+    perceptual_loss_gradient, rgb_to_lab, rgb_to_xyz, xyz_to_lab, xyz_to_rgb, DeltaEFormula,
+    Illuminant, LabColor, PerceptualLossConfig, XyzColor,
 };
 
 // PBR Phase 6 - Reference Material Datasets
 pub use material_datasets::{
-    MaterialCategory, MeasurementMetadata, SpectralMeasurement,
-    MaterialDatabase,
+    MaterialCategory, MaterialDatabase, MeasurementMetadata, SpectralMeasurement,
 };
 
 // PBR Phase 6 - SIMD Batch Evaluation
 pub use simd_batch::{
-    SimdBatchInput, SimdBatchResult, SimdConfig,
-    SimdBatchEvaluator,
-    fresnel_schlick_8, beer_lambert_8, henyey_greenstein_8,
+    beer_lambert_8, fresnel_schlick_8, henyey_greenstein_8, SimdBatchEvaluator, SimdBatchInput,
+    SimdBatchResult, SimdConfig,
 };
 
 // PBR Phase 6 - Combined Effects Compositor
 pub use combined_effects::{
-    EffectLayer, BlendMode, RoughnessModel,
-    CombinedMaterial, CombinedMaterialBuilder,
-    presets as combined_presets,
+    presets as combined_presets, BlendMode, CombinedMaterial, CombinedMaterialBuilder, EffectLayer,
+    RoughnessModel,
 };
 
 // PBR Phase 6 - Validation and Benchmarks
 pub use phase6_validation::{
-    validate_perceptual_loss, validate_material_datasets,
-    validate_simd_batch, validate_combined_effects,
-    benchmark_phase6,
-    SimdBenchmarks, Phase6MemoryAnalysis,
+    benchmark_phase6, validate_combined_effects, validate_material_datasets,
+    validate_perceptual_loss, validate_simd_batch, Phase6MemoryAnalysis, SimdBenchmarks,
     ValidationResult as Phase6ValidationResult,
 };
 
 // PBR Phase 7 - Ultra-Realistic Rendering & Advanced Parallelization
-pub mod simd_parallel; // ✅ PBR Phase 7 - CPU parallelization with SIMD inner loops
-pub mod spectral_render; // ✅ PBR Phase 7 - Full spectral rendering with CIE CMF
 pub mod auto_calibration_realtime; // ✅ PBR Phase 7 - Real-time perceptual calibration
 pub mod combined_effects_advanced; // ✅ PBR Phase 7 - Extended effect layers with Phase 5 dynamics
+pub mod phase7_validation;
 pub mod presets_experimental; // ✅ PBR Phase 7 - 8 ultra-realistic experimental presets
-pub mod phase7_validation; // ✅ PBR Phase 7 - Benchmarks and validation
+pub mod simd_parallel; // ✅ PBR Phase 7 - CPU parallelization with SIMD inner loops
+pub mod spectral_render; // ✅ PBR Phase 7 - Full spectral rendering with CIE CMF // ✅ PBR Phase 7 - Benchmarks and validation
 
 // PBR Phase 7 - Parallel Batch Evaluation
-pub use simd_parallel::{
-    ParallelConfig, ParallelBatchEvaluator, ParallelBenchmark,
-};
+pub use simd_parallel::{ParallelBatchEvaluator, ParallelBenchmark, ParallelConfig};
 
 // PBR Phase 7 - Full Spectral Rendering
 pub use spectral_render::{
-    SpectralRenderConfig, SpectralMaterialEvaluator, SpectralRadiance,
-    ColorMatchingLUT, WAVELENGTH_COUNT,
+    ColorMatchingLUT, SpectralMaterialEvaluator, SpectralRadiance, SpectralRenderConfig,
+    WAVELENGTH_COUNT,
 };
 
 // PBR Phase 7 - Real-Time Auto-Calibration
 pub use auto_calibration_realtime::{
-    RealtimeCalibrationConfig, CalibrationFeedbackLoop, ConvergenceStatus,
-    realtime_calibrate, compare_to_dataset, perceptual_match_score,
+    compare_to_dataset, perceptual_match_score, realtime_calibrate, CalibrationFeedbackLoop,
+    ConvergenceStatus, RealtimeCalibrationConfig,
 };
 
 // PBR Phase 7 - Advanced Combined Effects
 pub use combined_effects_advanced::{
-    AdvancedEffectLayer, AdvancedCombinedMaterial, AdvancedCombinedMaterialBuilder,
-    PhysicalState, DispersionModel as AdvancedDispersionModel,
-    SizeDistribution as AdvancedSizeDistribution, TemperatureGradientConfig, GradientType,
-    total_advanced_memory,
+    total_advanced_memory, AdvancedCombinedMaterial, AdvancedCombinedMaterialBuilder,
+    AdvancedEffectLayer, DispersionModel as AdvancedDispersionModel, GradientType, PhysicalState,
+    SizeDistribution as AdvancedSizeDistribution, TemperatureGradientConfig,
 };
 
 // PBR Phase 7 - Experimental Presets
 pub use presets_experimental::{
-    morpho_dynamic, copper_aging, stressed_crystal, opalescent_suspension,
-    titanium_heated, dynamic_soap_bubble, ancient_bronze, oil_on_water_dynamic,
-    preset_catalog, create_default as create_experimental_preset,
-    list_presets as list_experimental_presets,
-    PresetInfo, total_presets_memory,
+    ancient_bronze, copper_aging, create_default as create_experimental_preset,
+    dynamic_soap_bubble, list_presets as list_experimental_presets, morpho_dynamic,
+    oil_on_water_dynamic, opalescent_suspension, preset_catalog, stressed_crystal, titanium_heated,
+    total_presets_memory, PresetInfo,
 };
 
 // PBR Phase 7 - Validation and Benchmarks
 pub use phase7_validation::{
-    benchmark_parallel_performance, benchmark_spectral_rendering, benchmark_calibration,
-    analyze_phase7_memory, validate_perceptual_accuracy,
-    validate_parallel_correctness, validate_spectral_correctness, validate_experimental_presets,
-    benchmark_phase7, compare_phase6_vs_phase7, generate_phase7_report,
-    ParallelComparison, SpectralComparison, CalibrationMetrics,
-    Phase7MemoryAnalysis, PerceptualValidation, Phase7BenchmarkResults, Phase7Comparison,
+    analyze_phase7_memory, benchmark_calibration, benchmark_parallel_performance, benchmark_phase7,
+    benchmark_spectral_rendering, compare_phase6_vs_phase7, generate_phase7_report,
+    validate_experimental_presets, validate_parallel_correctness, validate_perceptual_accuracy,
+    validate_spectral_correctness, CalibrationMetrics, ParallelComparison, PerceptualValidation,
+    Phase7BenchmarkResults, Phase7Comparison, Phase7MemoryAnalysis, SpectralComparison,
 };
 
 // PBR Phase 8 - Reference-Grade Scientific Validation & Ecosystem Integration
-pub mod reference_renderer; // ✅ PBR Phase 8 - IEEE754 full precision rendering
-pub mod spectral_error; // ✅ PBR Phase 8 - Comprehensive spectral/perceptual error metrics
-pub mod material_fingerprint; // ✅ PBR Phase 8 - Deterministic material hashing & versioning
-pub mod external_validation; // ✅ PBR Phase 8 - External dataset validation framework
+pub mod canonical_demos;
 pub mod dataset_merl; // ✅ PBR Phase 8 - MERL BRDF dataset support
+pub mod external_validation; // ✅ PBR Phase 8 - External dataset validation framework
 pub mod material_export; // ✅ PBR Phase 8 - GLSL/WGSL/MaterialX/CSS export
+pub mod material_fingerprint; // ✅ PBR Phase 8 - Deterministic material hashing & versioning
 pub mod material_import; // ✅ PBR Phase 8 - MaterialX/glTF/JSON import
-pub mod plugin_api; // ✅ PBR Phase 8 - Versioned plugin system
-pub mod research_api; // ✅ PBR Phase 8 - ML integration & optimization hooks
 pub mod phase8_validation; // ✅ PBR Phase 8 - Benchmarks and reports
-pub mod tier_validation; // ✅ PBR Phase 8 - Cross-tier validation
-pub mod canonical_demos; // ✅ PBR Phase 8 - Reproducible scientific demos
+pub mod plugin_api; // ✅ PBR Phase 8 - Versioned plugin system
+pub mod reference_renderer; // ✅ PBR Phase 8 - IEEE754 full precision rendering
+pub mod research_api; // ✅ PBR Phase 8 - ML integration & optimization hooks
+pub mod spectral_error; // ✅ PBR Phase 8 - Comprehensive spectral/perceptual error metrics
+pub mod tier_validation; // ✅ PBR Phase 8 - Cross-tier validation // ✅ PBR Phase 8 - Reproducible scientific demos
 
 // PBR Phase 8 - Reference Renderer
 pub use reference_renderer::{
-    PrecisionMode, ReferenceRenderConfig, ReferenceRenderer, ReferenceRenderResult,
-    LutVsReferenceComparison,
-    total_reference_memory,
+    total_reference_memory, LutVsReferenceComparison, PrecisionMode, ReferenceRenderConfig,
+    ReferenceRenderResult, ReferenceRenderer,
 };
 
 // PBR Phase 8 - Spectral Error Metrics
 pub use spectral_error::{
-    SpectralErrorMetrics, PerceptualErrorMetrics, EnergyMetrics, ComprehensiveMetrics,
-    SpectralQualityGrade, PerceptualQualityGrade, ValidationStatus,
-    compute_spectral_metrics, compute_perceptual_metrics, compute_energy_metrics,
-    compute_comprehensive, compute_spectral_angle,
-    total_error_memory,
+    compute_comprehensive, compute_energy_metrics, compute_perceptual_metrics,
+    compute_spectral_angle, compute_spectral_metrics, total_error_memory, ComprehensiveMetrics,
+    EnergyMetrics, PerceptualErrorMetrics, PerceptualQualityGrade, SpectralErrorMetrics,
+    SpectralQualityGrade, ValidationStatus,
 };
 
 // PBR Phase 8 - Material Fingerprinting
 pub use material_fingerprint::{
-    MaterialFingerprint, MaterialVersion, CalibrationLog, CalibrationEntry,
-    deterministic_hash, fingerprint_from_params, fingerprint_from_named,
-    total_fingerprint_memory,
+    deterministic_hash, fingerprint_from_named, fingerprint_from_params, total_fingerprint_memory,
+    CalibrationEntry, CalibrationLog, MaterialFingerprint, MaterialVersion,
 };
 
 // PBR Phase 8 - External Validation Framework
 pub use external_validation::{
-    ExternalDataset, ValidationResult as ExternalValidationResult, ValidationReport,
-    ReportSummary, MaterialValidation, ValidationEngine, ValidationConfig,
-    total_validation_memory,
+    total_validation_memory, ExternalDataset, MaterialValidation, ReportSummary, ValidationConfig,
+    ValidationEngine, ValidationReport, ValidationResult as ExternalValidationResult,
 };
 
 // PBR Phase 8 - MERL BRDF Dataset
 pub use dataset_merl::{
-    MerlMaterial, MerlDataset, MaterialCategory as MerlCategory,
-    total_merl_memory,
+    total_merl_memory, MaterialCategory as MerlCategory, MerlDataset, MerlMaterial,
 };
 
 // PBR Phase 8 - Material Export
 pub use material_export::{
-    ExportTarget, GlslVersion, MaterialDescriptor, ThinFilmDescriptor,
-    ExportOptions, MaterialExporter,
-    total_export_memory,
+    total_export_memory, ExportOptions, ExportTarget, GlslVersion, MaterialDescriptor,
+    MaterialExporter, ThinFilmDescriptor,
 };
 
 // PBR Phase 8 - Material Import
 pub use material_import::{
-    ImportSource, ImportError, ImportAdapter, MaterialImporter,
-    total_import_memory,
+    total_import_memory, ImportAdapter, ImportError, ImportSource, MaterialImporter,
 };
 
 // PBR Phase 8 - Plugin System
 pub use plugin_api::{
-    PLUGIN_API_VERSION, PLUGIN_API_VERSION_STRING,
-    MaterialType, PluginMaterialParams, EvaluationContext, PluginRenderOutput,
-    SpectralMeasurement as PluginSpectralMeasurement, RenderPlugin, DatasetPlugin, MetricPlugin,
-    PluginRegistry, PluginError, PluginInfo, PluginInventory,
-    LambertianPlugin, RmseMetricPlugin, SamMetricPlugin,
-    estimate_plugin_api_memory,
+    estimate_plugin_api_memory, DatasetPlugin, EvaluationContext, LambertianPlugin, MaterialType,
+    MetricPlugin, PluginError, PluginInfo, PluginInventory, PluginMaterialParams, PluginRegistry,
+    PluginRenderOutput, RenderPlugin, RmseMetricPlugin, SamMetricPlugin,
+    SpectralMeasurement as PluginSpectralMeasurement, PLUGIN_API_VERSION,
+    PLUGIN_API_VERSION_STRING,
 };
 
 // PBR Phase 8 - Research API
 pub use research_api::{
-    ForwardFunction, ParameterBounds, ParameterMapping, MaterialForwardFunction,
-    ObjectiveType, ObjectiveFunction, ConstraintType, Constraint,
-    MultiObjectiveTarget, OptimizationResult, GridSearchOptimizer,
-    estimate_research_api_memory,
+    estimate_research_api_memory, Constraint, ConstraintType, ForwardFunction, GridSearchOptimizer,
+    MaterialForwardFunction, MultiObjectiveTarget, ObjectiveFunction, ObjectiveType,
+    OptimizationResult, ParameterBounds, ParameterMapping,
 };
 
 // PBR Phase 8 - Validation and Benchmarks
 pub use phase8_validation::{
-    benchmark_reference_accuracy, benchmark_merl_validation, benchmark_export_performance,
-    benchmark_fingerprint_consistency, benchmark_plugin_overhead, analyze_phase8_memory,
-    benchmark_phase8, generate_phase8_report, generate_phase8_json_report,
-    LutVsReferenceResults, MerlValidationResults, ExportTimingResults,
-    FingerprintResults, PluginOverheadResults, Phase8MemoryAnalysis, Phase8BenchmarkResults,
+    analyze_phase8_memory, benchmark_export_performance, benchmark_fingerprint_consistency,
+    benchmark_merl_validation, benchmark_phase8, benchmark_plugin_overhead,
+    benchmark_reference_accuracy, generate_phase8_json_report, generate_phase8_report,
+    ExportTimingResults, FingerprintResults, LutVsReferenceResults, MerlValidationResults,
+    Phase8BenchmarkResults, Phase8MemoryAnalysis, PluginOverheadResults,
 };
 
 // PBR Phase 8 - Tier Cross-Validation
 pub use tier_validation::{
-    TierValidationResult, CrossValidationReport,
-    run_cross_validation, run_metal_validation, run_dispersion_validation,
-    generate_full_validation_report, get_validation_summary,
+    generate_full_validation_report, get_validation_summary, run_cross_validation,
+    run_dispersion_validation, run_metal_validation, CrossValidationReport, TierValidationResult,
 };
 
 // PBR Phase 8 - Canonical Demos
 pub use canonical_demos::{
-    DemoResult, DemoSuite,
-    demo_dielectric_vs_conductor, demo_thin_film_soap_bubble, demo_ar_coating,
-    demo_fog_vs_smoke, demo_copper_patina, demo_spectral_vs_rgb,
-    run_all_demos, run_demo,
+    demo_ar_coating, demo_copper_patina, demo_dielectric_vs_conductor, demo_fog_vs_smoke,
+    demo_spectral_vs_rgb, demo_thin_film_soap_bubble, run_all_demos, run_demo, DemoResult,
+    DemoSuite,
 };
 
 // PBR Phase 9 - Unified BSDF + Perceptual Rendering Loop
-pub mod unified_bsdf; // ✅ PBR Phase 9 - Unified BSDF trait with energy conservation
 pub mod anisotropic_brdf; // ✅ PBR Phase 9 - Anisotropic GGX microfacet model
-pub mod subsurface_scattering; // ✅ PBR Phase 9 - Diffusion BSSRDF for translucent materials
 pub mod perceptual_loop; // ✅ PBR Phase 9 - Closed-loop perceptual optimization
-pub mod phase9_validation; // ✅ PBR Phase 9 - Comprehensive validation suite
+pub mod phase9_validation;
+pub mod subsurface_scattering; // ✅ PBR Phase 9 - Diffusion BSSRDF for translucent materials
+pub mod unified_bsdf; // ✅ PBR Phase 9 - Unified BSDF trait with energy conservation // ✅ PBR Phase 9 - Comprehensive validation suite
 
 // PBR Phase 9 - Unified BSDF
 pub use unified_bsdf::{
-    BSDF, BSDFContext, BSDFResponse, BSDFSample, EnergyValidation,
-    Vector3 as BSDFVector3,
-    DielectricBSDF, ConductorBSDF, ThinFilmBSDF, LayeredBSDF, LambertianBSDF,
-    DispersionModel as BSDFDispersionModel,
     evaluate_rgb as bsdf_evaluate_rgb, evaluate_spectral as bsdf_evaluate_spectral,
-    validate_energy_conservation as bsdf_validate_energy,
-    total_unified_bsdf_memory,
+    total_unified_bsdf_memory, validate_energy_conservation as bsdf_validate_energy, BSDFContext,
+    BSDFResponse, BSDFSample, ConductorBSDF, DielectricBSDF,
+    DispersionModel as BSDFDispersionModel, EnergyValidation, LambertianBSDF, LayeredBSDF,
+    ThinFilmBSDF, Vector3 as BSDFVector3, BSDF,
 };
 
 // PBR Phase 9 - Anisotropic BRDF
 pub use anisotropic_brdf::{
-    AnisotropicGGX, AnisotropicConductor, FiberBSDF,
-    presets as anisotropic_presets,
-    anisotropy_strength, strength_to_alphas,
-    total_anisotropic_memory,
+    anisotropy_strength, presets as anisotropic_presets, strength_to_alphas,
+    total_anisotropic_memory, AnisotropicConductor, AnisotropicGGX, FiberBSDF,
 };
 
 // PBR Phase 9 - Subsurface Scattering
 pub use subsurface_scattering::{
-    SubsurfaceParams, DiffusionBSSRDF, SubsurfaceBSDF,
-    sss_presets,
-    total_sss_memory,
+    sss_presets, total_sss_memory, DiffusionBSSRDF, SubsurfaceBSDF, SubsurfaceParams,
 };
 
 // PBR Phase 9 - Perceptual Rendering Loop
 pub use perceptual_loop::{
-    MaterialParams as PerceptualMaterialParams, ParameterBounds as PerceptualBounds, PerceptualTarget,
-    AdamState, ConvergenceStatus as PerceptualConvergenceStatus, OptimizationResult as PerceptualOptResult,
-    PerceptualLoopConfig, PerceptualRenderingLoop,
-    quick_match_color,
-    total_perceptual_loop_memory,
+    quick_match_color, total_perceptual_loop_memory, AdamState,
+    ConvergenceStatus as PerceptualConvergenceStatus, MaterialParams as PerceptualMaterialParams,
+    OptimizationResult as PerceptualOptResult, ParameterBounds as PerceptualBounds,
+    PerceptualLoopConfig, PerceptualRenderingLoop, PerceptualTarget,
 };
 
 // PBR Phase 9 - Validation
 pub use phase9_validation::{
-    BSDFComparisonResults, AnisotropicValidation, SSSValidation, ConvergenceResults,
-    EnergyConservationReport, Phase9MemoryAnalysis, Phase9ValidationReport,
-    validate_unified_vs_legacy, validate_anisotropic, validate_sss,
-    validate_perceptual_loop, validate_energy_conservation_all as validate_phase9_energy,
-    analyze_memory as analyze_phase9_memory,
-    run_full_validation as run_phase9_validation,
-    generate_report as generate_phase9_report,
+    analyze_memory as analyze_phase9_memory, generate_report as generate_phase9_report,
+    run_full_validation as run_phase9_validation, validate_anisotropic,
+    validate_energy_conservation_all as validate_phase9_energy, validate_perceptual_loop,
+    validate_sss, validate_unified_vs_legacy, AnisotropicValidation, BSDFComparisonResults,
+    ConvergenceResults, EnergyConservationReport, Phase9MemoryAnalysis, Phase9ValidationReport,
+    SSSValidation,
 };
 
 // PBR Phase 10 - Neural Correction Layers & Hybrid Physical-Neural Rendering
-pub mod neural_correction; // ✅ PBR Phase 10 - SIREN MLP for physics residuals
 pub mod neural_constraints; // ✅ PBR Phase 10 - Physics-based constraints enforcement
+pub mod neural_correction; // ✅ PBR Phase 10 - SIREN MLP for physics residuals
+pub mod phase10_validation;
 pub mod training_dataset; // ✅ PBR Phase 10 - Synthetic + MERL training data generation
-pub mod training_pipeline; // ✅ PBR Phase 10 - Adam training loop with perceptual loss
-pub mod phase10_validation; // ✅ PBR Phase 10 - Comprehensive validation suite
+pub mod training_pipeline; // ✅ PBR Phase 10 - Adam training loop with perceptual loss // ✅ PBR Phase 10 - Comprehensive validation suite
 
 // PBR Phase 10 - Neural Correction MLP
 pub use neural_correction::{
-    NeuralCorrectionMLP, CorrectionInput, CorrectionOutput,
-    NeuralCorrectedBSDF,
-    total_neural_correction_memory,
+    total_neural_correction_memory, CorrectionInput, CorrectionOutput, NeuralCorrectedBSDF,
+    NeuralCorrectionMLP,
 };
 
 // PBR Phase 10 - Physics Constraints
 pub use neural_constraints::{
-    ConstraintType as NeuralConstraintType, ConstraintConfig, ConstraintValidator,
-    RegularizationTerms, ConstraintViolationReport,
-    total_neural_constraints_memory,
+    total_neural_constraints_memory, ConstraintConfig, ConstraintType as NeuralConstraintType,
+    ConstraintValidator, ConstraintViolationReport, RegularizationTerms,
 };
 
 // PBR Phase 10 - Training Dataset
 pub use training_dataset::{
-    TrainingSample, DatasetMetadata, DatasetSource, AugmentationConfig,
-    TrainingDataset,
-    estimate_dataset_memory,
+    estimate_dataset_memory, AugmentationConfig, DatasetMetadata, DatasetSource, TrainingDataset,
+    TrainingSample,
 };
 
 // PBR Phase 10 - Training Pipeline
 pub use training_pipeline::{
-    LossWeights, TrainingConfig, TrainingResult,
-    TrainingPipeline,
-    total_training_pipeline_memory,
+    total_training_pipeline_memory, LossWeights, TrainingConfig, TrainingPipeline, TrainingResult,
 };
 
 // PBR Phase 10 - Validation
 pub use phase10_validation::{
-    ComparisonResults, PerceptualImprovement, EnergyValidation as Phase10EnergyValidation,
-    NetworkStats, Phase10MemoryAnalysis, Phase10ValidationReport,
-    validate_physical_vs_hybrid, validate_perceptual_improvement,
-    validate_energy_conservation as validate_phase10_energy,
-    compute_network_stats, analyze_phase10_memory,
+    analyze_phase10_memory, compute_network_stats, generate_report as generate_phase10_report,
     run_full_validation as run_phase10_validation,
-    generate_report as generate_phase10_report,
+    validate_energy_conservation as validate_phase10_energy, validate_perceptual_improvement,
+    validate_physical_vs_hybrid, ComparisonResults, EnergyValidation as Phase10EnergyValidation,
+    NetworkStats, PerceptualImprovement, Phase10MemoryAnalysis, Phase10ValidationReport,
 };
 
 // PBR Phase 11 - Production Readiness, GPU Acceleration & Public Canonicalization
@@ -641,28 +570,21 @@ pub mod pbr_api; // ✅ PBR Phase 11 - Stable public API v1.0
 pub mod phase11_validation; // ✅ PBR Phase 11 - Validation suite
 
 // PBR Phase 11 - GPU Backend
-pub use gpu_backend::{
-    GpuBackendConfig, GpuBackendStats,
-    estimate_gpu_backend_memory,
-};
+pub use gpu_backend::{estimate_gpu_backend_memory, GpuBackendConfig, GpuBackendStats};
 
 #[cfg(feature = "gpu")]
 pub use gpu_backend::{
-    GpuContext, GpuContextError, GpuCapabilities, DeviceLimits,
-    BufferPool, BufferHandle, MaterialGpuData, BSDFResponseGpu,
-    ComputePipelineCache, PipelineType,
-    GpuBatchEvaluator, GpuBatchResult, GpuDispatchConfig,
-    GpuCpuParityTest, ParityConfig, ParityResult,
-    AutoFallback, FallbackReason, FallbackStats, FallbackBatchEvaluator,
+    AutoFallback, BSDFResponseGpu, BufferHandle, BufferPool, ComputePipelineCache, DeviceLimits,
+    FallbackBatchEvaluator, FallbackReason, FallbackStats, GpuBatchEvaluator, GpuBatchResult,
+    GpuCapabilities, GpuContext, GpuContextError, GpuCpuParityTest, GpuDispatchConfig,
+    MaterialGpuData, ParityConfig, ParityResult, PipelineType,
 };
 
 // PBR Phase 11 - Stable Public API v1.0
 pub use pbr_api::v1::{
-    API_VERSION, API_VERSION_STRING, is_compatible,
-    Material, Layer, MaterialBuilder, MaterialPreset,
-    EvaluationContext as PbrEvaluationContext, Vector3 as PbrVector3,
-    QualityTier as PbrQualityTier,
-    AnisotropicGGX as PbrAnisotropicGGX,
+    is_compatible, AnisotropicGGX as PbrAnisotropicGGX, EvaluationContext as PbrEvaluationContext,
+    Layer, Material, MaterialBuilder, MaterialPreset, QualityTier as PbrQualityTier,
+    Vector3 as PbrVector3, API_VERSION, API_VERSION_STRING,
 };
 
 // PBR Phase 11 - Prelude for convenient imports
@@ -672,363 +594,433 @@ pub mod pbr_prelude {
 
 // PBR Phase 11 - Validation
 pub use phase11_validation::{
-    GpuParityResults, ApiStabilityResults, MemoryResults, EnergyResults,
-    Phase11MemoryAnalysis, Phase11ValidationReport,
-    validate_gpu_parity, validate_api_stability, validate_memory,
-    validate_energy_conservation as validate_phase11_energy,
-    analyze_phase11_memory,
-    run_full_validation as run_phase11_validation,
-    generate_report as generate_phase11_report,
+    analyze_phase11_memory, generate_report as generate_phase11_report,
+    run_full_validation as run_phase11_validation, validate_api_stability,
+    validate_energy_conservation as validate_phase11_energy, validate_gpu_parity, validate_memory,
+    ApiStabilityResults, EnergyResults, GpuParityResults, MemoryResults, Phase11MemoryAnalysis,
+    Phase11ValidationReport,
 };
 
 // PBR Phase 12 - Temporal Light Transport, Spectral Coherence & Differentiable Foundations
-pub mod temporal; // ✅ PBR Phase 12 - Temporal BSDF evaluation with time-aware materials
-pub mod spectral_coherence; // ✅ PBR Phase 12 - Spectral flicker prevention and coherent sampling
 pub mod neural_temporal_correction; // ✅ PBR Phase 12 - Neural correction with cumulative drift bounding
-pub mod phase12_validation; // ✅ PBR Phase 12 - Validation suite for temporal stability
+pub mod phase12_validation;
+pub mod spectral_coherence; // ✅ PBR Phase 12 - Spectral flicker prevention and coherent sampling
+pub mod temporal; // ✅ PBR Phase 12 - Temporal BSDF evaluation with time-aware materials // ✅ PBR Phase 12 - Validation suite for temporal stability
 
 // PBR Phase 12 - Temporal Material Model
 pub use temporal::{
-    TemporalContext, TemporalContextBuilder,
-    DriftTracker, DriftConfig, DriftStatus,
-    TemporalBSDF, EvolutionRate, TemporalEvolution, TemporalBSDFInfo,
-    TemporalDielectric, DielectricEvolution,
-    TemporalThinFilm, ThinFilmEvolution,
-    TemporalConductor, ConductorEvolution,
-    InterpolationMode, Interpolation, RateLimiter, ExponentialMovingAverage,
-    smoothstep, smootherstep, lerp, inverse_lerp, remap,
-    estimate_temporal_memory,
+    estimate_temporal_memory, inverse_lerp, lerp, remap, smootherstep, smoothstep,
+    ConductorEvolution, DielectricEvolution, DriftConfig, DriftStatus, DriftTracker, EvolutionRate,
+    ExponentialMovingAverage, Interpolation, InterpolationMode, RateLimiter, TemporalBSDF,
+    TemporalBSDFInfo, TemporalConductor, TemporalContext, TemporalContextBuilder,
+    TemporalDielectric, TemporalEvolution, TemporalThinFilm, ThinFilmEvolution,
 };
 
 // PBR Phase 12 - Spectral Coherence
 pub use spectral_coherence::{
-    SpectralPacket, SpectralPacketBuilder, CoherenceMetadata, WavelengthBand,
-    CoherentSampler, SamplingStrategy, StratifiedSampler, JitteredSampler,
-    SpectralInterpolator, BlendConfig, GradientLimiter,
-    FlickerValidator, FlickerConfig, FlickerStatus, FlickerReport, FrameComparison,
-    estimate_spectral_coherence_memory,
+    estimate_spectral_coherence_memory, BlendConfig, CoherenceMetadata, CoherentSampler,
+    FlickerConfig, FlickerReport, FlickerStatus, FlickerValidator, FrameComparison,
+    GradientLimiter, JitteredSampler, SamplingStrategy, SpectralInterpolator, SpectralPacket,
+    SpectralPacketBuilder, StratifiedSampler, WavelengthBand,
 };
 
 // PBR Phase 12 - Neural Temporal Correction
 pub use neural_temporal_correction::{
-    TemporalCorrectionInput, TemporalNeuralCorrection, TemporalNeuralConfig,
-    CumulativeDriftTracker, DriftLimitConfig,
-    TemporalNeuralCorrectedBSDF,
-    estimate_temporal_neural_memory,
+    estimate_temporal_neural_memory, CumulativeDriftTracker, DriftLimitConfig,
+    TemporalCorrectionInput, TemporalNeuralConfig, TemporalNeuralCorrectedBSDF,
+    TemporalNeuralCorrection,
 };
 
 // PBR Phase 12 - Validation
 pub use phase12_validation::{
-    Phase12ValidationConfig, Phase12ValidationSuite,
-    ValidationResult as Phase12ValidationResult, Phase12ValidationReport,
-    run_quick_validation as run_phase12_quick,
-    run_full_validation as run_phase12_full,
-    run_strict_validation as run_phase12_strict,
+    run_full_validation as run_phase12_full, run_quick_validation as run_phase12_quick,
+    run_strict_validation as run_phase12_strict, Phase12ValidationConfig, Phase12ValidationReport,
+    Phase12ValidationSuite, ValidationResult as Phase12ValidationResult,
 };
 
 // PBR Phase 13 - Differentiable Rendering, Inverse Materials & Physical Parameter Recovery
 pub mod differentiable; // ✅ PBR Phase 13 - DifferentiableBSDF trait with analytical gradients
-pub mod inverse_material; // ✅ PBR Phase 13 - Adam/L-BFGS optimization for parameter recovery
-pub mod temporal_differentiable; // ✅ PBR Phase 13 - BPTT and evolution gradients
-pub mod spectral_gradients; // ✅ PBR Phase 13 - Per-wavelength gradients and ΔE2000
 pub mod gradient_validation; // ✅ PBR Phase 13 - Analytical vs numerical gradient verification
-pub mod phase13_validation; // ✅ PBR Phase 13 - Comprehensive validation suite
+pub mod inverse_material; // ✅ PBR Phase 13 - Adam/L-BFGS optimization for parameter recovery
+pub mod phase13_validation;
+pub mod spectral_gradients; // ✅ PBR Phase 13 - Per-wavelength gradients and ΔE2000
+pub mod temporal_differentiable; // ✅ PBR Phase 13 - BPTT and evolution gradients // ✅ PBR Phase 13 - Comprehensive validation suite
 
 // PBR Phase 13 - Differentiable BSDF Rendering
 pub use differentiable::{
-    DifferentiableBSDF, DifferentiableResponse, ParameterGradients,
-    ParameterBounds as DifferentiableBounds, GradientConfig, GradientVerification,
-    fresnel_schlick_gradient, fresnel_conductor_gradient,
-    ggx_distribution_gradient, smith_g_gradient, beer_lambert_gradient,
-    DifferentiableDielectric, DifferentiableConductor, DifferentiableThinFilm,
-    DifferentiableLayered, LayerConfig,
-    Jacobian, JacobianBuilder,
-    estimate_differentiable_memory,
+    beer_lambert_gradient, estimate_differentiable_memory, fresnel_conductor_gradient,
+    fresnel_schlick_gradient, ggx_distribution_gradient, smith_g_gradient, DifferentiableBSDF,
+    DifferentiableConductor, DifferentiableDielectric, DifferentiableLayered,
+    DifferentiableResponse, DifferentiableThinFilm, GradientConfig, GradientVerification, Jacobian,
+    JacobianBuilder, LayerConfig, ParameterBounds as DifferentiableBounds, ParameterGradients,
 };
 
 // PBR Phase 13 - Inverse Material Solver
 pub use inverse_material::{
-    DifferentiableOptimizer,
-    AdamOptimizer as InverseAdamOptimizer, LBFGSOptimizer,
-    AdamConfig as InverseAdamConfig, LBFGSConfig,
-    BoundsEnforcer, BoundsConfig as InverseBoundsConfig, ProjectionMethod,
-    InverseMaterialSolver, InverseSolverConfig, InverseResult, ConvergenceReason,
-    ReferenceData, ReferenceObservation, LossFunction,
-    TemporalFitter, TemporalFitterConfig, TemporalSequence, TemporalFitResult,
-    recover_ior_from_normal_reflectance, recover_roughness_from_glossiness,
-    estimate_inverse_memory,
+    estimate_inverse_memory, recover_ior_from_normal_reflectance,
+    recover_roughness_from_glossiness, AdamConfig as InverseAdamConfig,
+    AdamOptimizer as InverseAdamOptimizer, BoundsConfig as InverseBoundsConfig, BoundsEnforcer,
+    ConvergenceReason, DifferentiableOptimizer, InverseMaterialSolver, InverseResult,
+    InverseSolverConfig, LBFGSConfig, LBFGSOptimizer, LossFunction, ProjectionMethod,
+    ReferenceData, ReferenceObservation, TemporalFitResult, TemporalFitter, TemporalFitterConfig,
+    TemporalSequence,
 };
 
 // PBR Phase 13 - Temporal Differentiable
 pub use temporal_differentiable::{
-    EvolutionGradient, LinearEvolutionGradient, ExponentialEvolutionGradient,
-    OscillatingEvolutionGradient, EvolutionGradients, EvolutionType,
-    compute_evolution_gradient,
-    BPTT, BPTTConfig, BPTTState, TemporalGradientAccumulator,
-    GradientStabilizer, StabilizerConfig,
-    estimate_temporal_differentiable_memory,
+    compute_evolution_gradient, estimate_temporal_differentiable_memory, BPTTConfig, BPTTState,
+    EvolutionGradient, EvolutionGradients, EvolutionType, ExponentialEvolutionGradient,
+    GradientStabilizer, LinearEvolutionGradient, OscillatingEvolutionGradient, StabilizerConfig,
+    TemporalGradientAccumulator, BPTT,
 };
 
 // PBR Phase 13 - Spectral Gradients
 pub use spectral_gradients::{
-    SpectralGradient, WavelengthGradient, SpectralJacobian,
-    compute_spectral_gradient, VISIBLE_WAVELENGTHS,
-    CauchyDispersion as SpectralCauchyDispersion, SellmeierDispersion as SpectralSellmeierDispersion,
-    Lab, LabGradient, DeltaE2000Gradient, PerceptualLoss as SpectralPerceptualLoss,
-    delta_e_2000 as spectral_delta_e_2000, delta_e_2000_gradient,
-    estimate_spectral_gradients_memory,
+    compute_spectral_gradient, delta_e_2000 as spectral_delta_e_2000, delta_e_2000_gradient,
+    estimate_spectral_gradients_memory, CauchyDispersion as SpectralCauchyDispersion,
+    DeltaE2000Gradient, Lab, LabGradient, PerceptualLoss as SpectralPerceptualLoss,
+    SellmeierDispersion as SpectralSellmeierDispersion, SpectralGradient, SpectralJacobian,
+    WavelengthGradient, VISIBLE_WAVELENGTHS,
 };
 
 // PBR Phase 13 - Gradient Validation
 pub use gradient_validation::{
-    VerificationConfig, GradientCheck, GradientVerificationResult,
-    verify_bsdf_gradients, BatchVerification,
-    numerical_gradient_central, numerical_gradient_forward, numerical_jacobian,
-    quick_verify, full_verify_with_report,
+    full_verify_with_report, numerical_gradient_central, numerical_gradient_forward,
+    numerical_jacobian, quick_verify, verify_bsdf_gradients, BatchVerification, GradientCheck,
+    GradientVerificationResult, VerificationConfig,
 };
 
 // PBR Phase 13 - Validation
 pub use phase13_validation::{
-    Phase13ValidationConfig, Phase13ValidationReport, ValidationTest,
-    run_phase13_validation,
+    run_phase13_validation, Phase13ValidationConfig, Phase13ValidationReport, ValidationTest,
 };
 
 // PBR Phase 14 - Digital Material Twins & Calibration
-pub mod material_twin; // ✅ PBR Phase 14 - MaterialTwin abstraction with UUID, fingerprint, variants
 pub mod calibration; // ✅ PBR Phase 14 - Multi-source calibration (BRDF, spectral, time-series)
-pub mod uncertainty; // ✅ PBR Phase 14 - Covariance, Fisher information, bootstrap CI
 pub mod identifiability; // ✅ PBR Phase 14 - Jacobian rank analysis, parameter freezing
+pub mod material_twin; // ✅ PBR Phase 14 - MaterialTwin abstraction with UUID, fingerprint, variants
+pub mod phase14_validation;
 pub mod twin_validation; // ✅ PBR Phase 14 - TwinValidator, DriftMonitor
-pub mod phase14_validation; // ✅ PBR Phase 14 - Comprehensive validation suite
+pub mod uncertainty; // ✅ PBR Phase 14 - Covariance, Fisher information, bootstrap CI // ✅ PBR Phase 14 - Comprehensive validation suite
 
 // PBR Phase 14 - Material Twin Core
 pub use material_twin::{
-    TwinId, MaterialTwin, TwinBuilder, CalibrationMetadata, CalibrationQuality,
-    TwinVariant, StaticTwinData, TemporalTwinData, LayeredTwinData, MeasuredTwinData,
-    SpectralIdentity, SpectralSignature, SpectralDistance,
+    CalibrationMetadata, CalibrationQuality, LayeredTwinData, MaterialTwin, MeasuredTwinData,
+    SpectralDistance, SpectralIdentity, SpectralSignature, StaticTwinData, TemporalTwinData,
+    TwinBuilder, TwinId, TwinVariant,
 };
 
 // PBR Phase 14 - Calibration Pipeline
 pub use calibration::{
-    CalibrationSource, BRDFSource, SpectralSource, TimeSeriesSource, CombinedSource,
-    BRDFObservation, SpectralObservation, TemporalObservation,
-    LossWeights as CalibrationLossWeights, LossComponents, AggregatedLoss, LossAggregator,
-    ImputationStrategy, PartialDataHandler, DataQuality, MissingDataReport,
-    estimate_calibration_memory,
+    estimate_calibration_memory, AggregatedLoss, BRDFObservation, BRDFSource, CalibrationSource,
+    CombinedSource, DataQuality, ImputationStrategy, LossAggregator, LossComponents,
+    LossWeights as CalibrationLossWeights, MissingDataReport, PartialDataHandler,
+    SpectralObservation, SpectralSource, TemporalObservation, TimeSeriesSource,
 };
 
 // PBR Phase 14 - Uncertainty Estimation
 pub use uncertainty::{
-    ParameterCovarianceMatrix, CovarianceEstimator,
-    FisherInformationMatrix, FisherInformationEstimator,
-    BootstrapConfig, BootstrapResampler, BootstrapResult, ConfidenceInterval,
-    TwinConfidenceReport, ConfidenceWarning, ConfidenceLevel, ParameterUncertainty,
-    estimate_uncertainty_memory,
+    estimate_uncertainty_memory, BootstrapConfig, BootstrapResampler, BootstrapResult,
+    ConfidenceInterval, ConfidenceLevel, ConfidenceWarning, CovarianceEstimator,
+    FisherInformationEstimator, FisherInformationMatrix, ParameterCovarianceMatrix,
+    ParameterUncertainty, TwinConfidenceReport,
 };
 
 // PBR Phase 14 - Identifiability Analysis
 pub use identifiability::{
-    JacobianRankAnalyzer, IdentifiabilityResult, RankDeficiency,
-    ParameterCorrelationMatrix, CorrelationCluster, CorrelationAnalysis,
-    find_correlation_clusters, compute_vif,
-    FreezingRecommendation, FreezingReason, ParameterFreezingRecommender,
-    FreezingStrategy, FreezingReport,
-    estimate_identifiability_memory,
+    compute_vif, estimate_identifiability_memory, find_correlation_clusters, CorrelationAnalysis,
+    CorrelationCluster, FreezingReason, FreezingRecommendation, FreezingReport, FreezingStrategy,
+    IdentifiabilityResult, JacobianRankAnalyzer, ParameterCorrelationMatrix,
+    ParameterFreezingRecommender, RankDeficiency,
 };
 
 // PBR Phase 14 - Twin Validation & Drift Monitoring
 pub use twin_validation::{
-    TwinValidator, ValidationResult as TwinValidationResult, ValidationIssue, IssueCategory,
-    ValidationConfig as TwinValidationConfig, ValidationRecord,
-    DriftMonitor, DriftObservation, DriftStatistics, DriftReport,
-    estimate_validation_memory,
+    estimate_validation_memory, DriftMonitor, DriftObservation, DriftReport, DriftStatistics,
+    IssueCategory, TwinValidator, ValidationConfig as TwinValidationConfig, ValidationIssue,
+    ValidationRecord, ValidationResult as TwinValidationResult,
 };
 
 // PBR Phase 15 - Certifiable Material Twins
-pub mod metrology; // ✅ PBR Phase 15 - Formal metrology layer (measurement, uncertainty, traceability)
-pub mod instruments; // ✅ PBR Phase 15 - Virtual measurement instruments
 pub mod certification; // ✅ PBR Phase 15 - Certification levels, profiles, and auditing
 pub mod compliance; // ✅ PBR Phase 15 - Ground truth validation, neural audit, export
+pub mod instruments; // ✅ PBR Phase 15 - Virtual measurement instruments
+pub mod metrology; // ✅ PBR Phase 15 - Formal metrology layer (measurement, uncertainty, traceability)
 pub mod phase15_validation; // ✅ PBR Phase 15 - Comprehensive validation suite (67+ tests)
 
 // PBR Phase 15 - Metrology Layer
 pub use metrology::{
-    // Units
-    Unit, UnitValue, units_compatible, convert_unit,
-    celsius_to_kelvin, kelvin_to_celsius, deg_to_rad, rad_to_deg,
-    nm_to_um, um_to_nm, fraction_to_percent, percent_to_fraction,
-    // Measurement
-    Measurement, MeasurementId, MeasurementArray, Uncertainty, MeasurementQuality, MeasurementSource,
-    // Traceability
-    TraceabilityChain, TraceabilityEntry, TraceabilityOperation, CalibrationReference,
-    ChainMetadata,
-    // Tolerance
-    ToleranceBudget, ToleranceComponent, ToleranceCategory, ToleranceValidation,
-    CertificationTolerance, ComponentValidation,
-    // Propagation
-    UncertaintyPropagator, PropagationMethod, SensitivityAnalysis,
-    identity_correlation, uniform_correlation, validate_correlation_matrix,
+    celsius_to_kelvin,
+    convert_unit,
+    deg_to_rad,
     // Memory
-    estimate_memory_footprint as estimate_metrology_memory, MetrologyMemoryEstimate,
+    estimate_memory_footprint as estimate_metrology_memory,
+    fraction_to_percent,
+    identity_correlation,
+    kelvin_to_celsius,
+    nm_to_um,
+    percent_to_fraction,
+    rad_to_deg,
+    um_to_nm,
+    uniform_correlation,
+    units_compatible,
+    validate_correlation_matrix,
+    CalibrationReference,
+    CertificationTolerance,
+    ChainMetadata,
+    ComponentValidation,
+    // Measurement
+    Measurement,
+    MeasurementArray,
+    MeasurementId,
+    MeasurementQuality,
+    MeasurementSource,
+    MetrologyMemoryEstimate,
+    PropagationMethod,
+    SensitivityAnalysis,
+    // Tolerance
+    ToleranceBudget,
+    ToleranceCategory,
+    ToleranceComponent,
+    ToleranceValidation,
+    // Traceability
+    TraceabilityChain,
+    TraceabilityEntry,
+    TraceabilityOperation,
+    Uncertainty,
+    // Propagation
+    UncertaintyPropagator,
+    // Units
+    Unit,
+    UnitValue,
 };
 
 // PBR Phase 15 - Virtual Instruments
 pub use instruments::{
-    // Common
-    NoiseModel, Resolution, BiasModel, InstrumentConfig, DetectorGeometry,
-    LightSource as InstrumentLightSource, LightSourceType, Polarization,
-    EnvironmentConditions, SimpleRng,
-    // Gonioreflectometer
-    VirtualGonioreflectometer, GoniometerResult,
-    lambertian_brdf, phong_brdf, fresnel_brdf,
-    // Spectrophotometer
-    VirtualSpectrophotometer, SpectroResult, SpectroGeometry, SpectroMeasurementType,
-    constant_reflectance, linear_reflectance, gaussian_absorption,
-    // Ellipsometer
-    VirtualEllipsometer, EllipsometryResult, ThinFilmResult, EllipsometerType, EllipsometryPoint,
-    cauchy_dispersion, constant_optical_constants, glass_optical_constants, silicon_optical_constants,
+    cauchy_dispersion,
+    constant_optical_constants,
+    constant_reflectance,
     // Memory
-    estimate_memory_footprint as estimate_instruments_memory, InstrumentsMemoryEstimate,
+    estimate_memory_footprint as estimate_instruments_memory,
+    fresnel_brdf,
+    gaussian_absorption,
+    glass_optical_constants,
+    lambertian_brdf,
+    linear_reflectance,
+    phong_brdf,
+    silicon_optical_constants,
+    BiasModel,
+    DetectorGeometry,
+    EllipsometerType,
+    EllipsometryPoint,
+    EllipsometryResult,
+    EnvironmentConditions,
+    GoniometerResult,
+    InstrumentConfig,
+    InstrumentsMemoryEstimate,
+    LightSource as InstrumentLightSource,
+    LightSourceType,
+    // Common
+    NoiseModel,
+    Polarization,
+    Resolution,
+    SimpleRng,
+    SpectroGeometry,
+    SpectroMeasurementType,
+    SpectroResult,
+    ThinFilmResult,
+    // Ellipsometer
+    VirtualEllipsometer,
+    // Gonioreflectometer
+    VirtualGonioreflectometer,
+    // Spectrophotometer
+    VirtualSpectrophotometer,
 };
 
 // PBR Phase 15 - Certification System
 pub use certification::{
-    // Levels
-    CertificationLevel, CertificationMetrics, LevelCheck, LevelRequirements,
-    // Requirements
-    MandatoryTest, TestResult as CertificationTestResult, TestSuiteResult, required_tests, required_test_count,
-    // Profiles
-    CertifiedTwinProfile, NeuralCorrectionStats, NeuralViolation,
-    // Auditor
-    CertificationAuditor, MaterialAuditData, CertificationResult,
     // Quick functions
-    can_achieve_level, highest_level, quick_certify_experimental,
+    can_achieve_level,
     // Memory
-    estimate_memory_footprint as estimate_certification_memory, CertificationMemoryEstimate,
+    estimate_memory_footprint as estimate_certification_memory,
+    highest_level,
+    quick_certify_experimental,
+    required_test_count,
+    required_tests,
+    // Auditor
+    CertificationAuditor,
+    // Levels
+    CertificationLevel,
+    CertificationMemoryEstimate,
+    CertificationMetrics,
+    CertificationResult,
+    // Profiles
+    CertifiedTwinProfile,
+    LevelCheck,
+    LevelRequirements,
+    // Requirements
+    MandatoryTest,
+    MaterialAuditData,
+    NeuralCorrectionStats,
+    NeuralViolation,
+    TestResult as CertificationTestResult,
+    TestSuiteResult,
 };
 
 // PBR Phase 15 - Compliance & Export
 pub use compliance::{
-    // Ground Truth
-    GroundTruthValidator, GroundTruthDataset,
-    ValidationReport as GroundTruthValidationReport, DatasetValidationReport,
-    ReferenceMeasurement, SpectralMeasurement as ComplianceSpectralMeasurement,
-    gold_reference_data, silver_reference_data, bk7_reference_data,
-    // Neural Audit
-    NeuralAuditor, NeuralAuditResult, AuditFinding, FindingSeverity, FindingCategory,
-    CorrectionCheck,
-    // Reproducibility
-    ReproducibilityTest, ReproducibilityResult,
-    ComparisonResult as ReproducibilityComparisonResult, CrossPlatformReference,
-    compute_reproducibility_hash, verify_hash,
-    // Export
-    MetrologicalExporter, ExportFormat, batch_export,
+    batch_export,
+    bk7_reference_data,
+    compute_reproducibility_hash,
+    estimate_memory_footprint as estimate_compliance_memory,
+    full_compliance_check,
+    gold_reference_data,
     // Quick checks
-    quick_ground_truth_check, quick_neural_audit, quick_reproducibility_check,
-    full_compliance_check, FullComplianceResult,
+    quick_ground_truth_check,
+    quick_neural_audit,
+    quick_reproducibility_check,
+    silver_reference_data,
     // Validation
-    validate_module as validate_compliance_module, ComplianceValidation,
-    estimate_memory_footprint as estimate_compliance_memory, ComplianceMemoryEstimate,
+    validate_module as validate_compliance_module,
+    verify_hash,
+    AuditFinding,
+    ComparisonResult as ReproducibilityComparisonResult,
+    ComplianceMemoryEstimate,
+    ComplianceValidation,
+    CorrectionCheck,
+    CrossPlatformReference,
+    DatasetValidationReport,
+    ExportFormat,
+    FindingCategory,
+    FindingSeverity,
+    FullComplianceResult,
+    GroundTruthDataset,
+    // Ground Truth
+    GroundTruthValidator,
+    // Export
+    MetrologicalExporter,
+    NeuralAuditResult,
+    // Neural Audit
+    NeuralAuditor,
+    ReferenceMeasurement,
+    ReproducibilityResult,
+    // Reproducibility
+    ReproducibilityTest,
+    SpectralMeasurement as ComplianceSpectralMeasurement,
+    ValidationReport as GroundTruthValidationReport,
 };
 
 // PBR Phase 15 - Validation Suite
-pub use phase15_validation::{
-    run_phase15_validation, Phase15ValidationResult,
-};
+pub use phase15_validation::{run_phase15_validation, Phase15ValidationResult};
 
 // Sprint 8 - Scientific Validation
 pub use scientific_validation::{
+    airy_thin_film_reflectance,
+    bk7_sellmeier,
+    cauchy_dispersion as cauchy_dispersion_analytical,
+    copper_optical_constants,
+    fresnel_conductor_exact,
+    // Analytical References
+    fresnel_dielectric_exact,
+    // Reference Data
+    gold_optical_constants,
+    mie_asymmetry_g as mie_asymmetry_g_analytical,
+    rayleigh_scattering,
+    run_full_validation as run_sprint8_validation,
+    sellmeier_dispersion,
+    silver_optical_constants,
+    transfer_matrix_multilayer,
+    validate_dispersion_bk7,
+    validate_energy_conservation as validate_sprint8_energy_conservation,
+    validate_fresnel_dielectric,
+    validate_gold_reflectance,
+    validate_mie_rayleigh_limit,
+    // Validation Functions
+    validate_thin_film_vs_airy,
+    PhenomenonValidation,
     // Statistical Metrics
     ValidationMetrics as ScientificValidationMetrics,
-    PhenomenonValidation, ValidationReport as ScientificValidationReport,
-    // Analytical References
-    fresnel_dielectric_exact, fresnel_conductor_exact,
-    airy_thin_film_reflectance, transfer_matrix_multilayer,
-    rayleigh_scattering, mie_asymmetry_g as mie_asymmetry_g_analytical,
-    cauchy_dispersion as cauchy_dispersion_analytical, sellmeier_dispersion, bk7_sellmeier,
-    // Reference Data
-    gold_optical_constants, silver_optical_constants, copper_optical_constants,
-    // Validation Functions
-    validate_thin_film_vs_airy, validate_fresnel_dielectric,
-    validate_dispersion_bk7, validate_gold_reflectance,
-    validate_mie_rayleigh_limit,
-    validate_energy_conservation as validate_sprint8_energy_conservation,
-    run_full_validation as run_sprint8_validation,
+    ValidationReport as ScientificValidationReport,
 };
 
 // Phase 5 Intelligence - Enhanced Neural Corrections
 pub mod phase13_neural;
 
 // Enterprise Phase 7 - Advanced Materials Extension
+pub mod advanced_material_presets;
 pub mod anisotropic; // ✅ Enterprise Phase 7 - Anisotropic BSDF (brushed metals, hair, fabric)
 pub mod meta_materials; // ✅ Enterprise Phase 7 - Photonic crystals, structural color
-pub mod plasmonic; // ✅ Enterprise Phase 7 - Plasmonic nanoparticles (LSPR)
-pub mod advanced_material_presets; // ✅ Enterprise Phase 7 - Extended presets (architectural, automotive, natural, technical)
+pub mod plasmonic; // ✅ Enterprise Phase 7 - Plasmonic nanoparticles (LSPR) // ✅ Enterprise Phase 7 - Extended presets (architectural, automotive, natural, technical)
 
 // Phase 5 Intelligence - Wavelength-Specific Corrections
 pub use phase13_neural::{
-    WavelengthBand as NeuralWavelengthBand, WavelengthCorrectionConfig, WavelengthCorrectionMLP,
-    BandInterpolator, BandStats, SpectralCorrectionResult,
+    BandInterpolator, BandStats, SpectralCorrectionResult, WavelengthBand as NeuralWavelengthBand,
+    WavelengthCorrectionConfig, WavelengthCorrectionMLP,
 };
 
 // Phase 5 Intelligence - Polarization-Aware Corrections
 pub use phase13_neural::{
-    PolarizationState, PolarizationCorrectionConfig, PolarizationCorrectionMLP,
-    PolarizedResponse, PolarizationDifference,
+    PolarizationCorrectionConfig, PolarizationCorrectionMLP, PolarizationDifference,
+    PolarizationState, PolarizedResponse,
 };
 
 // Phase 5 Intelligence - Training Data Collection
 pub use phase13_neural::{
-    TrainingSample as NeuralTrainingSample, TrainingSampleInput, TrainingSampleTarget, SampleMetadata,
-    MaterialType as TrainingMaterialType, DataSource,
-    CollectionFilter, TrainingStorage, MemoryStorage, StorageError,
-    TrainingDataCollector, CollectionStatistics,
+    CollectionFilter, CollectionStatistics, DataSource, MaterialType as TrainingMaterialType,
+    MemoryStorage, SampleMetadata, StorageError, TrainingDataCollector,
+    TrainingSample as NeuralTrainingSample, TrainingSampleInput, TrainingSampleTarget,
+    TrainingStorage,
 };
 
 // Phase 5 Intelligence - Confidence Scoring
 pub use phase13_neural::{
-    CorrectionConfidence, ConfidenceLevel as NeuralConfidenceLevel, TrainingStatistics, InputDistribution,
-    ConfidenceScorer, ConfidenceScorerConfig,
-    thresholds as confidence_thresholds,
-    estimate_phase13_neural_memory,
+    estimate_phase13_neural_memory, thresholds as confidence_thresholds,
+    ConfidenceLevel as NeuralConfidenceLevel, ConfidenceScorer, ConfidenceScorerConfig,
+    CorrectionConfidence, InputDistribution, TrainingStatistics,
 };
 
 // Enterprise Phase 7 - Anisotropic Materials (brushed metals, hair, fabric)
 pub use anisotropic::{
-    Color as AnisotropicColor,
-    AnisotropicBSDF, AshikhminShirleyBSDF, HairBSDF,
-    presets as anisotropic_material_presets,
-    estimate_anisotropic_memory,
+    estimate_anisotropic_memory, presets as anisotropic_material_presets, AnisotropicBSDF,
+    AshikhminShirleyBSDF, Color as AnisotropicColor, HairBSDF,
 };
 
 // Enterprise Phase 7 - Meta-Materials (photonic crystals, structural color)
 pub use meta_materials::{
-    MaterialRef, LatticeType, NanostructureType,
-    PhotonicCrystal, StructuralColor, DiffractionGrating,
-    presets as meta_material_presets,
-    estimate_meta_materials_memory,
+    estimate_meta_materials_memory, presets as meta_material_presets, DiffractionGrating,
+    LatticeType, MaterialRef, NanostructureType, PhotonicCrystal, StructuralColor,
 };
 
 // Enterprise Phase 7 - Plasmonic Materials (nanoparticles, LSPR)
 pub use plasmonic::{
-    MetalType as PlasmonicMetalType, ParticleShape, Ordering as PlasmonicOrdering,
-    PlasmonicNanoparticle, PlasmonicFilm, PlasmonicArray,
-    presets as plasmonic_presets,
-    estimate_plasmonic_memory,
+    estimate_plasmonic_memory, presets as plasmonic_presets, MetalType as PlasmonicMetalType,
+    Ordering as PlasmonicOrdering, ParticleShape, PlasmonicArray, PlasmonicFilm,
+    PlasmonicNanoparticle,
 };
 
 // Enterprise Phase 7 - Advanced Material Presets (architectural, automotive, natural, technical)
 pub use advanced_material_presets::{
-    AdvancedMaterialCategory, AdvancedMaterialInfo,
-    // Architectural glass
-    low_e_coating, electrochromic_glass, smart_glass_pdlc,
-    // Automotive finishes
-    car_paint_metallic, pearlescent_paint, chrome_finish,
-    // Natural materials
-    opal, mother_of_pearl, beetle_shell,
     // Technical coatings
-    anti_reflective_coating, dichroic_filter, holographic,
+    anti_reflective_coating,
+    beetle_shell,
+    // Automotive finishes
+    car_paint_metallic,
     // Catalog functions
-    catalog as advanced_material_catalog, get_preset_info, list_by_category,
+    catalog as advanced_material_catalog,
+    chrome_finish,
+    dichroic_filter,
+    electrochromic_glass,
     estimate_advanced_presets_memory,
+    get_preset_info,
+    holographic,
+    list_by_category,
+    // Architectural glass
+    low_e_coating,
+    mother_of_pearl,
+    // Natural materials
+    opal,
+    pearlescent_paint,
+    smart_glass_pdlc,
+    AdvancedMaterialCategory,
+    AdvancedMaterialInfo,
 };

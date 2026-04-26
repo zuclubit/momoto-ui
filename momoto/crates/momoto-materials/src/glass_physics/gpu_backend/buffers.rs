@@ -8,9 +8,9 @@
 use std::collections::HashMap;
 
 #[cfg(feature = "gpu")]
-use wgpu;
-#[cfg(feature = "gpu")]
 use std::sync::Arc;
+#[cfg(feature = "gpu")]
+use wgpu;
 
 /// Buffer pool for reusing GPU buffers.
 #[cfg(feature = "gpu")]
@@ -62,7 +62,8 @@ impl BufferPool {
         self.material_buffers.entry(count).or_insert_with(|| {
             self.stats.allocations += 1;
             self.stats.memory_bytes += size as u64;
-            self.stats.peak_memory_bytes = self.stats.peak_memory_bytes.max(self.stats.memory_bytes);
+            self.stats.peak_memory_bytes =
+                self.stats.peak_memory_bytes.max(self.stats.memory_bytes);
             self.device.create_buffer(&wgpu::BufferDescriptor {
                 label: Some(&format!("Material Buffer ({})", count)),
                 size: size as u64,
@@ -78,7 +79,8 @@ impl BufferPool {
         self.response_buffers.entry(count).or_insert_with(|| {
             self.stats.allocations += 1;
             self.stats.memory_bytes += size as u64;
-            self.stats.peak_memory_bytes = self.stats.peak_memory_bytes.max(self.stats.memory_bytes);
+            self.stats.peak_memory_bytes =
+                self.stats.peak_memory_bytes.max(self.stats.memory_bytes);
             self.device.create_buffer(&wgpu::BufferDescriptor {
                 label: Some(&format!("Response Buffer ({})", count)),
                 size: size as u64,
@@ -94,7 +96,8 @@ impl BufferPool {
         self.staging_buffers.entry(count).or_insert_with(|| {
             self.stats.allocations += 1;
             self.stats.memory_bytes += size as u64;
-            self.stats.peak_memory_bytes = self.stats.peak_memory_bytes.max(self.stats.memory_bytes);
+            self.stats.peak_memory_bytes =
+                self.stats.peak_memory_bytes.max(self.stats.memory_bytes);
             self.device.create_buffer(&wgpu::BufferDescriptor {
                 label: Some(&format!("Staging Buffer ({})", count)),
                 size: size as u64,

@@ -45,7 +45,10 @@ fn evaluate_dielectric(ior: f64, roughness: f64, cos_theta: f64) -> DielectricRe
 
     if sin_t2 >= 1.0 {
         // Total internal reflection
-        return DielectricResponse { reflectance: 1.0, transmittance: 0.0 };
+        return DielectricResponse {
+            reflectance: 1.0,
+            transmittance: 0.0,
+        };
     }
 
     let cos_t = (1.0 - sin_t2).sqrt();
@@ -53,12 +56,20 @@ fn evaluate_dielectric(ior: f64, roughness: f64, cos_theta: f64) -> DielectricRe
     // s-polarization (TE): Rs = ((n1·cos_i − n2·cos_t) / (n1·cos_i + n2·cos_t))²
     let rs_num = cos_i - ior * cos_t;
     let rs_den = cos_i + ior * cos_t;
-    let rs = if rs_den.abs() < 1e-15 { 1.0 } else { (rs_num / rs_den).powi(2) };
+    let rs = if rs_den.abs() < 1e-15 {
+        1.0
+    } else {
+        (rs_num / rs_den).powi(2)
+    };
 
     // p-polarization (TM): Rp = ((n2·cos_i − n1·cos_t) / (n2·cos_i + n1·cos_t))²
     let rp_num = ior * cos_i - cos_t;
     let rp_den = ior * cos_i + cos_t;
-    let rp = if rp_den.abs() < 1e-15 { 1.0 } else { (rp_num / rp_den).powi(2) };
+    let rp = if rp_den.abs() < 1e-15 {
+        1.0
+    } else {
+        (rp_num / rp_den).powi(2)
+    };
 
     // Unpolarized reflectance (equal weighting)
     let r_spec = (rs + rp) * 0.5;
@@ -81,41 +92,39 @@ fn evaluate_dielectric(ior: f64, roughness: f64, cos_theta: f64) -> DielectricRe
 // =============================================================================
 
 const CIE_X_BAR: [f64; 31] = [
-    0.01360, 0.04243, 0.13438, 0.28390, 0.34828, 0.33602, 0.29080, 0.19536,
-    0.09564, 0.03201, 0.00490, 0.00930, 0.06327, 0.16768, 0.29012, 0.43382,
-    0.59450, 0.76210, 0.91620, 1.02630, 1.06220, 1.00260, 0.85445, 0.64236,
-    0.44790, 0.28350, 0.16490, 0.08740, 0.04677, 0.02270, 0.01136,
+    0.01360, 0.04243, 0.13438, 0.28390, 0.34828, 0.33602, 0.29080, 0.19536, 0.09564, 0.03201,
+    0.00490, 0.00930, 0.06327, 0.16768, 0.29012, 0.43382, 0.59450, 0.76210, 0.91620, 1.02630,
+    1.06220, 1.00260, 0.85445, 0.64236, 0.44790, 0.28350, 0.16490, 0.08740, 0.04677, 0.02270,
+    0.01136,
 ];
 
 const CIE_Y_BAR: [f64; 31] = [
-    0.00039, 0.00120, 0.00400, 0.01160, 0.02300, 0.03800, 0.06000, 0.09098,
-    0.13902, 0.20802, 0.32300, 0.50300, 0.71000, 0.86200, 0.95400, 0.99495,
-    0.99500, 0.95200, 0.87000, 0.75700, 0.63100, 0.50300, 0.38100, 0.26500,
-    0.17500, 0.10700, 0.06100, 0.03200, 0.01700, 0.00821, 0.00410,
+    0.00039, 0.00120, 0.00400, 0.01160, 0.02300, 0.03800, 0.06000, 0.09098, 0.13902, 0.20802,
+    0.32300, 0.50300, 0.71000, 0.86200, 0.95400, 0.99495, 0.99500, 0.95200, 0.87000, 0.75700,
+    0.63100, 0.50300, 0.38100, 0.26500, 0.17500, 0.10700, 0.06100, 0.03200, 0.01700, 0.00821,
+    0.00410,
 ];
 
 const CIE_Z_BAR: [f64; 31] = [
-    0.06450, 0.20510, 0.67850, 1.38560, 1.74706, 1.77211, 1.66920, 1.28764,
-    0.81295, 0.46518, 0.27200, 0.15820, 0.07825, 0.04216, 0.02030, 0.00875,
-    0.00390, 0.00210, 0.00165, 0.00110, 0.00080, 0.00034, 0.00019, 0.00005,
-    0.00002, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000,
+    0.06450, 0.20510, 0.67850, 1.38560, 1.74706, 1.77211, 1.66920, 1.28764, 0.81295, 0.46518,
+    0.27200, 0.15820, 0.07825, 0.04216, 0.02030, 0.00875, 0.00390, 0.00210, 0.00165, 0.00110,
+    0.00080, 0.00034, 0.00019, 0.00005, 0.00002, 0.00000, 0.00000, 0.00000, 0.00000, 0.00000,
+    0.00000,
 ];
 
 /// D65 illuminant spectral power distribution at 10 nm intervals, 400–700 nm.
 /// Normalized to 100 at 560 nm. (CIE standard illuminant D65)
 const ILLUMINANT_D65: [f64; 31] = [
-    82.754,  91.486,  93.431,  86.682, 104.865, 117.008, 117.812, 114.861,
-   115.923, 108.811, 109.354, 107.802, 104.790, 107.689, 104.405, 104.046,
-   100.000,  96.334,  95.788,  88.686,  90.006,  89.599,  87.699,  83.288,
-    83.699,  80.026,  80.214,  82.277,  78.284,  69.721,  71.609,
+    82.754, 91.486, 93.431, 86.682, 104.865, 117.008, 117.812, 114.861, 115.923, 108.811, 109.354,
+    107.802, 104.790, 107.689, 104.405, 104.046, 100.000, 96.334, 95.788, 88.686, 90.006, 89.599,
+    87.699, 83.288, 83.699, 80.026, 80.214, 82.277, 78.284, 69.721, 71.609,
 ];
 
 /// Wavelengths (nm) corresponding to the 31 spectral bands.
 const WAVELENGTHS: [f64; 31] = [
-    400.0, 410.0, 420.0, 430.0, 440.0, 450.0, 460.0, 470.0, 480.0, 490.0,
-    500.0, 510.0, 520.0, 530.0, 540.0, 550.0, 560.0, 570.0, 580.0, 590.0,
-    600.0, 610.0, 620.0, 630.0, 640.0, 650.0, 660.0, 670.0, 680.0, 690.0,
-    700.0,
+    400.0, 410.0, 420.0, 430.0, 440.0, 450.0, 460.0, 470.0, 480.0, 490.0, 500.0, 510.0, 520.0,
+    530.0, 540.0, 550.0, 560.0, 570.0, 580.0, 590.0, 600.0, 610.0, 620.0, 630.0, 640.0, 650.0,
+    660.0, 670.0, 680.0, 690.0, 700.0,
 ];
 
 // =============================================================================
@@ -188,14 +197,18 @@ pub fn bsdf_to_dominant_color(ior: f64, roughness: f64, cos_theta: f64) -> Mater
     let xyz = [x_acc / norm, y_acc / norm, z_acc / norm];
 
     // XYZ (D65) → linear sRGB (IEC 61966-2-1)
-    let r_lin =  3.2404542 * xyz[0] - 1.5371385 * xyz[1] - 0.4985314 * xyz[2];
+    let r_lin = 3.2404542 * xyz[0] - 1.5371385 * xyz[1] - 0.4985314 * xyz[2];
     let g_lin = -0.9692660 * xyz[0] + 1.8760108 * xyz[1] + 0.0415560 * xyz[2];
-    let b_lin =  0.0556434 * xyz[0] - 0.2040259 * xyz[1] + 1.0572252 * xyz[2];
+    let b_lin = 0.0556434 * xyz[0] - 0.2040259 * xyz[1] + 1.0572252 * xyz[2];
 
     // Gamma correction (IEC 61966-2-1 sRGB transfer function)
     fn to_srgb(x: f64) -> f64 {
         let c = x.clamp(0.0, 1.0);
-        if c <= 0.0031308 { c * 12.92 } else { 1.055 * c.powf(1.0 / 2.4) - 0.055 }
+        if c <= 0.0031308 {
+            c * 12.92
+        } else {
+            1.055 * c.powf(1.0 / 2.4) - 0.055
+        }
     }
 
     let color = Color::from_srgb(to_srgb(r_lin), to_srgb(g_lin), to_srgb(b_lin));
@@ -205,8 +218,7 @@ pub fn bsdf_to_dominant_color(ior: f64, roughness: f64, cos_theta: f64) -> Mater
     let x_chrom = xyz[0] / (xyz[0] + xyz[1] + xyz[2] + 1e-10);
     let y_chrom = xyz[1] / (xyz[0] + xyz[1] + xyz[2] + 1e-10);
     let n = (x_chrom - 0.3320) / (y_chrom - 0.1858 + 1e-10);
-    let cct = (449.0 * n * n * n + 3525.0 * n * n + 6823.3 * n + 5520.33)
-        .clamp(1000.0, 20_000.0);
+    let cct = (449.0 * n * n * n + 3525.0 * n * n + 6823.3 * n + 5520.33).clamp(1000.0, 20_000.0);
 
     MaterialColorResult {
         dominant,
@@ -229,14 +241,23 @@ mod tests {
         // Crown glass (n=1.52), polished, near-normal incidence
         let result = bsdf_to_dominant_color(1.52, 0.0, 0.9);
         // L, C, H must be in valid ranges
-        assert!(result.dominant.l > 0.0 && result.dominant.l <= 1.0,
-            "L out of range: {}", result.dominant.l);
-        assert!(result.dominant.c >= 0.0,
-            "C must be non-negative: {}", result.dominant.c);
+        assert!(
+            result.dominant.l > 0.0 && result.dominant.l <= 1.0,
+            "L out of range: {}",
+            result.dominant.l
+        );
+        assert!(
+            result.dominant.c >= 0.0,
+            "C must be non-negative: {}",
+            result.dominant.c
+        );
         assert!(result.reflectance >= 0.0 && result.reflectance <= 1.0);
         assert!(result.transmittance >= 0.0 && result.transmittance <= 1.0);
-        assert!(result.cct > 1000.0 && result.cct < 20_000.0,
-            "CCT out of range: {}", result.cct);
+        assert!(
+            result.cct > 1000.0 && result.cct < 20_000.0,
+            "CCT out of range: {}",
+            result.cct
+        );
     }
 
     #[test]
@@ -247,7 +268,8 @@ mod tests {
         assert!(
             diamond.reflectance >= glass.reflectance,
             "Diamond ({:.4}) should be ≥ glass ({:.4})",
-            diamond.reflectance, glass.reflectance
+            diamond.reflectance,
+            glass.reflectance
         );
     }
 
@@ -256,8 +278,11 @@ mod tests {
         // For a dielectric: R + T ≈ 1 (A ≈ 0)
         let result = bsdf_to_dominant_color(1.5, 0.1, 0.8);
         let sum = result.reflectance + result.transmittance;
-        assert!(sum >= 0.85 && sum <= 1.05,
-            "R+T should be ~1.0, got {:.4}", sum);
+        assert!(
+            sum >= 0.85 && sum <= 1.05,
+            "R+T should be ~1.0, got {:.4}",
+            sum
+        );
     }
 
     #[test]
@@ -267,8 +292,10 @@ mod tests {
         let rough = bsdf_to_dominant_color(1.5, 0.5, 0.9);
         let smooth_total = smooth.reflectance + smooth.transmittance;
         let rough_total = rough.reflectance + rough.transmittance;
-        assert!((smooth_total - rough_total).abs() < 0.2,
-            "Roughness shouldn't change total energy dramatically");
+        assert!(
+            (smooth_total - rough_total).abs() < 0.2,
+            "Roughness shouldn't change total energy dramatically"
+        );
     }
 
     #[test]

@@ -92,10 +92,12 @@ impl DeferReason {
     /// Human-readable explanation string.
     pub fn description(&self) -> &'static str {
         match self {
-            Self::ResourceLimit       => "Insufficient concurrent slots or CPU budget",
-            Self::DependencyPending   => "One or more required predecessor steps are not yet complete",
-            Self::PriorityTooLow      => "Step priority is below the current execution threshold",
-            Self::RateLimited         => "Rate limit or cooldown interval is active",
+            Self::ResourceLimit => "Insufficient concurrent slots or CPU budget",
+            Self::DependencyPending => {
+                "One or more required predecessor steps are not yet complete"
+            }
+            Self::PriorityTooLow => "Step priority is below the current execution threshold",
+            Self::RateLimited => "Rate limit or cooldown interval is active",
         }
     }
 }
@@ -209,7 +211,8 @@ impl ResourceTracker {
         ResourceAvailability {
             cpu_available: (self.constraints.max_cpu - self.cpu_used).max(0.0),
             memory_mb: self.constraints.max_memory_mb,
-            concurrent_slots: self.constraints
+            concurrent_slots: self
+                .constraints
                 .max_concurrent
                 .saturating_sub(self.occupied_slots),
         }
@@ -315,8 +318,8 @@ impl IntelligentScheduler {
 
         // Estimate completion: assume each slot runs sequentially if parallel disabled
         let slot_count = execute_now.len().max(1);
-        let avg_cost = execute_now.iter().map(|s| s.estimated_cost).sum::<f64>()
-            / slot_count as f64;
+        let avg_cost =
+            execute_now.iter().map(|s| s.estimated_cost).sum::<f64>() / slot_count as f64;
         let estimated_completion_ms = (avg_cost * self.config.timeout_ms as f64) as u64;
 
         SchedulingDecision {
@@ -355,8 +358,8 @@ impl ExecutionStrategy {
     pub fn description(&self) -> &'static str {
         match self {
             Self::Sequential => "All steps execute in order, one at a time",
-            Self::Parallel   => "All independent steps execute concurrently",
-            Self::Adaptive   => "Mixed strategy derived from dependency graph analysis",
+            Self::Parallel => "All independent steps execute concurrently",
+            Self::Adaptive => "Mixed strategy derived from dependency graph analysis",
         }
     }
 }
@@ -377,7 +380,10 @@ pub struct ParallelGroup {
 impl ParallelGroup {
     /// Create a group with an explicit concurrency cap.
     pub fn new(steps: Vec<PrioritizedStep>, max_parallel: usize) -> Self {
-        Self { steps, max_parallel }
+        Self {
+            steps,
+            max_parallel,
+        }
     }
 
     /// Estimated total cost of the group (sum of individual costs).
@@ -400,7 +406,9 @@ pub struct ParallelizationAdvisor {
 impl ParallelizationAdvisor {
     /// Create an advisor with the default threshold (2 independent steps).
     pub fn new() -> Self {
-        Self { min_parallel_threshold: 2 }
+        Self {
+            min_parallel_threshold: 2,
+        }
     }
 
     /// Recommend an [`ExecutionStrategy`] for the supplied steps.
@@ -416,9 +424,7 @@ impl ParallelizationAdvisor {
         }
 
         let has_deps = steps.iter().any(|s| !s.dependencies.is_empty());
-        let independent_count = steps.iter()
-            .filter(|s| s.dependencies.is_empty())
-            .count();
+        let independent_count = steps.iter().filter(|s| s.dependencies.is_empty()).count();
 
         if has_deps {
             // Any mix of independent + dependent steps → Adaptive
@@ -594,7 +600,11 @@ impl FeedbackLoop {
         let converged = improvement.abs() < self.config.convergence_threshold;
         self.current_value = next;
 
-        let result = IterationResult { iteration, improvement, converged };
+        let result = IterationResult {
+            iteration,
+            improvement,
+            converged,
+        };
         self.history.push(result.clone());
         result
     }
@@ -668,8 +678,7 @@ mod tests {
 
     #[test]
     fn test_prioritized_step_deps_met() {
-        let step = PrioritizedStep::new("b", 5, 0.3)
-            .with_dependency("a");
+        let step = PrioritizedStep::new("b", 5, 0.3).with_dependency("a");
         assert!(!step.dependencies_met(&["x".to_string()]));
         assert!(step.dependencies_met(&["a".to_string(), "x".to_string()]));
     }
@@ -742,9 +751,15 @@ mod tests {
 
     #[test]
     fn test_scheduler_respects_slot_limit() {
-        let cfg = SchedulerConfig { max_parallel: 1, ..Default::default() };
+        let cfg = SchedulerConfig {
+            max_parallel: 1,
+            ..Default::default()
+        };
         let scheduler = IntelligentScheduler::new(cfg);
-        let resources = ResourceAvailability { concurrent_slots: 1, ..Default::default() };
+        let resources = ResourceAvailability {
+            concurrent_slots: 1,
+            ..Default::default()
+        };
         let steps = vec![
             PrioritizedStep::new("a", 10, 0.5),
             PrioritizedStep::new("b", 9, 0.5),
@@ -758,9 +773,7 @@ mod tests {
     fn test_scheduler_defers_unmet_deps() {
         let scheduler = IntelligentScheduler::default();
         let resources = ResourceAvailability::default();
-        let steps = vec![
-            PrioritizedStep::new("b", 10, 0.5).with_dependency("a"),
-        ];
+        let steps = vec![PrioritizedStep::new("b", 10, 0.5).with_dependency("a")];
         let decision = scheduler.schedule(steps, &resources);
         assert_eq!(decision.execute_now.len(), 0);
         assert_eq!(decision.defer.len(), 1);
@@ -832,7 +845,9 @@ mod tests {
         for _ in 0..200 {
             let res = fb.iterate(current, target);
             current = current + 0.5 * (target - current);
-            if res.converged { break; }
+            if res.converged {
+                break;
+            }
         }
 
         assert!(fb.status().is_converged(), "Expected convergence");

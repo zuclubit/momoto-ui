@@ -40,8 +40,8 @@
 
 use std::collections::VecDeque;
 
-use super::unified_bsdf::{BSDF, BSDFContext, DielectricBSDF, ConductorBSDF};
-use super::perceptual_loss::{rgb_to_lab, delta_e_2000, LabColor, Illuminant};
+use super::perceptual_loss::{delta_e_2000, rgb_to_lab, Illuminant, LabColor};
+use super::unified_bsdf::{BSDFContext, ConductorBSDF, DielectricBSDF, BSDF};
 
 // ============================================================================
 // MATERIAL PARAMETERS
@@ -111,7 +111,11 @@ impl MaterialParams {
 
     /// Number of parameters
     pub fn param_count(&self) -> usize {
-        if self.is_conductor { 3 } else { 2 }
+        if self.is_conductor {
+            3
+        } else {
+            2
+        }
     }
 }
 
@@ -142,7 +146,9 @@ impl ParameterBounds {
         MaterialParams {
             ior: params.ior.clamp(self.ior_min, self.ior_max),
             k: params.k.clamp(self.k_min, self.k_max),
-            roughness: params.roughness.clamp(self.roughness_min, self.roughness_max),
+            roughness: params
+                .roughness
+                .clamp(self.roughness_min, self.roughness_max),
             is_conductor: params.is_conductor,
             cos_theta: params.cos_theta,
         }
@@ -480,7 +486,8 @@ impl PerceptualRenderingLoop {
 
             // 7. Update parameters
             let param_vec = params.to_vec();
-            let new_param_vec: Vec<f64> = param_vec.iter()
+            let new_param_vec: Vec<f64> = param_vec
+                .iter()
                 .zip(updates.iter())
                 .map(|(p, u)| p + u)
                 .collect();
@@ -547,7 +554,7 @@ impl PerceptualRenderingLoop {
             // Check if loss is decreasing
             let recent: Vec<f64> = self.loss_history.iter().copied().collect();
             let first_half_avg: f64 = recent[..2].iter().sum::<f64>() / 2.0;
-            let second_half_avg: f64 = recent[recent.len()-2..].iter().sum::<f64>() / 2.0;
+            let second_half_avg: f64 = recent[recent.len() - 2..].iter().sum::<f64>() / 2.0;
 
             if second_half_avg > first_half_avg * 0.99 {
                 // Loss not decreasing, reduce LR
@@ -590,7 +597,11 @@ fn render_params_rgb(params: &MaterialParams) -> [f64; 3] {
 
         // For metals, reflectance varies with wavelength
         // Use spectral IOR if available, otherwise uniform
-        [response.reflectance, response.reflectance, response.reflectance]
+        [
+            response.reflectance,
+            response.reflectance,
+            response.reflectance,
+        ]
     } else {
         // Render dielectric
         let dielectric = DielectricBSDF::new(params.ior, params.roughness);
@@ -638,11 +649,11 @@ pub fn quick_match_color(target_rgb: [f64; 3]) -> MaterialParams {
 
 /// Total memory used by perceptual loop module
 pub fn total_perceptual_loop_memory() -> usize {
-    std::mem::size_of::<PerceptualRenderingLoop>() +
-    std::mem::size_of::<AdamState>() +
-    std::mem::size_of::<OptimizationResult>() +
-    std::mem::size_of::<MaterialParams>() * 2 +
-    1_000 // History vectors overhead
+    std::mem::size_of::<PerceptualRenderingLoop>()
+        + std::mem::size_of::<AdamState>()
+        + std::mem::size_of::<OptimizationResult>()
+        + std::mem::size_of::<MaterialParams>() * 2
+        + 1_000 // History vectors overhead
 }
 
 // ============================================================================
@@ -700,7 +711,7 @@ mod tests {
     #[test]
     fn test_optimization_converges() {
         let mut loop_runner = PerceptualRenderingLoop::new()
-            .with_target_delta_e(3.0)  // Relaxed target for fast test
+            .with_target_delta_e(3.0) // Relaxed target for fast test
             .with_max_iterations(50);
 
         // Target: low reflectance achievable by dielectrics (~4-10% range)
@@ -712,7 +723,11 @@ mod tests {
         let result = loop_runner.optimize(&initial, &target);
 
         // Should improve from initial - dielectric can approach this target
-        assert!(result.final_delta_e < 50.0, "Delta E too high: {}", result.final_delta_e);
+        assert!(
+            result.final_delta_e < 50.0,
+            "Delta E too high: {}",
+            result.final_delta_e
+        );
         assert!(result.iterations > 0);
     }
 
@@ -740,8 +755,7 @@ mod tests {
 
     #[test]
     fn test_loss_history() {
-        let mut loop_runner = PerceptualRenderingLoop::new()
-            .with_max_iterations(10);
+        let mut loop_runner = PerceptualRenderingLoop::new().with_max_iterations(10);
 
         let target = PerceptualTarget::Reflectance(0.1);
         let initial = MaterialParams::dielectric(1.5, 0.0);
@@ -755,8 +769,7 @@ mod tests {
 
     #[test]
     fn test_gradient_norm_history() {
-        let mut loop_runner = PerceptualRenderingLoop::new()
-            .with_max_iterations(10);
+        let mut loop_runner = PerceptualRenderingLoop::new().with_max_iterations(10);
 
         let target = PerceptualTarget::Reflectance(0.5);
         let initial = MaterialParams::dielectric(1.5, 0.0);

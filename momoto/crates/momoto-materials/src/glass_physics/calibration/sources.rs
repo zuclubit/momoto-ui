@@ -111,7 +111,13 @@ impl BRDFObservation {
     }
 
     /// Create from degrees.
-    pub fn from_degrees(theta_i: f64, phi_i: f64, theta_o: f64, phi_o: f64, reflectance: f64) -> Self {
+    pub fn from_degrees(
+        theta_i: f64,
+        phi_i: f64,
+        theta_o: f64,
+        phi_o: f64,
+        reflectance: f64,
+    ) -> Self {
         Self::new(
             theta_i.to_radians(),
             phi_i.to_radians(),
@@ -198,13 +204,21 @@ impl BRDFSource {
         if self.observations.is_empty() {
             return 0.0;
         }
-        let sum: f64 = self.observations.iter().map(|o| o.reflectance * o.weight).sum();
+        let sum: f64 = self
+            .observations
+            .iter()
+            .map(|o| o.reflectance * o.weight)
+            .sum();
         let weight_sum: f64 = self.observations.iter().map(|o| o.weight).sum();
         sum / weight_sum
     }
 
     /// Generate uniform angular sampling.
-    pub fn from_uniform_sampling(name: &str, n_theta: usize, reflectance_fn: impl Fn(f64, f64) -> f64) -> Self {
+    pub fn from_uniform_sampling(
+        name: &str,
+        n_theta: usize,
+        reflectance_fn: impl Fn(f64, f64) -> f64,
+    ) -> Self {
         let mut source = Self::new(name);
         source.is_isotropic = true;
 
@@ -291,7 +305,7 @@ impl SpectralSource {
         Self {
             metadata: SourceMetadata::new(name),
             observations: Vec::new(),
-            wavelength_min: f64::INFINITY,  // Will be set by first observation
+            wavelength_min: f64::INFINITY, // Will be set by first observation
             wavelength_max: f64::NEG_INFINITY, // Will be set by first observation
             has_transmittance: false,
         }
@@ -444,18 +458,17 @@ impl TimeSeriesSource {
 
     /// Sort observations by time.
     pub fn sort(&mut self) {
-        self.observations.sort_by(|a, b| a.time.partial_cmp(&b.time).unwrap());
+        self.observations
+            .sort_by(|a, b| a.time.partial_cmp(&b.time).unwrap());
     }
 
     /// Get observation at time (nearest).
     pub fn at_time(&self, time: f64) -> Option<&TemporalObservation> {
-        self.observations
-            .iter()
-            .min_by(|a, b| {
-                let diff_a = (a.time - time).abs();
-                let diff_b = (b.time - time).abs();
-                diff_a.partial_cmp(&diff_b).unwrap()
-            })
+        self.observations.iter().min_by(|a, b| {
+            let diff_a = (a.time - time).abs();
+            let diff_b = (b.time - time).abs();
+            diff_a.partial_cmp(&diff_b).unwrap()
+        })
     }
 
     /// Compute drift between first and last observation.
@@ -670,8 +683,7 @@ mod tests {
 
     #[test]
     fn test_spectral_observation() {
-        let obs = SpectralObservation::new(550.0, 0.0, 0.3)
-            .with_transmittance(0.6);
+        let obs = SpectralObservation::new(550.0, 0.0, 0.3).with_transmittance(0.6);
 
         assert!((obs.energy_sum() - 0.9).abs() < 0.01);
     }
@@ -679,7 +691,11 @@ mod tests {
     #[test]
     fn test_spectral_source() {
         let source = SpectralSource::from_wavelength_range("test", 400.0, 700.0, 31, |wl| {
-            if wl < 500.0 { 0.1 } else { 0.5 }
+            if wl < 500.0 {
+                0.1
+            } else {
+                0.5
+            }
         });
 
         assert_eq!(source.observations.len(), 31);
@@ -688,8 +704,7 @@ mod tests {
 
     #[test]
     fn test_temporal_observation() {
-        let obs = TemporalObservation::new(1.0, 60, 0.5)
-            .with_temperature(25.0);
+        let obs = TemporalObservation::new(1.0, 60, 0.5).with_temperature(25.0);
 
         assert!(obs.temperature.is_some());
         assert_eq!(obs.frame, 60);

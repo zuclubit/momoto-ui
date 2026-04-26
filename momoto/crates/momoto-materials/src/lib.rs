@@ -101,14 +101,14 @@ pub use css_enhanced::{render_enhanced_css, render_premium_css, EnhancedCssBacke
 
 // Fresnel reflectance - fundamental for glass/metal rendering
 pub use glass_physics::{
-    fresnel_schlick, fresnel_full, brewster_angle, edge_intensity,
-    generate_fresnel_gradient, to_css_fresnel_gradient, to_css_luminous_border,
+    brewster_angle, edge_intensity, fresnel_full, fresnel_schlick, generate_fresnel_gradient,
+    to_css_fresnel_gradient, to_css_luminous_border,
 };
 
 // Blinn-Phong specular - core highlight calculations
 pub use glass_physics::{
     blinn_phong_specular, calculate_highlight_position, calculate_specular_layers,
-    roughness_to_shininess, to_css_specular_highlight, to_css_inner_highlight,
+    roughness_to_shininess, to_css_inner_highlight, to_css_specular_highlight,
 };
 
 // Context system - environment-aware material evaluation
@@ -118,27 +118,22 @@ pub use glass_physics::{
 
 // Enhanced material presets with quality tiers
 pub use glass_physics::{
-    EnhancedGlassMaterial, QualityTier,
-    crown_glass, flint_glass, fused_silica, diamond, frosted_glass,
-    opal_glass, polycarbonate, pmma, water, sapphire, ice, milk_glass,
-    all_presets, presets_by_quality,
+    all_presets, crown_glass, diamond, flint_glass, frosted_glass, fused_silica, ice, milk_glass,
+    opal_glass, pmma, polycarbonate, presets_by_quality, sapphire, water, EnhancedGlassMaterial,
+    QualityTier,
 };
 
 // LUT system for performance (5-10x speedup)
 pub use glass_physics::{
-    beer_lambert_fast, fresnel_fast, total_lut_memory,
-    BeerLambertLUT, FresnelLUT,
+    beer_lambert_fast, fresnel_fast, total_lut_memory, BeerLambertLUT, FresnelLUT,
 };
 
 // Batch evaluation for bulk operations (7-10x speedup)
-pub use glass_physics::{
-    evaluate_batch, BatchEvaluator, BatchMaterialInput, BatchResult,
-};
+pub use glass_physics::{evaluate_batch, BatchEvaluator, BatchMaterialInput, BatchResult};
 
 // Quality tier selection system
 pub use glass_physics::{
-    select_tier, DeviceCapabilities, MaterialComplexity, QualityConfig,
-    TierFeatures, TierMetrics,
+    select_tier, DeviceCapabilities, MaterialComplexity, QualityConfig, TierFeatures, TierMetrics,
 };
 
 // ============================================================================
@@ -147,52 +142,47 @@ pub use glass_physics::{
 
 // Unified BSDF system - physically-based material evaluation
 pub use glass_physics::{
-    BSDF, BSDFContext, BSDFResponse, BSDFSample, EnergyValidation,
-    DielectricBSDF, ConductorBSDF, ThinFilmBSDF, LayeredBSDF, LambertianBSDF,
-    bsdf_evaluate_rgb, bsdf_evaluate_spectral, bsdf_validate_energy,
+    bsdf_evaluate_rgb, bsdf_evaluate_spectral, bsdf_validate_energy, BSDFContext, BSDFResponse,
+    BSDFSample, ConductorBSDF, DielectricBSDF, EnergyValidation, LambertianBSDF, LayeredBSDF,
+    ThinFilmBSDF, BSDF,
 };
 
 // Digital Material Twins - calibrated material instances
 pub use glass_physics::{
-    TwinId, MaterialTwin, TwinBuilder, CalibrationMetadata, CalibrationQuality,
-    TwinVariant, StaticTwinData, TemporalTwinData, LayeredTwinData, MeasuredTwinData,
-    SpectralIdentity, SpectralSignature, SpectralDistance,
+    CalibrationMetadata, CalibrationQuality, LayeredTwinData, MaterialTwin, MeasuredTwinData,
+    SpectralDistance, SpectralIdentity, SpectralSignature, StaticTwinData, TemporalTwinData,
+    TwinBuilder, TwinId, TwinVariant,
 };
 
 // Thin film interference - iridescent effects
 pub use glass_physics::{
-    ThinFilm, ThinFilmStack,
-    thin_film_to_rgb, to_css_iridescent_gradient, to_css_soap_bubble, to_css_oil_slick,
-    ar_coating_thickness, dominant_wavelength, total_thin_film_memory,
+    ar_coating_thickness, dominant_wavelength, thin_film_to_rgb, to_css_iridescent_gradient,
+    to_css_oil_slick, to_css_soap_bubble, total_thin_film_memory, ThinFilm, ThinFilmStack,
 };
 
 // Complex IOR for metals (gold, silver, copper, etc.)
 pub use glass_physics::{
-    Complex, ComplexIOR, SpectralComplexIOR,
-    fresnel_conductor, fresnel_conductor_unpolarized, fresnel_conductor_schlick,
-    to_css_metallic_gradient, to_css_metallic_surface,
-    metals,
+    fresnel_conductor, fresnel_conductor_schlick, fresnel_conductor_unpolarized, metals,
+    to_css_metallic_gradient, to_css_metallic_surface, Complex, ComplexIOR, SpectralComplexIOR,
 };
 
 // Dispersion models - wavelength-dependent IOR
 pub use glass_physics::{
-    CauchyDispersion, Dispersion, DispersionModel, SellmeierDispersion,
-    f0_from_ior, f0_rgb, chromatic_aberration_strength,
+    chromatic_aberration_strength, f0_from_ior, f0_rgb, CauchyDispersion, Dispersion,
+    DispersionModel, SellmeierDispersion,
 };
 
 // Scattering phase functions
 pub use glass_physics::{
-    henyey_greenstein, hg_fast, double_henyey_greenstein,
-    HenyeyGreensteinLUT, ScatteringParams, sample_hg,
+    double_henyey_greenstein, henyey_greenstein, hg_fast, sample_hg, HenyeyGreensteinLUT,
+    ScatteringParams,
 };
 
 // Mie scattering for particles
 pub use glass_physics::{
-    MieParams, MieLUT,
-    rayleigh_phase, rayleigh_efficiency, rayleigh_intensity_rgb,
-    mie_asymmetry_g, mie_phase_hg, mie_efficiencies,
-    mie_fast, mie_particle, mie_particle_rgb,
-    total_mie_memory,
+    mie_asymmetry_g, mie_efficiencies, mie_fast, mie_particle, mie_particle_rgb, mie_phase_hg,
+    rayleigh_efficiency, rayleigh_intensity_rgb, rayleigh_phase, total_mie_memory, MieLUT,
+    MieParams,
 };
 
 // ============================================================================
@@ -201,73 +191,59 @@ pub use glass_physics::{
 
 // Differentiable rendering - gradient computation for optimization
 pub use glass_physics::{
-    DifferentiableBSDF, DifferentiableResponse, ParameterGradients,
-    GradientConfig, GradientVerification,
-    DifferentiableDielectric, DifferentiableConductor, DifferentiableThinFilm,
-    DifferentiableLayered, LayerConfig,
-    Jacobian, JacobianBuilder,
+    DifferentiableBSDF, DifferentiableConductor, DifferentiableDielectric, DifferentiableLayered,
+    DifferentiableResponse, DifferentiableThinFilm, GradientConfig, GradientVerification, Jacobian,
+    JacobianBuilder, LayerConfig, ParameterGradients,
 };
 
 // Inverse material solver - parameter recovery from measurements
 pub use glass_physics::{
-    InverseMaterialSolver, InverseSolverConfig, InverseResult, ConvergenceReason,
-    ReferenceData, ReferenceObservation, LossFunction,
-    recover_ior_from_normal_reflectance, recover_roughness_from_glossiness,
+    recover_ior_from_normal_reflectance, recover_roughness_from_glossiness, ConvergenceReason,
+    InverseMaterialSolver, InverseResult, InverseSolverConfig, LossFunction, ReferenceData,
+    ReferenceObservation,
 };
 
 // Calibration pipeline - multi-source material calibration
 pub use glass_physics::{
-    CalibrationSource, BRDFSource, SpectralSource, TimeSeriesSource, CombinedSource,
-    BRDFObservation, SpectralObservation, TemporalObservation,
-    LossComponents, AggregatedLoss, LossAggregator,
+    AggregatedLoss, BRDFObservation, BRDFSource, CalibrationSource, CombinedSource, LossAggregator,
+    LossComponents, SpectralObservation, SpectralSource, TemporalObservation, TimeSeriesSource,
 };
 
 // Uncertainty estimation - confidence intervals and covariance
 pub use glass_physics::{
-    ParameterCovarianceMatrix, CovarianceEstimator,
-    FisherInformationMatrix, FisherInformationEstimator,
-    BootstrapConfig, BootstrapResampler, BootstrapResult, ConfidenceInterval,
-    TwinConfidenceReport, ConfidenceWarning, ConfidenceLevel, ParameterUncertainty,
+    BootstrapConfig, BootstrapResampler, BootstrapResult, ConfidenceInterval, ConfidenceLevel,
+    ConfidenceWarning, CovarianceEstimator, FisherInformationEstimator, FisherInformationMatrix,
+    ParameterCovarianceMatrix, ParameterUncertainty, TwinConfidenceReport,
 };
 
 // Perceptual loss functions - LAB color space and Delta E
 pub use glass_physics::{
-    LabColor, XyzColor, Illuminant,
-    DeltaEFormula, PerceptualLossConfig,
-    rgb_to_xyz, xyz_to_rgb, xyz_to_lab, lab_to_xyz, rgb_to_lab, lab_to_rgb,
-    delta_e_76, delta_e_94, delta_e_2000,
-    perceptual_loss, perceptual_loss_gradient,
+    delta_e_2000, delta_e_76, delta_e_94, lab_to_rgb, lab_to_xyz, perceptual_loss,
+    perceptual_loss_gradient, rgb_to_lab, rgb_to_xyz, xyz_to_lab, xyz_to_rgb, DeltaEFormula,
+    Illuminant, LabColor, PerceptualLossConfig, XyzColor,
 };
 
 // Combined effects compositor
 pub use glass_physics::{
-    EffectLayer, BlendMode, RoughnessModel,
-    CombinedMaterial, CombinedMaterialBuilder,
+    BlendMode, CombinedMaterial, CombinedMaterialBuilder, EffectLayer, RoughnessModel,
 };
 
 // Anisotropic BRDF - brushed metals, hair, fabric
 pub use glass_physics::{
-    AnisotropicGGX, AnisotropicConductor, FiberBSDF,
-    anisotropy_strength, strength_to_alphas,
+    anisotropy_strength, strength_to_alphas, AnisotropicConductor, AnisotropicGGX, FiberBSDF,
 };
 
 // Subsurface scattering - translucent materials
-pub use glass_physics::{
-    SubsurfaceParams, DiffusionBSSRDF, SubsurfaceBSDF,
-    sss_presets,
-};
+pub use glass_physics::{sss_presets, DiffusionBSSRDF, SubsurfaceBSDF, SubsurfaceParams};
 
 // PBR API v1 - stable public interface
 pub use glass_physics::{
-    API_VERSION, API_VERSION_STRING, is_compatible,
-    Material, Layer, MaterialBuilder, MaterialPreset,
+    is_compatible, Layer, Material, MaterialBuilder, MaterialPreset, API_VERSION,
+    API_VERSION_STRING,
 };
 
 // GPU backend configuration (feature-gated types available via glass_physics)
-pub use glass_physics::{
-    GpuBackendConfig, GpuBackendStats,
-    estimate_gpu_backend_memory,
-};
+pub use glass_physics::{estimate_gpu_backend_memory, GpuBackendConfig, GpuBackendStats};
 
 // ============================================================================
 // Tier 4 - Scientific & Metrology APIs (certification, instruments, validation)
@@ -275,64 +251,61 @@ pub use glass_physics::{
 
 // Metrology - formal measurement system
 pub use glass_physics::{
-    Unit, UnitValue, Measurement, MeasurementId, MeasurementArray,
-    Uncertainty, MeasurementQuality, MeasurementSource,
-    TraceabilityChain, TraceabilityEntry, TraceabilityOperation,
-    ToleranceBudget, ToleranceComponent, ToleranceCategory,
+    Measurement, MeasurementArray, MeasurementId, MeasurementQuality, MeasurementSource,
+    ToleranceBudget, ToleranceCategory, ToleranceComponent, TraceabilityChain, TraceabilityEntry,
+    TraceabilityOperation, Uncertainty, Unit, UnitValue,
 };
 
 // Virtual instruments - simulation of physical measurement devices
 pub use glass_physics::{
-    VirtualGonioreflectometer, GoniometerResult,
-    VirtualSpectrophotometer, SpectroResult, SpectroGeometry,
-    VirtualEllipsometer, EllipsometryResult, ThinFilmResult as EllipsometryThinFilmResult,
+    EllipsometryResult, GoniometerResult, SpectroGeometry, SpectroResult,
+    ThinFilmResult as EllipsometryThinFilmResult, VirtualEllipsometer, VirtualGonioreflectometer,
+    VirtualSpectrophotometer,
 };
 
 // Certification system - material validation levels
 pub use glass_physics::{
-    CertificationLevel, CertificationMetrics, LevelRequirements,
-    CertificationAuditor, MaterialAuditData, CertificationResult,
-    can_achieve_level, highest_level, quick_certify_experimental,
+    can_achieve_level, highest_level, quick_certify_experimental, CertificationAuditor,
+    CertificationLevel, CertificationMetrics, CertificationResult, LevelRequirements,
+    MaterialAuditData,
 };
 
 // Ground truth validation
 pub use glass_physics::{
-    GroundTruthValidator, GroundTruthDataset,
-    gold_reference_data, silver_reference_data, bk7_reference_data,
+    bk7_reference_data, gold_reference_data, silver_reference_data, GroundTruthDataset,
+    GroundTruthValidator,
 };
 
 // Material export/import
 pub use glass_physics::{
-    ExportTarget, GlslVersion, MaterialDescriptor,
-    ExportOptions, MaterialExporter,
-    ImportSource, ImportError, ImportAdapter, MaterialImporter,
+    ExportOptions, ExportTarget, GlslVersion, ImportAdapter, ImportError, ImportSource,
+    MaterialDescriptor, MaterialExporter, MaterialImporter,
 };
 
 // Plugin system
 pub use glass_physics::{
-    PLUGIN_API_VERSION, PLUGIN_API_VERSION_STRING,
-    MaterialType, PluginMaterialParams, PluginRenderOutput,
-    RenderPlugin, DatasetPlugin, MetricPlugin,
-    PluginRegistry, PluginError, PluginInfo, PluginInventory,
+    DatasetPlugin, MaterialType, MetricPlugin, PluginError, PluginInfo, PluginInventory,
+    PluginMaterialParams, PluginRegistry, PluginRenderOutput, RenderPlugin, PLUGIN_API_VERSION,
+    PLUGIN_API_VERSION_STRING,
 };
 
 // Reference renderer - IEEE754 precision
 pub use glass_physics::{
-    PrecisionMode, ReferenceRenderConfig, ReferenceRenderer, ReferenceRenderResult,
+    PrecisionMode, ReferenceRenderConfig, ReferenceRenderResult, ReferenceRenderer,
 };
 
 // Spectral error metrics
 pub use glass_physics::{
-    SpectralErrorMetrics, PerceptualErrorMetrics, EnergyMetrics, ComprehensiveMetrics,
-    SpectralQualityGrade, PerceptualQualityGrade, ValidationStatus,
-    compute_spectral_metrics, compute_perceptual_metrics, compute_comprehensive,
+    compute_comprehensive, compute_perceptual_metrics, compute_spectral_metrics,
+    ComprehensiveMetrics, EnergyMetrics, PerceptualErrorMetrics, PerceptualQualityGrade,
+    SpectralErrorMetrics, SpectralQualityGrade, ValidationStatus,
 };
 
 // Scientific validation
 pub use glass_physics::{
-    fresnel_dielectric_exact, fresnel_conductor_exact,
-    airy_thin_film_reflectance, transfer_matrix_multilayer,
-    rayleigh_scattering, cauchy_dispersion_analytical, sellmeier_dispersion,
+    airy_thin_film_reflectance, cauchy_dispersion_analytical, fresnel_conductor_exact,
+    fresnel_dielectric_exact, rayleigh_scattering, sellmeier_dispersion,
+    transfer_matrix_multilayer,
 };
 
 // ============================================================================
@@ -341,35 +314,44 @@ pub use glass_physics::{
 
 // Advanced material presets catalog
 pub use glass_physics::{
-    AdvancedMaterialCategory, AdvancedMaterialInfo,
-    advanced_material_catalog, get_preset_info, list_by_category,
-    estimate_advanced_presets_memory,
-    // Architectural glass
-    low_e_coating, electrochromic_glass, smart_glass_pdlc,
-    // Automotive finishes
-    car_paint_metallic, pearlescent_paint, chrome_finish,
-    // Natural materials
-    opal, mother_of_pearl, beetle_shell,
+    advanced_material_catalog,
     // Technical coatings
-    anti_reflective_coating, dichroic_filter, holographic,
+    anti_reflective_coating,
+    beetle_shell,
+    // Automotive finishes
+    car_paint_metallic,
+    chrome_finish,
+    dichroic_filter,
+    electrochromic_glass,
+    estimate_advanced_presets_memory,
+    get_preset_info,
+    holographic,
+    list_by_category,
+    // Architectural glass
+    low_e_coating,
+    mother_of_pearl,
+    // Natural materials
+    opal,
+    pearlescent_paint,
+    smart_glass_pdlc,
+    AdvancedMaterialCategory,
+    AdvancedMaterialInfo,
 };
 
 // Anisotropic materials (brushed metals, hair, fabric)
 pub use glass_physics::{
-    AnisotropicBSDF, AshikhminShirleyBSDF, HairBSDF,
-    anisotropic_material_presets, estimate_anisotropic_memory,
+    anisotropic_material_presets, estimate_anisotropic_memory, AnisotropicBSDF,
+    AshikhminShirleyBSDF, HairBSDF,
 };
 
 // Meta-materials (photonic crystals, structural color)
 pub use glass_physics::{
-    MaterialRef, LatticeType, NanostructureType,
-    PhotonicCrystal, StructuralColor, DiffractionGrating,
-    meta_material_presets, estimate_meta_materials_memory,
+    estimate_meta_materials_memory, meta_material_presets, DiffractionGrating, LatticeType,
+    MaterialRef, NanostructureType, PhotonicCrystal, StructuralColor,
 };
 
 // Plasmonic materials (nanoparticles, LSPR)
 pub use glass_physics::{
-    PlasmonicMetalType, ParticleShape, PlasmonicOrdering,
-    PlasmonicNanoparticle, PlasmonicFilm, PlasmonicArray,
-    plasmonic_presets, estimate_plasmonic_memory,
+    estimate_plasmonic_memory, plasmonic_presets, ParticleShape, PlasmonicArray, PlasmonicFilm,
+    PlasmonicMetalType, PlasmonicNanoparticle, PlasmonicOrdering,
 };

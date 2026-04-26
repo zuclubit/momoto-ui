@@ -18,8 +18,8 @@
 //! - Logarithmic law: x = k_log × ln(1 + t/τ) (thin films)
 //! - Arrhenius: k = k₀ × exp(-E_a/RT)
 
-use std::f64::consts::PI;
 use std::collections::HashMap;
+use std::f64::consts::PI;
 
 // ============================================================================
 // ELEMENT AND ALLOY DEFINITIONS
@@ -28,15 +28,15 @@ use std::collections::HashMap;
 /// Chemical elements that can oxidize
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Element {
-    Cu,  // Copper
-    Fe,  // Iron
-    Al,  // Aluminum
-    Zn,  // Zinc
-    Ag,  // Silver
-    Au,  // Gold (doesn't really oxidize)
-    Ni,  // Nickel
-    Cr,  // Chromium
-    Ti,  // Titanium
+    Cu, // Copper
+    Fe, // Iron
+    Al, // Aluminum
+    Zn, // Zinc
+    Ag, // Silver
+    Au, // Gold (doesn't really oxidize)
+    Ni, // Nickel
+    Cr, // Chromium
+    Ti, // Titanium
 }
 
 impl Element {
@@ -113,7 +113,8 @@ impl AlloyComposition {
 
     /// Get dominant element
     pub fn dominant_element(&self) -> Element {
-        self.elements.iter()
+        self.elements
+            .iter()
             .max_by(|a, b| a.1.partial_cmp(b.1).unwrap())
             .map(|(e, _)| *e)
             .unwrap_or(Element::Fe)
@@ -158,11 +159,11 @@ impl OxidationKinetics {
     /// Kinetics for copper
     pub fn copper() -> Self {
         Self {
-            k0_parabolic: 1e8,        // nm²/s at high T
-            k0_linear: 0.01,          // nm/s
-            k_log: 10.0,              // nm
-            tau_log: 3600.0,          // 1 hour
-            activation_energy: 0.8,   // eV
+            k0_parabolic: 1e8,      // nm²/s at high T
+            k0_linear: 0.01,        // nm/s
+            k_log: 10.0,            // nm
+            tau_log: 3600.0,        // 1 hour
+            activation_energy: 0.8, // eV
             transition_thickness: 50.0,
             humidity_factor: 1.5,
         }
@@ -177,7 +178,7 @@ impl OxidationKinetics {
             tau_log: 1800.0,
             activation_energy: 1.0,
             transition_thickness: 30.0,
-            humidity_factor: 3.0,  // Iron rusts fast in humidity
+            humidity_factor: 3.0, // Iron rusts fast in humidity
         }
     }
 
@@ -187,10 +188,10 @@ impl OxidationKinetics {
             k0_parabolic: 1e6,
             k0_linear: 0.1,
             k_log: 3.0,
-            tau_log: 60.0,           // Fast initial oxide
-            activation_energy: 1.5,   // Protective oxide
+            tau_log: 60.0,              // Fast initial oxide
+            activation_energy: 1.5,     // Protective oxide
             transition_thickness: 10.0, // Thin oxide
-            humidity_factor: 0.5,     // Humidity less important
+            humidity_factor: 0.5,       // Humidity less important
         }
     }
 
@@ -337,7 +338,9 @@ impl OxideStructure {
 
     /// Simple single-layer oxide
     pub fn single(layer: OxideLayerProperties) -> Self {
-        Self { layers: vec![layer] }
+        Self {
+            layers: vec![layer],
+        }
     }
 
     /// Total oxide thickness
@@ -573,7 +576,9 @@ impl DynamicOxidizedMetal {
         self.oxygen_pressure = o2_pressure.clamp(0.0, 1.0);
 
         // Record temperature history
-        self.state.temp_history.push((self.state.age_seconds, temp_k));
+        self.state
+            .temp_history
+            .push((self.state.age_seconds, temp_k));
 
         // Update average humidity
         let n = self.state.temp_history.len() as f64;
@@ -596,12 +601,16 @@ impl DynamicOxidizedMetal {
         // Calculate thickness growth
         let dx = match rate_law {
             RateLaw::Logarithmic => {
-                let x_max = self.kinetics.k_log *
-                    (1.0 + self.state.age_seconds / self.kinetics.tau_log).ln();
-                (x_max - self.state.oxide_thickness).max(0.0).min(dt_seconds * 0.01)
+                let x_max = self.kinetics.k_log
+                    * (1.0 + self.state.age_seconds / self.kinetics.tau_log).ln();
+                (x_max - self.state.oxide_thickness)
+                    .max(0.0)
+                    .min(dt_seconds * 0.01)
             }
             RateLaw::Linear => {
-                let k = self.kinetics.effective_k_linear(self.temperature, self.humidity);
+                let k = self
+                    .kinetics
+                    .effective_k_linear(self.temperature, self.humidity);
                 k * dt_seconds * self.oxygen_pressure
             }
             RateLaw::Parabolic => {
@@ -664,8 +673,9 @@ impl DynamicOxidizedMetal {
         }
 
         // Add substrate (metal) reflection
-        r_total += t_cumulative * t_cumulative *
-            self.fresnel_metal(wavelength_nm, self.base_optical.n, self.base_optical.k);
+        r_total += t_cumulative
+            * t_cumulative
+            * self.fresnel_metal(wavelength_nm, self.base_optical.n, self.base_optical.k);
 
         r_total.clamp(0.0, 1.0)
     }
@@ -731,8 +741,9 @@ impl OxidationSimulation {
         let mut schedule = Vec::new();
         for hour in 0..24 {
             let t = hour as f64 * 3600.0;
-            let temp = min_temp + (max_temp - min_temp) *
-                (0.5 + 0.5 * (2.0 * PI * hour as f64 / 24.0 - PI / 2.0).sin());
+            let temp = min_temp
+                + (max_temp - min_temp)
+                    * (0.5 + 0.5 * (2.0 * PI * hour as f64 / 24.0 - PI / 2.0).sin());
             schedule.push((t, temp, humidity));
         }
         Self {
@@ -742,7 +753,11 @@ impl OxidationSimulation {
     }
 
     /// Run simulation for total time
-    pub fn run(&self, metal: &mut DynamicOxidizedMetal, total_time: f64) -> Vec<(f64, f64, [f64; 3])> {
+    pub fn run(
+        &self,
+        metal: &mut DynamicOxidizedMetal,
+        total_time: f64,
+    ) -> Vec<(f64, f64, [f64; 3])> {
         let mut results = Vec::new();
         let mut t = 0.0;
 
@@ -769,7 +784,9 @@ impl OxidationSimulation {
         }
 
         // Cyclic interpolation through schedule
-        let cycle_time: f64 = self.environment_schedule.last()
+        let cycle_time: f64 = self
+            .environment_schedule
+            .last()
             .map(|(t, _, _)| *t)
             .unwrap_or(3600.0);
 
@@ -875,9 +892,14 @@ pub fn to_css_oxidized(metal: &DynamicOxidizedMetal) -> String {
 
     // Add texture for heavily oxidized surfaces
     if metal.state.oxide_thickness > 100.0 {
-        let porosity = metal.state.structure.layers.iter()
+        let porosity = metal
+            .state
+            .structure
+            .layers
+            .iter()
             .map(|l| l.porosity)
-            .sum::<f64>() / metal.state.structure.layers.len().max(1) as f64;
+            .sum::<f64>()
+            / metal.state.structure.layers.len().max(1) as f64;
 
         let noise_opacity = (porosity * 0.3).clamp(0.0, 0.2);
 
@@ -891,9 +913,11 @@ pub fn to_css_oxidized(metal: &DynamicOxidizedMetal) -> String {
             1.0 - noise_opacity
         )
     } else {
-        format!("background: {}; background-image: linear-gradient(135deg, \
+        format!(
+            "background: {}; background-image: linear-gradient(135deg, \
                  rgba(255,255,255,0.2) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
-                base)
+            base
+        )
     }
 }
 
@@ -912,9 +936,7 @@ pub fn to_css_oxidation_animation(
          100% {{ background-color: rgb({}, {}, {}); }}\n\
          }}\n\
          animation: oxidation {:.1}s ease-in-out forwards;",
-        start_rgb[0], start_rgb[1], start_rgb[2],
-        end_rgb[0], end_rgb[1], end_rgb[2],
-        duration_s
+        start_rgb[0], start_rgb[1], start_rgb[2], end_rgb[0], end_rgb[1], end_rgb[2], duration_s
     )
 }
 

@@ -192,10 +192,10 @@ impl GpuBatchEvaluator {
 
         self.stats.gpu_dispatches += 1;
         self.stats.gpu_materials += count as u64;
-        self.stats.avg_gpu_time_per_material =
-            (self.stats.avg_gpu_time_per_material * (self.stats.gpu_dispatches - 1) as f64
-                + elapsed / count as f64)
-                / self.stats.gpu_dispatches as f64;
+        self.stats.avg_gpu_time_per_material = (self.stats.avg_gpu_time_per_material
+            * (self.stats.gpu_dispatches - 1) as f64
+            + elapsed / count as f64)
+            / self.stats.gpu_dispatches as f64;
 
         result
     }
@@ -296,7 +296,8 @@ impl GpuBatchEvaluator {
             compute_pass.set_pipeline(pipeline);
             compute_pass.set_bind_group(0, &bind_group, &[]);
 
-            let workgroups = (count as u32 + self.config.workgroup_size - 1) / self.config.workgroup_size;
+            let workgroups =
+                (count as u32 + self.config.workgroup_size - 1) / self.config.workgroup_size;
             compute_pass.dispatch_workgroups(workgroups, 1, 1);
         }
 
@@ -410,18 +411,16 @@ mod tests {
 
     #[test]
     fn test_from_gpu_responses() {
-        let responses = vec![
-            ResponseGpuData {
-                reflectance_r: 0.5,
-                reflectance_g: 0.5,
-                reflectance_b: 0.5,
-                transmittance_r: 0.3,
-                transmittance_g: 0.3,
-                transmittance_b: 0.3,
-                absorption_r: 0.2,
-                absorption_g: 0.2,
-            },
-        ];
+        let responses = vec![ResponseGpuData {
+            reflectance_r: 0.5,
+            reflectance_g: 0.5,
+            reflectance_b: 0.5,
+            transmittance_r: 0.3,
+            transmittance_g: 0.3,
+            transmittance_b: 0.3,
+            absorption_r: 0.2,
+            absorption_g: 0.2,
+        }];
 
         let result = GpuBatchResult::from_gpu_responses(&responses, 100.0);
         assert_eq!(result.count, 1);

@@ -2,13 +2,13 @@
 
 #![allow(dead_code, unused_variables)]
 
-use crate::contract::{Contract, ContrastStandard, ComplianceLevel};
+use crate::contract::{ComplianceLevel, Contract, ContrastStandard};
 use crate::query::Query;
 use crate::response::{
-    AdjustedColorResponse, ColorMetrics, ColorConversionResponse, ContextInfo,
-    ErrorInfo, GamutCheckResponse, MaterialCategory, MaterialCssResponse,
-    MaterialListResponse, MaterialResponse, ModificationDetail, ModificationInfo,
-    RecommendationResponse, Response, ScoreResponse, ValidationResponse, Violation,
+    AdjustedColorResponse, ColorConversionResponse, ColorMetrics, ContextInfo, ErrorInfo,
+    GamutCheckResponse, MaterialCategory, MaterialCssResponse, MaterialListResponse,
+    MaterialResponse, ModificationDetail, ModificationInfo, RecommendationResponse, Response,
+    ScoreResponse, ValidationResponse, Violation,
 };
 
 /// Main entry point for agent query execution.
@@ -25,7 +25,12 @@ impl AgentExecutor {
             Query::Validate { color, contract } => {
                 Response::Validation(self.validate(&color, &contract))
             }
-            Query::ValidatePair { foreground, background, standard, level } => {
+            Query::ValidatePair {
+                foreground,
+                background,
+                standard,
+                level,
+            } => {
                 let std = if standard == "wcag" {
                     ContrastStandard::Wcag
                 } else {
@@ -38,27 +43,31 @@ impl AgentExecutor {
                 };
                 Response::Validation(self.validate_pair(&foreground, &background, std, lvl))
             }
-            Query::RecommendForeground { background, context, target } => {
-                Response::Recommendation(self.stub_recommendation(&background))
-            }
-            Query::ImproveForeground { foreground, background, context, target } => {
-                Response::Recommendation(self.stub_recommendation(&background))
-            }
-            Query::ScorePair { foreground, background, context, target } => {
-                Response::Score(self.stub_score(&foreground, &background, &context, &target))
-            }
-            Query::GetMetrics { color } => {
-                Response::Metrics(self.get_metrics(&color))
-            }
-            Query::GetMaterial { name } => {
-                Response::Material(self.get_material_info(&name))
-            }
+            Query::RecommendForeground {
+                background,
+                context,
+                target,
+            } => Response::Recommendation(self.stub_recommendation(&background)),
+            Query::ImproveForeground {
+                foreground,
+                background,
+                context,
+                target,
+            } => Response::Recommendation(self.stub_recommendation(&background)),
+            Query::ScorePair {
+                foreground,
+                background,
+                context,
+                target,
+            } => Response::Score(self.stub_score(&foreground, &background, &context, &target)),
+            Query::GetMetrics { color } => Response::Metrics(self.get_metrics(&color)),
+            Query::GetMaterial { name } => Response::Material(self.get_material_info(&name)),
             Query::ListMaterials { category } => {
                 Response::Materials(self.list_materials(category.as_deref()))
             }
-            Query::ListWorkflows => {
-                Response::Json(serde_json::json!({"workflows": ["accessibility_audit", "palette_generation"]}))
-            }
+            Query::ListWorkflows => Response::Json(
+                serde_json::json!({"workflows": ["accessibility_audit", "palette_generation"]}),
+            ),
             _ => Response::Json(serde_json::json!({"status": "ok"})),
         }
     }
@@ -81,7 +90,10 @@ impl AgentExecutor {
                 })
             }
             "improve_foreground" => {
-                let fg = v.get("foreground").and_then(|f| f.as_str()).unwrap_or("#000000");
+                let fg = v
+                    .get("foreground")
+                    .and_then(|f| f.as_str())
+                    .unwrap_or("#000000");
                 serde_json::json!({
                     "color": fg,
                     "quality_score": 0.8,
@@ -112,7 +124,10 @@ impl AgentExecutor {
                 serde_json::to_value(list).unwrap_or_default()
             }
             "convert_color" => {
-                let space = v.get("target_space").and_then(|s| s.as_str()).unwrap_or("oklch");
+                let space = v
+                    .get("target_space")
+                    .and_then(|s| s.as_str())
+                    .unwrap_or("oklch");
                 serde_json::json!({"space": space, "values": {"L": 0.5, "C": 0.1, "H": 180.0}})
             }
             "adjust_color" => {
@@ -140,11 +155,15 @@ impl AgentExecutor {
         for constraint in &contract.constraints {
             match constraint.kind.as_str() {
                 "min_contrast_wcag_aa" => {
-                    let bg = constraint.params.get("background")
+                    let bg = constraint
+                        .params
+                        .get("background")
                         .and_then(|b| b.as_str())
                         .unwrap_or("#ffffff");
-                    let fg_c = Color::from_hex(color).unwrap_or_else(|_| Color::from_srgb8(0, 0, 0));
-                    let bg_c = Color::from_hex(bg).unwrap_or_else(|_| Color::from_srgb8(255, 255, 255));
+                    let fg_c =
+                        Color::from_hex(color).unwrap_or_else(|_| Color::from_srgb8(0, 0, 0));
+                    let bg_c =
+                        Color::from_hex(bg).unwrap_or_else(|_| Color::from_srgb8(255, 255, 255));
                     let ratio = WCAGMetric.evaluate(fg_c, bg_c).value;
                     if ratio < 4.5 {
                         violations.push(crate::response::Violation {
@@ -157,11 +176,15 @@ impl AgentExecutor {
                     }
                 }
                 "min_contrast_wcag_aaa" => {
-                    let bg = constraint.params.get("background")
+                    let bg = constraint
+                        .params
+                        .get("background")
                         .and_then(|b| b.as_str())
                         .unwrap_or("#ffffff");
-                    let fg_c = Color::from_hex(color).unwrap_or_else(|_| Color::from_srgb8(0, 0, 0));
-                    let bg_c = Color::from_hex(bg).unwrap_or_else(|_| Color::from_srgb8(255, 255, 255));
+                    let fg_c =
+                        Color::from_hex(color).unwrap_or_else(|_| Color::from_srgb8(0, 0, 0));
+                    let bg_c =
+                        Color::from_hex(bg).unwrap_or_else(|_| Color::from_srgb8(255, 255, 255));
                     let ratio = WCAGMetric.evaluate(fg_c, bg_c).value;
                     if ratio < 7.0 {
                         violations.push(crate::response::Violation {
@@ -226,8 +249,8 @@ impl AgentExecutor {
     /// Get color metrics.
     pub fn get_metrics(&self, color: &str) -> ColorMetrics {
         use momoto_core::color::Color;
-        use momoto_core::space::oklch::OKLCH;
         use momoto_core::luminance::relative_luminance_srgb;
+        use momoto_core::space::oklch::OKLCH;
 
         let c = Color::from_hex(color).unwrap_or_else(|_| Color::from_srgb8(0, 0, 0));
         let oklch = OKLCH::from_color(&c);
@@ -252,12 +275,54 @@ impl AgentExecutor {
     /// Get material preset info.
     pub fn get_material_info(&self, preset: &str) -> Option<MaterialResponse> {
         let (name, description, ior, category, dispersion, has_scattering) = match preset {
-            "crown_glass" => ("Crown Glass", "Standard optical glass", 1.52, "glass", Some(59.0), false),
-            "flint_glass" => ("Flint Glass", "High-dispersion optical glass", 1.62, "glass", Some(36.0), false),
-            "borosilicate" => ("Borosilicate", "Low-expansion glass (Pyrex)", 1.47, "glass", Some(65.0), false),
-            "diamond" => ("Diamond", "Highest natural IOR gemstone", 2.42, "gem", Some(55.0), false),
-            "sapphire" => ("Sapphire", "Corundum gemstone", 1.77, "gem", Some(72.0), false),
-            "ruby" => ("Ruby", "Red corundum gemstone", 1.76, "gem", Some(70.0), false),
+            "crown_glass" => (
+                "Crown Glass",
+                "Standard optical glass",
+                1.52,
+                "glass",
+                Some(59.0),
+                false,
+            ),
+            "flint_glass" => (
+                "Flint Glass",
+                "High-dispersion optical glass",
+                1.62,
+                "glass",
+                Some(36.0),
+                false,
+            ),
+            "borosilicate" => (
+                "Borosilicate",
+                "Low-expansion glass (Pyrex)",
+                1.47,
+                "glass",
+                Some(65.0),
+                false,
+            ),
+            "diamond" => (
+                "Diamond",
+                "Highest natural IOR gemstone",
+                2.42,
+                "gem",
+                Some(55.0),
+                false,
+            ),
+            "sapphire" => (
+                "Sapphire",
+                "Corundum gemstone",
+                1.77,
+                "gem",
+                Some(72.0),
+                false,
+            ),
+            "ruby" => (
+                "Ruby",
+                "Red corundum gemstone",
+                1.76,
+                "gem",
+                Some(70.0),
+                false,
+            ),
             "gold" => ("Gold", "Noble metal Au", 0.27, "metal", None, false),
             "silver" => ("Silver", "Noble metal Ag", 0.05, "metal", None, false),
             "copper" => ("Copper", "Conductive metal Cu", 0.44, "metal", None, false),
@@ -284,21 +349,48 @@ impl AgentExecutor {
     /// List available material presets.
     pub fn list_materials(&self, category: Option<&str>) -> MaterialListResponse {
         let all_materials = vec![
-            ("crown_glass", "glass"), ("flint_glass", "glass"), ("borosilicate", "glass"),
-            ("bk7", "glass"), ("sf11", "glass"), ("n_bk7", "glass"), ("n_sf11", "glass"),
-            ("lak9", "glass"), ("lab_glass", "glass"), ("extra_light_flint", "glass"),
-            ("dense_flint", "glass"), ("quartz", "glass"),
-            ("diamond", "gem"), ("sapphire", "gem"), ("ruby", "gem"),
-            ("emerald", "gem"), ("amethyst", "gem"),
-            ("gold", "metal"), ("silver", "metal"), ("copper", "metal"),
-            ("iron", "metal"), ("aluminum", "metal"), ("titanium", "metal"),
-            ("nickel", "metal"), ("chromium", "metal"), ("platinum", "metal"),
-            ("cobalt", "metal"), ("tungsten", "metal"), ("zinc", "metal"),
-            ("skin", "organic"), ("milk", "organic"), ("blood", "organic"),
-            ("plant_leaf", "organic"), ("wood", "organic"),
-            ("marble", "stone"), ("granite", "stone"), ("sandstone", "stone"),
-            ("water", "liquid"), ("ethanol", "liquid"), ("glycerin", "liquid"),
-            ("ice", "liquid"), ("glycerol", "liquid"),
+            ("crown_glass", "glass"),
+            ("flint_glass", "glass"),
+            ("borosilicate", "glass"),
+            ("bk7", "glass"),
+            ("sf11", "glass"),
+            ("n_bk7", "glass"),
+            ("n_sf11", "glass"),
+            ("lak9", "glass"),
+            ("lab_glass", "glass"),
+            ("extra_light_flint", "glass"),
+            ("dense_flint", "glass"),
+            ("quartz", "glass"),
+            ("diamond", "gem"),
+            ("sapphire", "gem"),
+            ("ruby", "gem"),
+            ("emerald", "gem"),
+            ("amethyst", "gem"),
+            ("gold", "metal"),
+            ("silver", "metal"),
+            ("copper", "metal"),
+            ("iron", "metal"),
+            ("aluminum", "metal"),
+            ("titanium", "metal"),
+            ("nickel", "metal"),
+            ("chromium", "metal"),
+            ("platinum", "metal"),
+            ("cobalt", "metal"),
+            ("tungsten", "metal"),
+            ("zinc", "metal"),
+            ("skin", "organic"),
+            ("milk", "organic"),
+            ("blood", "organic"),
+            ("plant_leaf", "organic"),
+            ("wood", "organic"),
+            ("marble", "stone"),
+            ("granite", "stone"),
+            ("sandstone", "stone"),
+            ("water", "liquid"),
+            ("ethanol", "liquid"),
+            ("glycerin", "liquid"),
+            ("ice", "liquid"),
+            ("glycerol", "liquid"),
         ];
 
         let filtered: Vec<_> = all_materials
@@ -315,7 +407,10 @@ impl AgentExecutor {
 
         let categories = cat_counts
             .into_iter()
-            .map(|(name, count)| MaterialCategory { name: name.to_string(), count })
+            .map(|(name, count)| MaterialCategory {
+                name: name.to_string(),
+                count,
+            })
             .collect();
 
         let materials = filtered
@@ -368,7 +463,11 @@ impl AgentExecutor {
             perceptual: 0.85,
             appropriateness: 0.9,
             passes,
-            assessment: if passes { "Excellent".to_string() } else { "Poor".to_string() },
+            assessment: if passes {
+                "Excellent".to_string()
+            } else {
+                "Poor".to_string()
+            },
             context: ContextInfo {
                 usage: context.to_string(),
                 target: target.to_string(),

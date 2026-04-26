@@ -11,10 +11,9 @@
 
 #![allow(dead_code)]
 
-use serde::{Serialize, Deserialize};
 use momoto_core::color::Color;
-use momoto_core::space::oklch::{OKLCH, HuePath};
-
+use momoto_core::space::oklch::{HuePath, OKLCH};
+use serde::{Deserialize, Serialize};
 
 // ============================================================================
 // Easing Functions
@@ -60,7 +59,11 @@ impl EasingFunction {
             }
             Self::Step => {
                 // Instantaneous jump at midpoint
-                if t < 0.5 { 0.0 } else { 1.0 }
+                if t < 0.5 {
+                    0.0
+                } else {
+                    1.0
+                }
             }
             Self::CubicBezier(p1x, p1y, p2x, p2y) => {
                 // Numerical approximation via Newton–Raphson on the parametric Bezier
@@ -73,8 +76,8 @@ impl EasingFunction {
                 let zeta = zeta.clamp(0.001, 0.999);
                 let omega_d = omega * (1.0 - zeta * zeta).sqrt();
                 let envelope = (-zeta * omega * t).exp();
-                let oscillation = (omega_d * t).cos()
-                    + (zeta / (1.0 - zeta * zeta).sqrt()) * (omega_d * t).sin();
+                let oscillation =
+                    (omega_d * t).cos() + (zeta / (1.0 - zeta * zeta).sqrt()) * (omega_d * t).sin();
                 (1.0 - envelope * oscillation).clamp(-0.5, 1.5)
             }
         }
@@ -94,19 +97,13 @@ fn cubic_bezier_y(p1x: f64, p1y: f64, p2x: f64, p2y: f64, t: f64) -> f64 {
     // Bezier x(u) = 3*p1x*u*(1-u)^2 + 3*p2x*u^2*(1-u) + u^3
     // Find u such that x(u) = t, then compute y(u)
     let bezier_x = |u: f64| -> f64 {
-        3.0 * p1x * u * (1.0 - u).powi(2)
-            + 3.0 * p2x * u.powi(2) * (1.0 - u)
-            + u.powi(3)
+        3.0 * p1x * u * (1.0 - u).powi(2) + 3.0 * p2x * u.powi(2) * (1.0 - u) + u.powi(3)
     };
     let bezier_y = |u: f64| -> f64 {
-        3.0 * p1y * u * (1.0 - u).powi(2)
-            + 3.0 * p2y * u.powi(2) * (1.0 - u)
-            + u.powi(3)
+        3.0 * p1y * u * (1.0 - u).powi(2) + 3.0 * p2y * u.powi(2) * (1.0 - u) + u.powi(3)
     };
     let bezier_dx = |u: f64| -> f64 {
-        3.0 * p1x * (1.0 - u) * (1.0 - 3.0 * u)
-            + 3.0 * p2x * u * (3.0 * u - 2.0)
-            + 3.0 * u.powi(2)
+        3.0 * p1x * (1.0 - u) * (1.0 - 3.0 * u) + 3.0 * p2x * u * (3.0 * u - 2.0) + 3.0 * u.powi(2)
     };
 
     // Newton–Raphson: find u from x
@@ -190,8 +187,7 @@ impl ColorTransition {
         let mid = OKLCH::interpolate(&a, &b, eased_t, HuePath::Shorter);
         let color = mid.map_to_gamut().to_color();
 
-        let timestamp = self.from.timestamp_ms
-            + (eased_t * self.duration_ms as f64) as u64;
+        let timestamp = self.from.timestamp_ms + (eased_t * self.duration_ms as f64) as u64;
 
         TemporalColorState {
             hex: color.to_hex(),
@@ -725,7 +721,8 @@ impl FlickerDetector {
         }
 
         // Count flashes in the worst 1-second window
-        let window_samples = (self.config.window_ms as f64 * self.config.sample_rate_hz / 1000.0) as usize;
+        let window_samples =
+            (self.config.window_ms as f64 * self.config.sample_rate_hz / 1000.0) as usize;
         let mut max_flashes_in_window = 0usize;
 
         if !flash_events.is_empty() && window_samples > 0 {
@@ -744,7 +741,8 @@ impl FlickerDetector {
 
         // Each flash event represents one luminance reversal; WCAG counts pairs
         // A "flash" in WCAG terms = going from below threshold to above and back
-        let flashes_per_second = max_flashes_in_window as f64 / (self.config.window_ms as f64 / 1000.0);
+        let flashes_per_second =
+            max_flashes_in_window as f64 / (self.config.window_ms as f64 / 1000.0);
 
         let risk = classify_flicker_risk(flashes_per_second, &self.config);
         let wcag_compliant = flashes_per_second <= self.config.threshold_hz;
@@ -1116,7 +1114,9 @@ impl TemporalContrastAnalyzer {
             true
         } else {
             let mean = changes.iter().map(|c| c.delta).sum::<f64>() / changes.len() as f64;
-            changes.iter().all(|c| (c.delta - mean).abs() / mean.max(0.001) < 0.2)
+            changes
+                .iter()
+                .all(|c| (c.delta - mean).abs() / mean.max(0.001) < 0.2)
         };
 
         TemporalContrastResult {
@@ -1127,7 +1127,7 @@ impl TemporalContrastAnalyzer {
             },
             masking: TemporalMasking {
                 forward_masking_ms: 100, // Typical ~100ms forward masking
-                backward_masking_ms: 50,  // Typical ~50ms backward masking
+                backward_masking_ms: 50, // Typical ~50ms backward masking
                 critical_band_hz: 10.0,
             },
             perceptually_uniform,
@@ -1315,9 +1315,7 @@ impl TemporalValidator {
                     "Increase transition duration to reduce flash rate below {} Hz",
                     self.config.max_flicker_hz
                 ),
-                suggested_duration_ms: Some(
-                    (1000.0 / self.config.max_flicker_hz * 2.0) as u64,
-                ),
+                suggested_duration_ms: Some((1000.0 / self.config.max_flicker_hz * 2.0) as u64),
             });
         }
 
@@ -1339,7 +1337,8 @@ impl TemporalValidator {
             recommendations.push(TemporalRecommendation {
                 priority: RecommendationPriority::High,
                 category: "motion".to_string(),
-                message: "Reduce animation velocity or add prefers-reduced-motion alternative".to_string(),
+                message: "Reduce animation velocity or add prefers-reduced-motion alternative"
+                    .to_string(),
                 suggested_duration_ms: Some(sequence.total_duration_ms * 2),
             });
         }
@@ -1360,12 +1359,15 @@ impl TemporalValidator {
         let passes_wcag = flicker_result.wcag_compliant && motion_result.is_safe;
 
         // Score: penalize for each issue by severity
-        let score_penalty: f64 = issues.iter().map(|i| match i.severity {
-            IssueSeverity::Critical => 0.5,
-            IssueSeverity::High => 0.25,
-            IssueSeverity::Medium => 0.1,
-            IssueSeverity::Low => 0.02,
-        }).sum();
+        let score_penalty: f64 = issues
+            .iter()
+            .map(|i| match i.severity {
+                IssueSeverity::Critical => 0.5,
+                IssueSeverity::High => 0.25,
+                IssueSeverity::Medium => 0.1,
+                IssueSeverity::Low => 0.02,
+            })
+            .sum();
         let overall_score = (1.0 - score_penalty).max(0.0);
 
         TemporalValidationReport {
@@ -1473,9 +1475,8 @@ impl TemporalNeuralCorrector {
                 let improvement;
                 if !local_report.passes_wcag {
                     // Extend duration proportional to correction strength
-                    let new_duration = (t.duration_ms as f64
-                        * (1.0 + self.config.correction_strength))
-                        as u64;
+                    let new_duration =
+                        (t.duration_ms as f64 * (1.0 + self.config.correction_strength)) as u64;
                     let mut corrected = t.clone();
                     corrected.duration_ms = new_duration;
                     // Smooth easing for better perceptual uniformity
@@ -1588,14 +1589,16 @@ impl StressTestConfig {
                     oklch_h: 0.0,
                     timestamp_ms: 2000,
                 };
-                let sequence = ColorSequence::from_states(                    vec![black_state, white_state],
+                let sequence = ColorSequence::from_states(
+                    vec![black_state, white_state],
                     2000,
                     EasingFunction::EaseInOut,
                 );
                 StressTestScenario {
                     name: "smooth_slow_fade".to_string(),
                     category: ScenarioCategory::SlowFade,
-                    description: "2-second ease-in-out fade from black to white — expected safe".to_string(),
+                    description: "2-second ease-in-out fade from black to white — expected safe"
+                        .to_string(),
                     sequence,
                     expected_safe: true,
                 }
@@ -1616,14 +1619,16 @@ impl StressTestConfig {
                     oklch_h: 260.0,
                     timestamp_ms: 1000,
                 };
-                let sequence = ColorSequence::from_states(                    vec![blue, light_blue],
+                let sequence = ColorSequence::from_states(
+                    vec![blue, light_blue],
                     1000,
                     EasingFunction::EaseInOut,
                 );
                 StressTestScenario {
                     name: "slow_1hz_pulse".to_string(),
                     category: ScenarioCategory::SlowFade,
-                    description: "1 Hz blue pulse — expected safe (below WCAG 3 Hz threshold)".to_string(),
+                    description: "1 Hz blue pulse — expected safe (below WCAG 3 Hz threshold)"
+                        .to_string(),
                     sequence,
                     expected_safe: true,
                 }
@@ -1635,7 +1640,11 @@ impl StressTestConfig {
                 for i in 0..7 {
                     let l = if i % 2 == 0 { 0.05 } else { 0.95 };
                     states.push(TemporalColorState {
-                        hex: if i % 2 == 0 { "#111111".to_string() } else { "#eeeeee".to_string() },
+                        hex: if i % 2 == 0 {
+                            "#111111".to_string()
+                        } else {
+                            "#eeeeee".to_string()
+                        },
                         oklch_l: l,
                         oklch_c: 0.0,
                         oklch_h: 0.0,
@@ -1646,7 +1655,8 @@ impl StressTestConfig {
                 StressTestScenario {
                     name: "3hz_flicker_stress".to_string(),
                     category: ScenarioCategory::FlickerStress,
-                    description: "~3 Hz black/white flicker — at WCAG photosensitivity limit".to_string(),
+                    description: "~3 Hz black/white flicker — at WCAG photosensitivity limit"
+                        .to_string(),
                     sequence,
                     expected_safe: false,
                 }
@@ -1657,7 +1667,11 @@ impl StressTestConfig {
                 for i in 0..10 {
                     let l = if i % 2 == 0 { 0.0 } else { 1.0 };
                     states.push(TemporalColorState {
-                        hex: if i % 2 == 0 { "#000000".to_string() } else { "#ffffff".to_string() },
+                        hex: if i % 2 == 0 {
+                            "#000000".to_string()
+                        } else {
+                            "#ffffff".to_string()
+                        },
                         oklch_l: l,
                         oklch_c: 0.0,
                         oklch_h: 0.0,
@@ -1872,7 +1886,10 @@ mod tests {
 
     #[test]
     fn test_easing_spring() {
-        let e = EasingFunction::Spring { stiffness: 100.0, damping: 20.0 };
+        let e = EasingFunction::Spring {
+            stiffness: 100.0,
+            damping: 20.0,
+        };
         let v0 = e.evaluate(0.0);
         let v1 = e.evaluate(1.0);
         // Spring starts at ~0 and converges toward 1
@@ -1884,11 +1901,17 @@ mod tests {
     fn test_temporal_color_state_luminance() {
         let black = TemporalColorState {
             hex: "#000000".to_string(),
-            oklch_l: 0.0, oklch_c: 0.0, oklch_h: 0.0, timestamp_ms: 0,
+            oklch_l: 0.0,
+            oklch_c: 0.0,
+            oklch_h: 0.0,
+            timestamp_ms: 0,
         };
         let white = TemporalColorState {
             hex: "#ffffff".to_string(),
-            oklch_l: 1.0, oklch_c: 0.0, oklch_h: 0.0, timestamp_ms: 0,
+            oklch_l: 1.0,
+            oklch_c: 0.0,
+            oklch_h: 0.0,
+            timestamp_ms: 0,
         };
         assert!((black.relative_luminance() - 0.0).abs() < 1e-6);
         assert!((white.relative_luminance() - 1.0).abs() < 1e-6);
@@ -1899,7 +1922,10 @@ mod tests {
         let from = make_state("#000000", 0.0, 0);
         let to = make_state("#ffffff", 1.0, 1000);
         let transition = ColorTransition {
-            from, to, duration_ms: 1000, easing: EasingFunction::Linear,
+            from,
+            to,
+            duration_ms: 1000,
+            easing: EasingFunction::Linear,
         };
         let mid = transition.interpolate(0.5);
         assert!((mid.oklch_l - 0.5).abs() < 0.01);
@@ -1938,7 +1964,10 @@ mod tests {
         let seq = simple_sequence(1, 2000);
         let detector = FlickerDetector::new(FlickerConfig::wcag());
         let result = detector.detect(&seq);
-        assert!(result.wcag_compliant, "2-second fade should pass WCAG 2.3.1");
+        assert!(
+            result.wcag_compliant,
+            "2-second fade should pass WCAG 2.3.1"
+        );
     }
 
     #[test]
@@ -1954,7 +1983,10 @@ mod tests {
         let detector = FlickerDetector::new(FlickerConfig::wcag());
         let result = detector.detect(&seq);
         assert!(!result.wcag_compliant, "20 Hz flash should fail WCAG 2.3.1");
-        assert!(matches!(result.risk, FlickerRisk::High | FlickerRisk::Photosensitive));
+        assert!(matches!(
+            result.risk,
+            FlickerRisk::High | FlickerRisk::Photosensitive
+        ));
     }
 
     #[test]
@@ -2021,8 +2053,7 @@ mod tests {
                 assert!(
                     result.passed,
                     "Safe scenario '{}' failed: {}",
-                    result.scenario.name,
-                    result.delta_from_expected
+                    result.scenario.name, result.delta_from_expected
                 );
             }
         }
@@ -2036,8 +2067,11 @@ mod tests {
             assert!(result.scenario.expected_safe);
         }
         // Should have no critical failures (all should pass the validator)
-        assert!(report.critical_failures.is_empty(),
-            "Critical failures in safe suite: {:?}", report.critical_failures);
+        assert!(
+            report.critical_failures.is_empty(),
+            "Critical failures in safe suite: {:?}",
+            report.critical_failures
+        );
     }
 
     #[test]
@@ -2067,7 +2101,10 @@ mod tests {
         let from = make_state("#000000", 0.0, 0);
         let to = make_state("#ffffff", 1.0, 2000);
         let transition = ColorTransition {
-            from, to, duration_ms: 2000, easing: EasingFunction::EaseInOut,
+            from,
+            to,
+            duration_ms: 2000,
+            easing: EasingFunction::EaseInOut,
         };
         let safe = FlickerSafeTransition::make_safe(transition, &FlickerConfig::wcag());
         assert!(safe.is_already_safe);

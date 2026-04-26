@@ -104,10 +104,10 @@ impl CertificationLevel {
     /// Get certification validity period in days.
     pub fn validity_days(&self) -> Option<u32> {
         match self {
-            CertificationLevel::Experimental => None,      // No expiry
-            CertificationLevel::Research => Some(365),     // 1 year
-            CertificationLevel::Industrial => Some(180),   // 6 months
-            CertificationLevel::Reference => Some(90),     // 3 months
+            CertificationLevel::Experimental => None,    // No expiry
+            CertificationLevel::Research => Some(365),   // 1 year
+            CertificationLevel::Industrial => Some(180), // 6 months
+            CertificationLevel::Reference => Some(90),   // 3 months
         }
     }
 
@@ -449,8 +449,16 @@ impl LevelRequirements {
             self.validity_days
                 .map(|d| format!("{} days", d))
                 .unwrap_or_else(|| "No expiry".to_string()),
-            if self.requires_calibration { "Yes" } else { "No" },
-            if self.requires_traceability { "Yes" } else { "No" },
+            if self.requires_calibration {
+                "Yes"
+            } else {
+                "No"
+            },
+            if self.requires_traceability {
+                "Yes"
+            } else {
+                "No"
+            },
         )
     }
 }

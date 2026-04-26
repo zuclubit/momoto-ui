@@ -341,8 +341,14 @@ impl MaterialExporter {
             "const vec3 u_baseColor = vec3({:.4}, {:.4}, {:.4});\n",
             material.base_color[0], material.base_color[1], material.base_color[2]
         ));
-        code.push_str(&format!("const float u_metallic = {:.4};\n", material.metallic));
-        code.push_str(&format!("const float u_roughness = {:.4};\n", material.roughness));
+        code.push_str(&format!(
+            "const float u_metallic = {:.4};\n",
+            material.metallic
+        ));
+        code.push_str(&format!(
+            "const float u_roughness = {:.4};\n",
+            material.roughness
+        ));
         code.push_str(&format!("const float u_ior = {:.4};\n", material.ior));
         code.push_str(&format!("const float u_f0 = {:.4};\n", material.f0()));
 
@@ -476,7 +482,10 @@ impl MaterialExporter {
         json.push_str(&format!("    \"specular_IOR\": {:.4}", material.ior));
 
         if material.transmission > 0.0 {
-            json.push_str(&format!(",\n    \"transmission\": {:.4}", material.transmission));
+            json.push_str(&format!(
+                ",\n    \"transmission\": {:.4}",
+                material.transmission
+            ));
         }
 
         json.push_str("\n  }\n");
@@ -759,8 +768,7 @@ mod tests {
 
     #[test]
     fn test_thin_film_descriptor() {
-        let mat = MaterialDescriptor::new("SoapBubble")
-            .with_thin_film(1.33, 300.0, 1.0);
+        let mat = MaterialDescriptor::new("SoapBubble").with_thin_film(1.33, 300.0, 1.0);
 
         assert!(mat.has_thin_film());
         let tf = mat.thin_film.unwrap();

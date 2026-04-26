@@ -51,33 +51,33 @@
 
 // Submodules (conditionally compiled with gpu feature)
 #[cfg(feature = "gpu")]
-pub mod device;
-#[cfg(feature = "gpu")]
 pub mod buffers;
 #[cfg(feature = "gpu")]
-pub mod pipelines;
+pub mod device;
 #[cfg(feature = "gpu")]
 pub mod dispatch;
 #[cfg(feature = "gpu")]
+pub mod fallback;
+#[cfg(feature = "gpu")]
 pub mod parity;
 #[cfg(feature = "gpu")]
-pub mod fallback;
+pub mod pipelines;
 #[cfg(feature = "gpu")]
 pub mod shaders;
 
 // Re-exports when gpu feature is enabled
 #[cfg(feature = "gpu")]
-pub use device::{GpuContext, GpuContextConfig, GpuCapabilities};
-#[cfg(feature = "gpu")]
 pub use buffers::{BufferPool, MaterialBuffer, ResponseBuffer};
 #[cfg(feature = "gpu")]
-pub use pipelines::{ComputePipelineCache, PipelineType};
+pub use device::{GpuCapabilities, GpuContext, GpuContextConfig};
 #[cfg(feature = "gpu")]
-pub use dispatch::{GpuBatchEvaluator, GpuDispatchConfig, GpuBatchResult};
-#[cfg(feature = "gpu")]
-pub use parity::{GpuCpuParityTest, ParityResult, ParityConfig};
+pub use dispatch::{GpuBatchEvaluator, GpuBatchResult, GpuDispatchConfig};
 #[cfg(feature = "gpu")]
 pub use fallback::{AutoFallback, FallbackReason, FallbackStats};
+#[cfg(feature = "gpu")]
+pub use parity::{GpuCpuParityTest, ParityConfig, ParityResult};
+#[cfg(feature = "gpu")]
+pub use pipelines::{ComputePipelineCache, PipelineType};
 
 // Stub types when gpu feature is disabled (allows code to compile without feature)
 #[cfg(not(feature = "gpu"))]
@@ -95,7 +95,10 @@ pub mod stubs {
 
     impl fmt::Display for GpuNotAvailable {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            write!(f, "GPU feature not enabled. Enable with `features = [\"gpu\"]`")
+            write!(
+                f,
+                "GPU feature not enabled. Enable with `features = [\"gpu\"]`"
+            )
         }
     }
 
@@ -145,7 +148,7 @@ pub mod stubs {
 }
 
 #[cfg(not(feature = "gpu"))]
-pub use stubs::{GpuContext, GpuBatchEvaluator, GpuNotAvailable};
+pub use stubs::{GpuBatchEvaluator, GpuContext, GpuNotAvailable};
 
 // ============================================================================
 // COMMON TYPES (available regardless of feature)

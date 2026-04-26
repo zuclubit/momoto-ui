@@ -2,8 +2,8 @@
 //!
 //! Extends the BSDF trait with time-awareness for temporal material evolution.
 
+use super::super::unified_bsdf::{BSDFResponse, BSDF};
 use super::context::TemporalContext;
-use super::super::unified_bsdf::{BSDF, BSDFResponse};
 
 // ============================================================================
 // TEMPORAL BSDF TRAIT
@@ -21,7 +21,11 @@ pub enum EvolutionRate {
     /// Oscillating (sinusoidal).
     Oscillating { frequency: f64, amplitude: f64 },
     /// Step function at threshold time.
-    Step { threshold: f64, before: f64, after: f64 },
+    Step {
+        threshold: f64,
+        before: f64,
+        after: f64,
+    },
 }
 
 impl Default for EvolutionRate {
@@ -36,21 +40,26 @@ impl EvolutionRate {
         match self {
             EvolutionRate::Static => base_value,
 
-            EvolutionRate::Linear { rate } => {
-                base_value + rate * time
-            }
+            EvolutionRate::Linear { rate } => base_value + rate * time,
 
             EvolutionRate::Exponential { rate, asymptote } => {
                 // value = asymptote + (base - asymptote) * exp(-rate * time)
                 asymptote + (base_value - asymptote) * (-rate * time).exp()
             }
 
-            EvolutionRate::Oscillating { frequency, amplitude } => {
+            EvolutionRate::Oscillating {
+                frequency,
+                amplitude,
+            } => {
                 use std::f64::consts::TAU;
                 base_value + amplitude * (frequency * TAU * time).sin()
             }
 
-            EvolutionRate::Step { threshold, before, after } => {
+            EvolutionRate::Step {
+                threshold,
+                before,
+                after,
+            } => {
                 if time < *threshold {
                     *before
                 } else {
@@ -237,8 +246,8 @@ pub trait TemporalBSDF: BSDF {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::super::unified_bsdf::DielectricBSDF;
+    use super::*;
 
     #[test]
     fn test_evolution_rate_static() {
@@ -257,7 +266,10 @@ mod tests {
 
     #[test]
     fn test_evolution_rate_exponential() {
-        let rate = EvolutionRate::Exponential { rate: 1.0, asymptote: 1.0 };
+        let rate = EvolutionRate::Exponential {
+            rate: 1.0,
+            asymptote: 1.0,
+        };
         // At t=0, should be base value
         assert!((rate.evaluate(0.0, 0.5) - 0.5).abs() < 1e-6);
         // At t=inf, should approach asymptote
@@ -267,7 +279,10 @@ mod tests {
 
     #[test]
     fn test_evolution_rate_oscillating() {
-        let rate = EvolutionRate::Oscillating { frequency: 1.0, amplitude: 0.1 };
+        let rate = EvolutionRate::Oscillating {
+            frequency: 1.0,
+            amplitude: 0.1,
+        };
         // At t=0, sin(0) = 0, so value = base
         assert!((rate.evaluate(0.0, 0.5) - 0.5).abs() < 1e-6);
         // At t=0.25 (quarter period), sin(π/2) = 1
@@ -277,7 +292,11 @@ mod tests {
 
     #[test]
     fn test_evolution_rate_step() {
-        let rate = EvolutionRate::Step { threshold: 1.0, before: 0.2, after: 0.8 };
+        let rate = EvolutionRate::Step {
+            threshold: 1.0,
+            before: 0.2,
+            after: 0.8,
+        };
         assert!((rate.evaluate(0.5, 0.5) - 0.2).abs() < 1e-6);
         assert!((rate.evaluate(1.5, 0.5) - 0.8).abs() < 1e-6);
     }
@@ -290,8 +309,7 @@ mod tests {
 
     #[test]
     fn test_temporal_evolution_builder() {
-        let evo = TemporalEvolution::default()
-            .with_roughness(EvolutionRate::Linear { rate: 0.01 });
+        let evo = TemporalEvolution::default().with_roughness(EvolutionRate::Linear { rate: 0.01 });
         assert!(!evo.is_static());
     }
 

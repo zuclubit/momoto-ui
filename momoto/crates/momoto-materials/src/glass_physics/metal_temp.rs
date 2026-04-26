@@ -113,9 +113,9 @@ impl DrudeParams {
     /// Calculate spectral complex IOR (RGB) at temperature
     pub fn spectral_ior(&self, temp_k: f64) -> SpectralComplexIOR {
         SpectralComplexIOR::new(
-            self.complex_ior(650.0, temp_k),  // Red
-            self.complex_ior(550.0, temp_k),  // Green
-            self.complex_ior(450.0, temp_k),  // Blue
+            self.complex_ior(650.0, temp_k), // Red
+            self.complex_ior(550.0, temp_k), // Green
+            self.complex_ior(450.0, temp_k), // Blue
         )
     }
 }
@@ -271,7 +271,7 @@ pub mod oxides {
         n: 1.76,
         k: 0.0,
         native_thickness_nm: 2.0,
-        max_thickness_nm: 10.0,  // Self-limiting
+        max_thickness_nm: 10.0, // Self-limiting
     };
 
     /// Iron oxide - Fe₂O₃ (rust, reddish-brown)
@@ -347,8 +347,8 @@ impl TempOxidizedMetal {
         Self {
             drude,
             oxide,
-            temperature_k: 300.0,  // Room temperature
-            oxidation_level: 0.0,   // Fresh
+            temperature_k: 300.0, // Room temperature
+            oxidation_level: 0.0, // Fresh
         }
     }
 
@@ -394,15 +394,13 @@ impl TempOxidizedMetal {
         // With oxide: thin-film interference
         // Simplified: use oxide single-layer reflectance modulated by metal
         let r_oxide = oxide_film.reflectance(wavelength_nm, self.oxide.n, cos_theta);
-        let r_metal = super::complex_ior::fresnel_conductor_unpolarized(
-            self.oxide.n,
-            metal_ior,
-            cos_theta,
-        );
+        let r_metal =
+            super::complex_ior::fresnel_conductor_unpolarized(self.oxide.n, metal_ior, cos_theta);
 
         // Absorption in oxide layer reduces reflectance
         // Thicker oxide (higher oxidation_level) = more absorption
-        let absorption = (-self.oxide.k * self.oxidation_level * oxide_film.thickness_nm * 0.01).exp();
+        let absorption =
+            (-self.oxide.k * self.oxidation_level * oxide_film.thickness_nm * 0.01).exp();
 
         // Approximate interference effect (can shift wavelength response)
         let phase = oxide_film.phase_difference(wavelength_nm, cos_theta);
@@ -434,49 +432,43 @@ pub mod oxidized_presets {
 
     /// Fresh copper (no oxidation)
     pub fn copper_fresh() -> TempOxidizedMetal {
-        TempOxidizedMetal::new(drude_metals::COPPER, oxides::COPPER_OXIDE_I)
-            .with_oxidation(0.0)
+        TempOxidizedMetal::new(drude_metals::COPPER, oxides::COPPER_OXIDE_I).with_oxidation(0.0)
     }
 
     /// Slightly oxidized copper (light tarnish)
     pub fn copper_tarnished() -> TempOxidizedMetal {
-        TempOxidizedMetal::new(drude_metals::COPPER, oxides::COPPER_OXIDE_I)
-            .with_oxidation(0.3)
+        TempOxidizedMetal::new(drude_metals::COPPER, oxides::COPPER_OXIDE_I).with_oxidation(0.3)
     }
 
     /// Heavily oxidized copper (dark patina)
     pub fn copper_patina() -> TempOxidizedMetal {
-        TempOxidizedMetal::new(drude_metals::COPPER, oxides::COPPER_OXIDE_II)
-            .with_oxidation(0.8)
+        TempOxidizedMetal::new(drude_metals::COPPER, oxides::COPPER_OXIDE_II).with_oxidation(0.8)
     }
 
     /// Fresh silver
     pub fn silver_fresh() -> TempOxidizedMetal {
-        TempOxidizedMetal::new(drude_metals::SILVER, oxides::SILVER_SULFIDE)
-            .with_oxidation(0.0)
+        TempOxidizedMetal::new(drude_metals::SILVER, oxides::SILVER_SULFIDE).with_oxidation(0.0)
     }
 
     /// Tarnished silver
     pub fn silver_tarnished() -> TempOxidizedMetal {
-        TempOxidizedMetal::new(drude_metals::SILVER, oxides::SILVER_SULFIDE)
-            .with_oxidation(0.5)
+        TempOxidizedMetal::new(drude_metals::SILVER, oxides::SILVER_SULFIDE).with_oxidation(0.5)
     }
 
     /// Fresh aluminum (with native oxide)
     pub fn aluminum_fresh() -> TempOxidizedMetal {
-        TempOxidizedMetal::new(drude_metals::ALUMINUM, oxides::ALUMINUM_OXIDE)
-            .with_oxidation(0.2)  // Native oxide always present
+        TempOxidizedMetal::new(drude_metals::ALUMINUM, oxides::ALUMINUM_OXIDE).with_oxidation(0.2)
+        // Native oxide always present
     }
 
     /// Rusty iron
     pub fn iron_rusty() -> TempOxidizedMetal {
-        TempOxidizedMetal::new(drude_metals::IRON, oxides::IRON_OXIDE)
-            .with_oxidation(0.7)
+        TempOxidizedMetal::new(drude_metals::IRON, oxides::IRON_OXIDE).with_oxidation(0.7)
     }
 
     /// Hot gold (elevated temperature)
     pub fn gold_hot() -> TempOxidizedMetal {
-        TempOxidizedMetal::new(drude_metals::GOLD, oxides::ALUMINUM_OXIDE)  // Gold doesn't oxidize
+        TempOxidizedMetal::new(drude_metals::GOLD, oxides::ALUMINUM_OXIDE) // Gold doesn't oxidize
             .with_temperature(500.0)
             .with_oxidation(0.0)
     }
@@ -521,11 +513,15 @@ pub fn to_css_temp_metal(metal: &TempOxidizedMetal, light_angle_deg: f64) -> Str
          rgb({}, {}, {}) 50%, \
          rgb({}, {}, {}) 100%)",
         light_angle_deg,
-        r_hot, g_hot, b_hot,
+        r_hot,
+        g_hot,
+        b_hot,
         (r_hot as f64 * 1.2).min(255.0) as u8,
         (g_hot as f64 * 1.15).min(255.0) as u8,
         (b_hot as f64 * 1.1).min(255.0) as u8,
-        r_hot, g_hot, b_hot,
+        r_hot,
+        g_hot,
+        b_hot,
     )
 }
 
@@ -552,11 +548,15 @@ pub fn to_css_patina(metal: &TempOxidizedMetal) -> String {
          rgb({}, {}, {}) 0%, \
          rgb({}, {}, {}) 70%, \
          rgb({}, {}, {}) 100%)",
-        r1, g1, b1,
+        r1,
+        g1,
+        b1,
         (r1 as f64 * 0.7 + r2 as f64 * 0.3) as u8,
         (g1 as f64 * 0.7 + g2 as f64 * 0.3) as u8,
         (b1 as f64 * 0.7 + b2 as f64 * 0.3) as u8,
-        r2, g2, b2,
+        r2,
+        g2,
+        b2,
     )
 }
 
@@ -681,11 +681,7 @@ mod tests {
 
         for (name, drude) in presets {
             let ior = drude.complex_ior(550.0, 300.0);
-            assert!(
-                ior.n > 0.0 && ior.k > 0.0,
-                "{} should have valid IOR",
-                name
-            );
+            assert!(ior.n > 0.0 && ior.k > 0.0, "{} should have valid IOR", name);
         }
     }
 
@@ -714,7 +710,9 @@ mod tests {
                 assert!(
                     r >= 0.0 && r <= 1.0,
                     "{} RGB[{}] should be valid: {}",
-                    name, i, r
+                    name,
+                    i,
+                    r
                 );
             }
         }

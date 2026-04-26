@@ -29,8 +29,8 @@
 
 use std::f64::consts::PI;
 
-use super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse, BSDFSample, Vector3};
 use super::fresnel::fresnel_schlick;
+use super::unified_bsdf::{BSDFContext, BSDFResponse, BSDFSample, Vector3, BSDF};
 
 // ============================================================================
 // SUBSURFACE PARAMETERS
@@ -158,8 +158,8 @@ impl Default for SubsurfaceParams {
         Self::new(
             [0.01, 0.01, 0.01], // Low absorption
             [2.0, 2.0, 2.0],    // Moderate scattering
-            0.0,                 // Isotropic
-            1.3,                 // Typical organic material
+            0.0,                // Isotropic
+            1.3,                // Typical organic material
         )
     }
 }
@@ -221,7 +221,7 @@ impl DiffusionBSSRDF {
 
         // Dipole distances
         let zr = 1.0 / (sigma_a + sigma_s_p); // Real source depth
-        let zv = zr * (1.0 + 4.0 * a / 3.0);  // Virtual source height
+        let zv = zr * (1.0 + 4.0 * a / 3.0); // Virtual source height
 
         // Distances to real and virtual sources
         let dr = (r * r + zr * zr).sqrt();
@@ -256,7 +256,13 @@ impl DiffusionBSSRDF {
     }
 
     /// Combined diffuse + single scatter contribution
-    pub fn evaluate_channel(&self, r: f64, cos_theta_i: f64, cos_theta_o: f64, channel: usize) -> f64 {
+    pub fn evaluate_channel(
+        &self,
+        r: f64,
+        cos_theta_i: f64,
+        cos_theta_o: f64,
+        channel: usize,
+    ) -> f64 {
         // Multiple scattering (diffusion)
         let diffuse = self.rd(r, channel);
 
@@ -301,11 +307,7 @@ pub struct SubsurfaceBSDF {
 
 impl SubsurfaceBSDF {
     /// Create a new subsurface BSDF
-    pub fn new(
-        surface_ior: f64,
-        subsurface_params: SubsurfaceParams,
-        mix: f64,
-    ) -> Self {
+    pub fn new(surface_ior: f64, subsurface_params: SubsurfaceParams, mix: f64) -> Self {
         Self {
             surface_ior,
             surface_roughness: 0.0,
@@ -379,8 +381,7 @@ impl BSDF for SubsurfaceBSDF {
         let absorption = (1.0 - total_r) * absorption_factor * self.mix;
         let transmission = (1.0 - total_r) * (1.0 - absorption_factor * self.mix);
 
-        BSDFResponse::new(total_r, transmission, absorption)
-            .with_rgb(sss_rgb)
+        BSDFResponse::new(total_r, transmission, absorption).with_rgb(sss_rgb)
     }
 
     fn sample(&self, ctx: &BSDFContext, u1: f64, u2: f64) -> BSDFSample {
@@ -421,10 +422,10 @@ pub mod sss_presets {
     /// Warm reddish subsurface due to blood absorption
     pub fn skin() -> SubsurfaceParams {
         SubsurfaceParams::new(
-            [0.032, 0.17, 0.48],   // σa: absorbs blue/green, passes red
-            [0.74, 0.88, 1.01],    // σs: high scattering
-            0.8,                    // Forward scattering
-            1.3,                    // Typical tissue IOR
+            [0.032, 0.17, 0.48], // σa: absorbs blue/green, passes red
+            [0.74, 0.88, 1.01],  // σs: high scattering
+            0.8,                 // Forward scattering
+            1.3,                 // Typical tissue IOR
         )
     }
 
@@ -435,8 +436,8 @@ pub mod sss_presets {
         SubsurfaceParams::new(
             [0.0021, 0.0041, 0.0071], // Very low absorption
             [2.19, 2.62, 3.00],       // High scattering
-            0.0,                       // Isotropic
-            1.5,                       // Stone IOR
+            0.0,                      // Isotropic
+            1.5,                      // Stone IOR
         )
     }
 
@@ -447,8 +448,8 @@ pub mod sss_presets {
         SubsurfaceParams::new(
             [0.0015, 0.0046, 0.019], // Low absorption
             [2.55, 3.21, 3.77],      // Very high scattering
-            0.7,                      // Forward scattering
-            1.35,                     // Liquid IOR
+            0.7,                     // Forward scattering
+            1.35,                    // Liquid IOR
         )
     }
 
@@ -457,10 +458,10 @@ pub mod sss_presets {
     /// Translucent green mineral
     pub fn jade() -> SubsurfaceParams {
         SubsurfaceParams::new(
-            [0.1, 0.01, 0.05],  // Absorbs red/blue, passes green
-            [1.5, 1.8, 1.6],    // Moderate scattering
-            0.3,                 // Slight forward scatter
-            1.6,                 // Mineral IOR
+            [0.1, 0.01, 0.05], // Absorbs red/blue, passes green
+            [1.5, 1.8, 1.6],   // Moderate scattering
+            0.3,               // Slight forward scatter
+            1.6,               // Mineral IOR
         )
     }
 
@@ -471,8 +472,8 @@ pub mod sss_presets {
         SubsurfaceParams::new(
             [0.001, 0.002, 0.005], // Very low absorption
             [1.8, 1.9, 2.0],       // High scattering
-            0.6,                    // Forward scattering
-            1.4,                    // Wax IOR
+            0.6,                   // Forward scattering
+            1.4,                   // Wax IOR
         )
     }
 
@@ -483,8 +484,8 @@ pub mod sss_presets {
         SubsurfaceParams::new(
             [0.0001, 0.0001, 0.0003], // Minimal absorption
             [1.0, 1.1, 1.2],          // Moderate scattering
-            0.4,                       // Forward scattering
-            1.4,                       // Soap IOR
+            0.4,                      // Forward scattering
+            1.4,                      // Soap IOR
         )
     }
 
@@ -493,10 +494,10 @@ pub mod sss_presets {
     /// Strong red absorption
     pub fn ketchup() -> SubsurfaceParams {
         SubsurfaceParams::new(
-            [0.06, 0.97, 1.45],  // Heavy green/blue absorption
-            [0.18, 0.07, 0.03],  // Low scattering
-            0.0,                  // Isotropic
-            1.4,                  // Food IOR
+            [0.06, 0.97, 1.45], // Heavy green/blue absorption
+            [0.18, 0.07, 0.03], // Low scattering
+            0.0,                // Isotropic
+            1.4,                // Food IOR
         )
     }
 
@@ -505,8 +506,8 @@ pub mod sss_presets {
         SubsurfaceParams::new(
             [0.003, 0.0034, 0.046], // Absorbs blue
             [2.29, 2.39, 1.97],     // High scattering
-            0.5,                     // Forward scattering
-            1.3,                     // Fruit IOR
+            0.5,                    // Forward scattering
+            1.3,                    // Fruit IOR
         )
     }
 
@@ -557,10 +558,10 @@ fn henyey_greenstein(cos_theta: f64, g: f64) -> f64 {
 
 /// Total memory used by SSS module
 pub fn total_sss_memory() -> usize {
-    std::mem::size_of::<SubsurfaceParams>() +
-    std::mem::size_of::<DiffusionBSSRDF>() +
-    std::mem::size_of::<SubsurfaceBSDF>() +
-    500 // Overhead
+    std::mem::size_of::<SubsurfaceParams>()
+        + std::mem::size_of::<DiffusionBSSRDF>()
+        + std::mem::size_of::<SubsurfaceBSDF>()
+        + 500 // Overhead
 }
 
 // ============================================================================
@@ -575,12 +576,7 @@ mod tests {
 
     #[test]
     fn test_sigma_computations() {
-        let params = SubsurfaceParams::new(
-            [0.1, 0.1, 0.1],
-            [1.0, 1.0, 1.0],
-            0.5,
-            1.3,
-        );
+        let params = SubsurfaceParams::new([0.1, 0.1, 0.1], [1.0, 1.0, 1.0], 0.5, 1.3);
 
         let sigma_t = params.sigma_t();
         assert!((sigma_t[0] - 1.1).abs() < EPSILON);
@@ -665,7 +661,10 @@ mod tests {
                 assert!(s >= 0.0, "sigma_s should be non-negative");
             }
             assert!(params.eta >= 1.0, "eta should be >= 1");
-            assert!(params.g >= -1.0 && params.g <= 1.0, "g should be in [-1, 1]");
+            assert!(
+                params.g >= -1.0 && params.g <= 1.0,
+                "g should be in [-1, 1]"
+            );
         }
     }
 
@@ -753,7 +752,11 @@ mod tests {
         for params in presets {
             let rd = params.diffuse_reflectance();
             for &r in &rd {
-                assert!(r >= 0.0 && r <= 1.0, "Diffuse reflectance out of range: {}", r);
+                assert!(
+                    r >= 0.0 && r <= 1.0,
+                    "Diffuse reflectance out of range: {}",
+                    r
+                );
             }
         }
     }
@@ -775,7 +778,8 @@ mod tests {
 
         // Milk should be nearly white (all channels similar and high)
         let avg = (rd[0] + rd[1] + rd[2]) / 3.0;
-        let variance = ((rd[0] - avg).powi(2) + (rd[1] - avg).powi(2) + (rd[2] - avg).powi(2)) / 3.0;
+        let variance =
+            ((rd[0] - avg).powi(2) + (rd[1] - avg).powi(2) + (rd[2] - avg).powi(2)) / 3.0;
 
         assert!(avg > 0.3, "Milk should be bright");
         assert!(variance < 0.05, "Milk should be white (low color variance)");

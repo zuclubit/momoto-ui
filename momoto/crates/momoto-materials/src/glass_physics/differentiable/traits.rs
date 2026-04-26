@@ -2,7 +2,7 @@
 //!
 //! Core trait definitions for differentiable material evaluation.
 
-use super::super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse};
+use super::super::unified_bsdf::{BSDFContext, BSDFResponse, BSDF};
 
 // ============================================================================
 // PARAMETER GRADIENTS
@@ -355,7 +355,9 @@ pub struct DifferentiableResponse {
 impl DifferentiableResponse {
     /// Create new response with gradients.
     pub fn new(response: BSDFResponse, gradients: ParameterGradients) -> Self {
-        let energy_conserved = (response.reflectance + response.transmittance + response.absorption - 1.0).abs() < 1e-6;
+        let energy_conserved =
+            (response.reflectance + response.transmittance + response.absorption - 1.0).abs()
+                < 1e-6;
         Self {
             response,
             gradients,

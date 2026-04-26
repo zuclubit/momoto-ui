@@ -229,7 +229,8 @@ impl EnhancedCssBackend {
             // Primary outer glow
             shadows.push(format!(
                 "0 0 {:.1}px rgba(255, 255, 255, {:.3})",
-                blur_radius, opacity * 1.3
+                blur_radius,
+                opacity * 1.3
             ));
             // Secondary subtle outer glow for softness
             shadows.push(format!(
@@ -360,7 +361,10 @@ mod tests {
 
         let css = EnhancedCssBackend::render(&material, &config);
 
-        assert!(css.contains("radial-gradient"), "Should have specular gradient");
+        assert!(
+            css.contains("radial-gradient"),
+            "Should have specular gradient"
+        );
         assert!(
             css.contains("linear-gradient"),
             "Should have inner highlight"

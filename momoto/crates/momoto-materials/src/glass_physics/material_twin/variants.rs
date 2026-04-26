@@ -206,7 +206,8 @@ impl TemporalTwinData {
 
     /// Get evolution progress (0-1).
     pub fn progress(&self) -> f64 {
-        self.max_time.map_or(0.0, |max| (self.current_time / max).min(1.0))
+        self.max_time
+            .map_or(0.0, |max| (self.current_time / max).min(1.0))
     }
 
     /// Add checkpoint with current fingerprint hash (first 8 bytes).
@@ -321,7 +322,8 @@ impl LayeredTwinData {
 
     /// Update total thickness from layers.
     fn update_total_thickness(&mut self) {
-        let total: Option<f64> = self.layers
+        let total: Option<f64> = self
+            .layers
             .iter()
             .map(|l| l.thickness_nm)
             .try_fold(0.0, |acc, t| t.map(|v| acc + v));
@@ -467,7 +469,10 @@ mod tests {
     #[test]
     fn test_twin_variant_display() {
         assert_eq!(format!("{}", TwinVariant::Static), "Static");
-        assert_eq!(format!("{}", TwinVariant::Layered { layer_count: 2 }), "Layered(2)");
+        assert_eq!(
+            format!("{}", TwinVariant::Layered { layer_count: 2 }),
+            "Layered(2)"
+        );
     }
 
     #[test]
@@ -501,8 +506,7 @@ mod tests {
 
     #[test]
     fn test_temporal_twin_drift() {
-        let mut data = TemporalTwinData::new()
-            .with_drift_threshold(0.02);
+        let mut data = TemporalTwinData::new().with_drift_threshold(0.02);
 
         data.advance(1.0, 0.01);
         assert!(!data.drift_exceeded());
@@ -532,7 +536,11 @@ mod tests {
         let mut data = LayeredTwinData::new();
 
         data.add_layer(LayerInfo::new(0, "AR Coating").with_thickness(100.0));
-        data.add_layer(LayerInfo::new(1, "Glass").with_thickness(1000.0).as_substrate());
+        data.add_layer(
+            LayerInfo::new(1, "Glass")
+                .with_thickness(1000.0)
+                .as_substrate(),
+        );
 
         assert_eq!(data.layer_count(), 2);
         assert!(data.total_thickness_nm.is_some());

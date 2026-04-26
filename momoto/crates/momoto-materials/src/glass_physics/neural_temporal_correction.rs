@@ -22,11 +22,9 @@
 //!   - Cumulative: Σ|ΔR|, Σ|ΔT| ≤ max_cumulative (0.05)
 //! ```
 
-use super::neural_correction::{
-    CorrectionInput, CorrectionOutput, NeuralCorrectionConfig,
-};
-use super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse, BSDFSample, EnergyValidation};
+use super::neural_correction::{CorrectionInput, CorrectionOutput, NeuralCorrectionConfig};
 use super::temporal::TemporalContext;
+use super::unified_bsdf::{BSDFContext, BSDFResponse, BSDFSample, EnergyValidation, BSDF};
 
 // ============================================================================
 // TEMPORAL CORRECTION INPUT
@@ -50,7 +48,12 @@ pub struct TemporalCorrectionInput {
 
 impl TemporalCorrectionInput {
     /// Create from base input and temporal context
-    pub fn new(base: CorrectionInput, delta_time: f64, prev_output: CorrectionOutput, frame: u64) -> Self {
+    pub fn new(
+        base: CorrectionInput,
+        delta_time: f64,
+        prev_output: CorrectionOutput,
+        frame: u64,
+    ) -> Self {
         Self {
             base,
             delta_time_normalized: (delta_time / 0.1).clamp(0.0, 10.0) / 10.0,
@@ -75,8 +78,16 @@ impl TemporalCorrectionInput {
     pub fn to_vec(&self) -> [f64; 14] {
         let base = self.base.to_vec();
         [
-            base[0], base[1], base[2], base[3], base[4],
-            base[5], base[6], base[7], base[8], base[9],
+            base[0],
+            base[1],
+            base[2],
+            base[3],
+            base[4],
+            base[5],
+            base[6],
+            base[7],
+            base[8],
+            base[9],
             self.delta_time_normalized,
             self.prev_delta_r,
             self.prev_delta_t,
@@ -105,9 +116,9 @@ pub struct DriftLimitConfig {
 impl Default for DriftLimitConfig {
     fn default() -> Self {
         Self {
-            max_cumulative: 0.05,   // 5% total drift allowed
-            decay_rate: 0.99,       // Slow decay
-            window_size: 100,       // Track last 100 frames
+            max_cumulative: 0.05, // 5% total drift allowed
+            decay_rate: 0.99,     // Slow decay
+            window_size: 100,     // Track last 100 frames
             disable_on_exceed: true,
         }
     }
@@ -321,17 +332,11 @@ impl TemporalNeuralCorrection {
         let w0: Vec<f64> = (0..hidden * Self::INPUT_DIM)
             .map(|_| rng.uniform(-c0, c0))
             .collect();
-        let b0: Vec<f64> = (0..hidden)
-            .map(|_| rng.uniform(-c0, c0))
-            .collect();
+        let b0: Vec<f64> = (0..hidden).map(|_| rng.uniform(-c0, c0)).collect();
 
         let c1 = (6.0 / hidden as f64).sqrt();
-        let w1: Vec<f64> = (0..hidden * hidden)
-            .map(|_| rng.uniform(-c1, c1))
-            .collect();
-        let b1: Vec<f64> = (0..hidden)
-            .map(|_| rng.uniform(-c1, c1))
-            .collect();
+        let w1: Vec<f64> = (0..hidden * hidden).map(|_| rng.uniform(-c1, c1)).collect();
+        let b1: Vec<f64> = (0..hidden).map(|_| rng.uniform(-c1, c1)).collect();
 
         let c_out = (6.0 / hidden as f64).sqrt();
         let w_out: Vec<f64> = (0..Self::OUTPUT_DIM * hidden)
@@ -362,9 +367,12 @@ impl TemporalNeuralCorrection {
 
     /// Total parameter count
     pub fn param_count(&self) -> usize {
-        Self::HIDDEN_DIM * Self::INPUT_DIM + Self::HIDDEN_DIM +
-        Self::HIDDEN_DIM * Self::HIDDEN_DIM + Self::HIDDEN_DIM +
-        Self::OUTPUT_DIM * Self::HIDDEN_DIM + Self::OUTPUT_DIM
+        Self::HIDDEN_DIM * Self::INPUT_DIM
+            + Self::HIDDEN_DIM
+            + Self::HIDDEN_DIM * Self::HIDDEN_DIM
+            + Self::HIDDEN_DIM
+            + Self::OUTPUT_DIM * Self::HIDDEN_DIM
+            + Self::OUTPUT_DIM
     }
 
     /// Memory usage in bytes
@@ -540,7 +548,8 @@ impl TemporalNeuralCorrection {
         self.w_out.copy_from_slice(&params[idx..idx + w_out_len]);
         idx += w_out_len;
 
-        self.b_out.copy_from_slice(&params[idx..idx + Self::OUTPUT_DIM]);
+        self.b_out
+            .copy_from_slice(&params[idx..idx + Self::OUTPUT_DIM]);
     }
 }
 
@@ -676,15 +685,15 @@ pub fn estimate_temporal_neural_memory() -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::unified_bsdf::DielectricBSDF;
+    use super::*;
 
     #[test]
     fn test_temporal_input() {
         let base = CorrectionInput::default();
         let input = TemporalCorrectionInput::new(
             base,
-            0.016,  // 60fps
+            0.016, // 60fps
             CorrectionOutput::zero(),
             100,
         );
@@ -731,7 +740,7 @@ mod tests {
     fn test_drift_limit_exceeded() {
         let config = DriftLimitConfig {
             max_cumulative: 0.01,
-            decay_rate: 1.0,  // No decay
+            decay_rate: 1.0, // No decay
             ..Default::default()
         };
         let mut tracker = CumulativeDriftTracker::new(config);
@@ -753,12 +762,7 @@ mod tests {
         let input1 = TemporalCorrectionInput::default();
         let out1 = network.forward_temporal(&input1);
 
-        let input2 = TemporalCorrectionInput::new(
-            CorrectionInput::default(),
-            0.016,
-            out1,
-            1,
-        );
+        let input2 = TemporalCorrectionInput::new(CorrectionInput::default(), 0.016, out1, 1);
         let out2 = network.forward_temporal(&input2);
 
         // Second output should be influenced by temporal smoothing
@@ -769,7 +773,7 @@ mod tests {
     fn test_disable_on_exceed() {
         let config = TemporalNeuralConfig {
             drift: DriftLimitConfig {
-                max_cumulative: 0.001,  // Very low limit
+                max_cumulative: 0.001, // Very low limit
                 decay_rate: 1.0,
                 disable_on_exceed: true,
                 ..Default::default()

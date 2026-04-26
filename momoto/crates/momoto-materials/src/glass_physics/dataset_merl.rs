@@ -509,12 +509,7 @@ impl ExternalDataset for MerlDataset {
         Some(0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2])
     }
 
-    fn get_spectral(
-        &self,
-        material_index: usize,
-        wavelength_nm: f64,
-        theta: f64,
-    ) -> Option<f64> {
+    fn get_spectral(&self, material_index: usize, wavelength_nm: f64, theta: f64) -> Option<f64> {
         if material_index >= self.materials.len() {
             return None;
         }

@@ -14,7 +14,6 @@
 //!
 //! Standard sampling uses 31 wavelengths from 400nm to 700nm.
 
-
 // ============================================================================
 // STANDARD WAVELENGTHS
 // ============================================================================
@@ -30,10 +29,9 @@ pub const LAMBDA_MAX: f64 = 700.0;
 
 /// Standard visible wavelengths (400-700nm, 10nm spacing).
 pub const VISIBLE_WAVELENGTHS: [f64; N_SPECTRAL_SAMPLES] = [
-    400.0, 410.0, 420.0, 430.0, 440.0, 450.0, 460.0, 470.0, 480.0, 490.0,
-    500.0, 510.0, 520.0, 530.0, 540.0, 550.0, 560.0, 570.0, 580.0, 590.0,
-    600.0, 610.0, 620.0, 630.0, 640.0, 650.0, 660.0, 670.0, 680.0, 690.0,
-    700.0,
+    400.0, 410.0, 420.0, 430.0, 440.0, 450.0, 460.0, 470.0, 480.0, 490.0, 500.0, 510.0, 520.0,
+    530.0, 540.0, 550.0, 560.0, 570.0, 580.0, 590.0, 600.0, 610.0, 620.0, 630.0, 640.0, 650.0,
+    660.0, 670.0, 680.0, 690.0, 700.0,
 ];
 
 // ============================================================================
@@ -91,7 +89,8 @@ impl SpectralGradient {
     /// Create for standard wavelengths.
     pub fn new() -> Self {
         Self {
-            gradients: VISIBLE_WAVELENGTHS.iter()
+            gradients: VISIBLE_WAVELENGTHS
+                .iter()
                 .map(|&w| WavelengthGradient::zero(w))
                 .collect(),
         }
@@ -100,7 +99,8 @@ impl SpectralGradient {
     /// Create with custom wavelengths.
     pub fn with_wavelengths(wavelengths: &[f64]) -> Self {
         Self {
-            gradients: wavelengths.iter()
+            gradients: wavelengths
+                .iter()
                 .map(|&w| WavelengthGradient::zero(w))
                 .collect(),
         }
@@ -139,10 +139,13 @@ impl SpectralGradient {
     /// Weighted sum by luminance importance.
     pub fn luminance_weighted_d_ior(&self) -> f64 {
         // Weight by photopic luminous efficiency (peak at 555nm)
-        self.gradients.iter().map(|g| {
-            let weight = luminous_efficiency(g.wavelength);
-            g.d_ior * weight
-        }).sum()
+        self.gradients
+            .iter()
+            .map(|g| {
+                let weight = luminous_efficiency(g.wavelength);
+                g.d_ior * weight
+            })
+            .sum()
     }
 
     /// Get reflectance spectrum.
@@ -586,8 +589,8 @@ mod tests {
         assert!(grad.gradients.iter().any(|g| g.d_dispersion != 0.0));
 
         // Blue wavelength should have higher reflectance (higher IOR)
-        let r_blue = grad.get(4).unwrap().reflectance;  // 440nm
-        let r_red = grad.get(26).unwrap().reflectance;  // 660nm
+        let r_blue = grad.get(4).unwrap().reflectance; // 440nm
+        let r_red = grad.get(26).unwrap().reflectance; // 660nm
 
         assert!(r_blue > r_red);
     }

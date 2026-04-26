@@ -73,9 +73,7 @@ impl EvolutionGradients {
 
     /// Compute gradient norm.
     pub fn norm(&self) -> f64 {
-        let mut sum = self.d_initial.powi(2)
-            + self.d_rate.powi(2)
-            + self.d_time.powi(2);
+        let mut sum = self.d_initial.powi(2) + self.d_rate.powi(2) + self.d_time.powi(2);
 
         if let Some(dt) = self.d_tau {
             sum += dt.powi(2);
@@ -272,7 +270,11 @@ impl OscillatingEvolutionGradient {
 
     /// Create with phase offset.
     pub fn with_phase(amplitude: f64, frequency: f64, phase: f64) -> Self {
-        Self { amplitude, frequency, phase }
+        Self {
+            amplitude,
+            frequency,
+            phase,
+        }
     }
 
     /// Gradient w.r.t. amplitude.
@@ -311,7 +313,11 @@ impl EvolutionGradient for OscillatingEvolutionGradient {
 
     fn gradient_time(&self, t: f64, _initial: f64) -> f64 {
         // ∂/∂t = amp × 2π × freq × cos(2πft + φ)
-        self.amplitude * 2.0 * PI * self.frequency * (2.0 * PI * self.frequency * t + self.phase).cos()
+        self.amplitude
+            * 2.0
+            * PI
+            * self.frequency
+            * (2.0 * PI * self.frequency * t + self.phase).cos()
     }
 
     fn all_gradients(&self, t: f64, _initial: f64) -> EvolutionGradients {
@@ -347,7 +353,10 @@ pub struct LogarithmicEvolutionGradient {
 impl LogarithmicEvolutionGradient {
     /// Create new logarithmic evolution.
     pub fn new(rate: f64, tau: f64) -> Self {
-        Self { rate, tau: tau.max(0.001) }
+        Self {
+            rate,
+            tau: tau.max(0.001),
+        }
     }
 
     /// Gradient w.r.t. tau.
@@ -409,7 +418,11 @@ pub enum EvolutionType {
     /// Exponential evolution.
     Exponential { rate: f64, asymptote: f64 },
     /// Oscillating evolution.
-    Oscillating { amplitude: f64, frequency: f64, phase: f64 },
+    Oscillating {
+        amplitude: f64,
+        frequency: f64,
+        phase: f64,
+    },
     /// Logarithmic evolution.
     Logarithmic { rate: f64, tau: f64 },
 }
@@ -435,7 +448,11 @@ pub fn compute_evolution_gradient(
             let model = ExponentialEvolutionGradient::new(rate, asymptote);
             (model.evaluate(t, initial), model.all_gradients(t, initial))
         }
-        EvolutionType::Oscillating { amplitude, frequency, phase } => {
+        EvolutionType::Oscillating {
+            amplitude,
+            frequency,
+            phase,
+        } => {
             let model = OscillatingEvolutionGradient::with_phase(amplitude, frequency, phase);
             (model.evaluate(t, initial), model.all_gradients(t, initial))
         }
@@ -529,12 +546,8 @@ mod tests {
 
     #[test]
     fn test_linear_gradient_vs_numeric() {
-        let verification = verify_evolution_gradient(
-            EvolutionType::Linear { rate: 0.1 },
-            5.0,
-            1.5,
-            EPSILON,
-        );
+        let verification =
+            verify_evolution_gradient(EvolutionType::Linear { rate: 0.1 }, 5.0, 1.5, EPSILON);
 
         assert!(verification.passed, "Max error: {}", verification.max_error);
     }
@@ -574,7 +587,10 @@ mod tests {
     #[test]
     fn test_exponential_gradient_vs_numeric() {
         let verification = verify_evolution_gradient(
-            EvolutionType::Exponential { rate: 0.5, asymptote: 1.0 },
+            EvolutionType::Exponential {
+                rate: 0.5,
+                asymptote: 1.0,
+            },
             2.0,
             2.0,
             EPSILON,
@@ -609,7 +625,11 @@ mod tests {
     #[test]
     fn test_oscillating_gradient_vs_numeric() {
         let verification = verify_evolution_gradient(
-            EvolutionType::Oscillating { amplitude: 0.1, frequency: 1.0, phase: 0.0 },
+            EvolutionType::Oscillating {
+                amplitude: 0.1,
+                frequency: 1.0,
+                phase: 0.0,
+            },
             0.3,
             1.5,
             EPSILON,
@@ -633,7 +653,10 @@ mod tests {
     #[test]
     fn test_logarithmic_gradient_vs_numeric() {
         let verification = verify_evolution_gradient(
-            EvolutionType::Logarithmic { rate: 0.1, tau: 1.0 },
+            EvolutionType::Logarithmic {
+                rate: 0.1,
+                tau: 1.0,
+            },
             2.0,
             1.5,
             EPSILON,
@@ -682,11 +705,8 @@ mod tests {
 
     #[test]
     fn test_compute_evolution_gradient() {
-        let (value, grads) = compute_evolution_gradient(
-            EvolutionType::Linear { rate: 0.1 },
-            5.0,
-            1.5,
-        );
+        let (value, grads) =
+            compute_evolution_gradient(EvolutionType::Linear { rate: 0.1 }, 5.0, 1.5);
 
         assert!((value - 2.0).abs() < 1e-10);
         assert!((grads.d_initial - 1.0).abs() < 1e-10);
@@ -703,7 +723,8 @@ mod tests {
         let eps = 1e-6;
         let model_plus = ExponentialEvolutionGradient::new(0.5, 1.0 + eps);
         let model_minus = ExponentialEvolutionGradient::new(0.5, 1.0 - eps);
-        let numeric = (model_plus.evaluate(2.0, 2.0) - model_minus.evaluate(2.0, 2.0)) / (2.0 * eps);
+        let numeric =
+            (model_plus.evaluate(2.0, 2.0) - model_minus.evaluate(2.0, 2.0)) / (2.0 * eps);
 
         assert!(
             (d_asymp - numeric).abs() < TOLERANCE,

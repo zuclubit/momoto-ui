@@ -76,8 +76,8 @@ pub mod session;
 pub mod workflow;
 
 // Phase 10: Multi-Turn Bot Automation
-pub mod bot_api;
 pub mod audit;
+pub mod bot_api;
 
 // AI Visual Generator - Full Pipeline
 pub mod visual_generator;
@@ -97,153 +97,241 @@ pub mod certification;
 mod executor;
 
 // Re-exports
-pub use contract::{Constraint, Contract, ContrastStandard, ComplianceLevel, Gamut};
+pub use contract::{ComplianceLevel, Constraint, Contract, ContrastStandard, Gamut};
 pub use executor::AgentExecutor;
+pub use experience::{
+    generate_experience, generate_experience_with_color, list_presets, ExperienceBuilder,
+    ExperienceGenerator, ThemePreset, VisualExperience,
+};
 pub use query::Query;
+pub use reporting::{
+    AccessibilityAuditReport, BatchDashboard, ColorAnalysisReport, ComprehensiveReport,
+    DashboardBuilder, EffortLevel, ExecutiveSummary, Finding, LiveMetrics, LogCollector,
+    MaterialPhysicsReport, MetricsDashboard, OutputMode, PerceptualQualityReport,
+    PrioritizedRecommendation, ProgressTracker, ReportConfig, ReportFormat, ReportGenerator,
+    ReportSection, ReportType, Severity,
+};
 pub use response::{
     AdjustedColorResponse, ColorConversionResponse, ColorDifferenceResponse, ColorMetrics,
     ContextInfo, GamutCheckResponse, MaterialCategory, MaterialCssResponse, MaterialListResponse,
     MaterialResponse, ModificationDetail, ModificationInfo, RecommendationResponse, Response,
     ScoreResponse, ValidationResponse, Violation,
 };
-pub use workflow::{
-    Workflow, WorkflowBuilder, WorkflowConfig, WorkflowExecutor, WorkflowInput,
-    WorkflowReport, WorkflowStep, Recommendation, RecommendationKind,
-    get_preset_workflow, list_preset_workflows,
-};
-pub use experience::{
-    ExperienceBuilder, ExperienceGenerator, ThemePreset, VisualExperience,
-    generate_experience, generate_experience_with_color, list_presets,
-};
-pub use reporting::{
-    ReportGenerator, ReportConfig, ReportFormat, ReportType, ReportSection,
-    ComprehensiveReport, ExecutiveSummary, Finding, Severity,
-    ColorAnalysisReport, AccessibilityAuditReport, MaterialPhysicsReport,
-    PerceptualQualityReport, PrioritizedRecommendation, EffortLevel,
-    BatchDashboard, ProgressTracker, LiveMetrics, LogCollector, OutputMode,
-    DashboardBuilder, MetricsDashboard,
-};
 pub use session::{
-    SessionManager, SessionManagerConfig, Session, SessionContext, SessionError,
-    ConversationHistory, ConversationTurn, ContextVariable, SessionSnapshot,
+    BotConfig,
+    BotCredentials,
+    BotId,
+    BotPermissions,
+    BotSession,
+    BotSessionError,
+    BotSessionManager,
+    ContextVariable,
+    ConversationHistory,
+    ConversationTurn,
     // Phase 10: Session persistence and bot sessions
-    FileSessionStore, InMemorySessionStore, PersistentSessionManager, SessionStore,
-    StorageFormat, BotId, BotConfig, BotCredentials, BotPermissions, BotSession,
-    BotSessionError, BotSessionManager, WorkflowId, RateLimiter,
+    FileSessionStore,
+    InMemorySessionStore,
+    PersistentSessionManager,
+    RateLimiter,
+    Session,
+    SessionContext,
+    SessionError,
+    SessionManager,
+    SessionManagerConfig,
+    SessionSnapshot,
+    SessionStore,
+    StorageFormat,
+    WorkflowId,
+};
+pub use workflow::{
+    get_preset_workflow, list_preset_workflows, Recommendation, RecommendationKind, Workflow,
+    WorkflowBuilder, WorkflowConfig, WorkflowExecutor, WorkflowInput, WorkflowReport, WorkflowStep,
 };
 
 // Phase 10: Bot API
 pub use bot_api::{
-    BotAPI, BotQuery, BotResponse, QueryType, WorkflowSpec, WorkflowStepSpec,
-    WorkflowConfig as BotWorkflowConfig, WorkflowStatus, WorkflowStatusType, WorkflowReport as BotWorkflowReport,
-    BatchOperation, BatchResponse, ReportType as BotReportType, ReportSchedule as BotReportSchedule,
-    WorkflowComposer, WorkflowTemplate, TemplateParameter, Connection,
+    BatchOperation, BatchResponse, BotAPI, BotQuery, BotResponse, Connection, QueryType,
+    ReportSchedule as BotReportSchedule, ReportType as BotReportType, TemplateParameter,
+    WorkflowComposer, WorkflowConfig as BotWorkflowConfig, WorkflowReport as BotWorkflowReport,
+    WorkflowSpec, WorkflowStatus, WorkflowStatusType, WorkflowStepSpec, WorkflowTemplate,
 };
 
 // Phase 10: Audit
 pub use audit::{
-    AuditLogger, AuditEntry, AuditId, AuditAction, AuditFilter, AuditStore,
-    AuditStatistics, Actor, Outcome, Resource, ExportFormat,
-    FileAuditStore, InMemoryAuditStore, AutoReportGenerator, Frequency,
-    ReportDelivery, ReportTemplate as AuditReportTemplate,
+    Actor, AuditAction, AuditEntry, AuditFilter, AuditId, AuditLogger, AuditStatistics, AuditStore,
+    AutoReportGenerator, ExportFormat, FileAuditStore, Frequency, InMemoryAuditStore, Outcome,
+    ReportDelivery, ReportTemplate as AuditReportTemplate, Resource,
 };
 
 // AI Visual Generator - Full Pipeline
 pub use visual_generator::{
-    AIVisualGenerator, GenerationConfig, GenerationResult, GenerationError,
-    ColorModeConfig, MaterialEffects, MaterialProperties, ValidationReport,
-    WCAGValidation, APCAValidation, PerceptualValidation, NeuralCorrectionMetrics,
-    ValidationIssue, PipelinePhases, GeneratedCSS, AudienceProfile,
+    AIVisualGenerator, APCAValidation, AudienceProfile, ColorModeConfig, GeneratedCSS,
+    GenerationConfig, GenerationError, GenerationResult, MaterialEffects, MaterialProperties,
+    NeuralCorrectionMetrics, PerceptualValidation, PipelinePhases, ValidationIssue,
+    ValidationReport, WCAGValidation,
 };
 
 pub use orchestration::{
-    IntelligentScheduler, SchedulingDecision, PrioritizedStep, SchedulerConfig,
-    DeferReason, ResourceTracker, ResourceAvailability, ResourceConstraints,
-    ParallelizationAdvisor, ExecutionStrategy, ParallelGroup, ConvergenceStatus,
-    FeedbackLoop, FeedbackConfig, IterationResult,
+    ConvergenceStatus, DeferReason, ExecutionStrategy, FeedbackConfig, FeedbackLoop,
+    IntelligentScheduler, IterationResult, ParallelGroup, ParallelizationAdvisor, PrioritizedStep,
+    ResourceAvailability, ResourceConstraints, ResourceTracker, SchedulerConfig,
+    SchedulingDecision,
 };
 
 // Phase 8: Temporal Perception Engine
 pub use temporal::{
+    get_temporal_score,
+    is_sequence_safe,
+    run_safe_stress_tests,
+    run_temporal_stress_tests,
+    validate_sequence,
+    BatchValidationReport,
     // Core types
-    ColorSequence, ColorTransition, TemporalColorState, EasingFunction,
-    TemporalMetrics, TemporalResult, TemporalRecommendation, RecommendationPriority,
-    WcagTemporalResult, FlickerAnalysis, MotionAnalysis, FlickerRisk,
-    // Contrast analysis
-    TemporalContrastSensitivity, TemporalContrastAnalyzer, TemporalContrastResult,
-    LuminanceChange, ContrastAdaptation, TemporalMasking,
+    ColorSequence,
+    ColorTransition,
+    ContrastAdaptation,
+    EasingFunction,
+    FlashEvent,
+    FlickerAnalysis,
+    FlickerConfig,
+    FlickerDetectionResult,
     // Flicker detection
-    FlickerDetector, FlickerConfig, FlickerDetectionResult, FlashEvent,
-    FlickerSafeTransition, TransitionDuration, SafeAnimationParams,
+    FlickerDetector,
+    FlickerRisk,
+    FlickerSafeTransition,
+    IssueCategory,
+    IssueSeverity,
+    LuminanceChange,
+    MotionAnalysis,
+    MotionAnalysisResult,
     // Motion analysis
-    MotionAnalyzer, MotionConfig, MotionAnalysisResult, MotionIssue, MotionSmoother,
+    MotionAnalyzer,
+    MotionConfig,
+    MotionIssue,
+    MotionSmoother,
+    RecommendationPriority,
+    SafeAnimationParams,
+    ScenarioCategory,
+    StressTestConfig,
+    StressTestResult,
+    StressTestScenario,
+    TemporalColorState,
+    TemporalContrastAnalyzer,
+    TemporalContrastResult,
+    // Contrast analysis
+    TemporalContrastSensitivity,
+    TemporalCorrectionResult,
+    TemporalIssue,
+    TemporalMasking,
+    TemporalMetrics,
+    TemporalNeuralConfig,
     // Neural correction
-    TemporalNeuralCorrector, TemporalNeuralConfig, TemporalCorrectionResult,
-    // Validation
-    TemporalValidator, TemporalValidatorConfig, WcagComplianceLevel,
-    TemporalValidationReport, BatchValidationReport, TemporalIssue, IssueCategory, IssueSeverity,
-    validate_sequence, is_sequence_safe, get_temporal_score,
+    TemporalNeuralCorrector,
+    TemporalRecommendation,
+    TemporalResult,
+    TemporalStressTestReport,
     // Stress tests
-    TemporalStressTestRunner, StressTestConfig, StressTestScenario, ScenarioCategory,
-    StressTestResult, TemporalStressTestReport,
-    run_temporal_stress_tests, run_safe_stress_tests,
+    TemporalStressTestRunner,
+    TemporalValidationReport,
+    // Validation
+    TemporalValidator,
+    TemporalValidatorConfig,
+    TransitionDuration,
+    WcagComplianceLevel,
+    WcagTemporalResult,
 };
 
 // Phase 9: Perceptual Source of Truth Certification
 pub use certification::{
-    // Core types
-    MomotoIdentity, CertificationAuthority, CertificationTarget, TargetType,
-    ColorData, MaterialData, AnimationData,
-    CertificationResult, SelfCertificationResult,
-    // Certificate
-    Certificate, CertificateContent, CertificateSignature, CertificateVerification,
-    // Specification
-    PerceptualSpecification, StaticPerceptionRules, TemporalPerceptionRules,
-    AccessibilityRequirements, NeuralCorrectionConstraints, MaterialPhysicsRules,
-    PerceptualTolerances,
-    // Conformance
-    ConformanceEngine, ConformanceResult, ConformanceTest, TestType,
-    // Profiles
-    CertificationProfile, Capability, ProfileMetadata,
-    is_profile_superset, highest_passing_profile,
-    // Artifacts
-    SignedArtifact, ArtifactType, ArtifactMetadata, ArtifactSignature, ArtifactVerification,
-    ArtifactBuilder, CertifiedDesignTokens, CertifiedColorSystem, CertifiedAnimationParams,
-    CertifiedMaterial, ColorScale, SemanticColors, SurfaceColors,
-    // Audit
-    AuditLogger as CertAuditLogger, AuditRecord, AuditResult, AuditEvent, AuditEventType,
-    AuditExport, ReproducibilityVerification, ReproducibleRunner,
+    compute_hash,
     // Utilities
-    current_timestamp, generate_certificate_id, compute_hash,
+    current_timestamp,
+    generate_certificate_id,
+    highest_passing_profile,
+    is_profile_superset,
+    AccessibilityRequirements,
+    AnimationData,
+    ArtifactBuilder,
+    ArtifactMetadata,
+    ArtifactSignature,
+    ArtifactType,
+    ArtifactVerification,
+    AuditEvent,
+    AuditEventType,
+    AuditExport,
+    // Audit
+    AuditLogger as CertAuditLogger,
+    AuditRecord,
+    AuditResult,
+    Capability,
+    // Certificate
+    Certificate,
+    CertificateContent,
+    CertificateSignature,
+    CertificateVerification,
+    CertificationAuthority,
+    // Profiles
+    CertificationProfile,
+    CertificationResult,
+    CertificationTarget,
+    CertifiedAnimationParams,
+    CertifiedColorSystem,
+    CertifiedDesignTokens,
+    CertifiedMaterial,
+    ColorData,
+    ColorScale,
+    // Conformance
+    ConformanceEngine,
+    ConformanceResult,
+    ConformanceTest,
+    MaterialData,
+    MaterialPhysicsRules,
+    // Core types
+    MomotoIdentity,
+    NeuralCorrectionConstraints,
+    // Specification
+    PerceptualSpecification,
+    PerceptualTolerances,
+    ProfileMetadata,
+    ReproducibilityVerification,
+    ReproducibleRunner,
+    SelfCertificationResult,
+    SemanticColors,
+    // Artifacts
+    SignedArtifact,
+    StaticPerceptionRules,
+    SurfaceColors,
+    TargetType,
+    TemporalPerceptionRules,
+    TestType,
 };
 
 /// Prelude module for convenient imports.
 pub mod prelude {
-    pub use crate::contract::{Constraint, Contract, ContrastStandard, ComplianceLevel};
+    pub use crate::contract::{ComplianceLevel, Constraint, Contract, ContrastStandard};
     pub use crate::executor::AgentExecutor;
     pub use crate::query::Query;
     pub use crate::response::{
-        MaterialListResponse, MaterialResponse, RecommendationResponse,
-        Response, ScoreResponse, ValidationResponse,
+        MaterialListResponse, MaterialResponse, RecommendationResponse, Response, ScoreResponse,
+        ValidationResponse,
     };
     pub use crate::workflow::{
-        Workflow, WorkflowBuilder, WorkflowConfig, WorkflowExecutor, WorkflowInput,
-        WorkflowReport, WorkflowStep, get_preset_workflow, list_preset_workflows,
+        get_preset_workflow, list_preset_workflows, Workflow, WorkflowBuilder, WorkflowConfig,
+        WorkflowExecutor, WorkflowInput, WorkflowReport, WorkflowStep,
     };
     pub use crate::{
-        validate, validate_pair, get_metrics, get_material, list_materials,
-        recommend_foreground, improve_foreground, score_pair,
+        get_material, get_metrics, improve_foreground, list_materials, recommend_foreground,
+        score_pair, validate, validate_pair,
     };
     // Phase 8: Temporal Perception
     pub use crate::temporal::{
-        ColorSequence, TemporalValidator, TemporalResult, FlickerRisk,
-        validate_sequence, is_sequence_safe, get_temporal_score,
-        run_temporal_stress_tests,
+        get_temporal_score, is_sequence_safe, run_temporal_stress_tests, validate_sequence,
+        ColorSequence, FlickerRisk, TemporalResult, TemporalValidator,
     };
     // Phase 9: Certification
     pub use crate::certification::{
-        CertificationAuthority, CertificationProfile, CertificationTarget, CertificationResult,
-        Certificate, SignedArtifact, ArtifactBuilder,
+        ArtifactBuilder, Certificate, CertificationAuthority, CertificationProfile,
+        CertificationResult, CertificationTarget, SignedArtifact,
     };
 }
 
@@ -359,7 +447,11 @@ pub fn list_materials(category: Option<&str>) -> MaterialListResponse {
 /// println!("Recommended: {}", rec.color);
 /// println!("Quality: {:.0}%", rec.quality_score * 100.0);
 /// ```
-pub fn recommend_foreground(background: &str, context: &str, target: &str) -> RecommendationResponse {
+pub fn recommend_foreground(
+    background: &str,
+    context: &str,
+    target: &str,
+) -> RecommendationResponse {
     let executor = AgentExecutor::new();
     match executor.execute(Query::RecommendForeground {
         background: background.to_string(),
@@ -400,7 +492,12 @@ pub fn recommend_foreground(background: &str, context: &str, target: &str) -> Re
 /// println!("Improved: {}", rec.color);
 /// println!("Reason: {}", rec.reason);
 /// ```
-pub fn improve_foreground(foreground: &str, background: &str, context: &str, target: &str) -> RecommendationResponse {
+pub fn improve_foreground(
+    foreground: &str,
+    background: &str,
+    context: &str,
+    target: &str,
+) -> RecommendationResponse {
     let executor = AgentExecutor::new();
     match executor.execute(Query::ImproveForeground {
         foreground: foreground.to_string(),
@@ -443,7 +540,12 @@ pub fn improve_foreground(foreground: &str, background: &str, context: &str, tar
 /// println!("Passes: {}", score.passes);
 /// println!("Assessment: {}", score.assessment);
 /// ```
-pub fn score_pair(foreground: &str, background: &str, context: &str, target: &str) -> ScoreResponse {
+pub fn score_pair(
+    foreground: &str,
+    background: &str,
+    context: &str,
+    target: &str,
+) -> ScoreResponse {
     let executor = AgentExecutor::new();
     match executor.execute(Query::ScorePair {
         foreground: foreground.to_string(),
@@ -485,8 +587,7 @@ mod tests {
 
     #[test]
     fn test_validate_passing() {
-        let contract = Contract::new()
-            .with_constraint(Constraint::min_contrast_wcag_aa("#ffffff"));
+        let contract = Contract::new().with_constraint(Constraint::min_contrast_wcag_aa("#ffffff"));
 
         let result = validate("#000000", &contract);
         assert!(result.is_valid());
@@ -494,8 +595,8 @@ mod tests {
 
     #[test]
     fn test_validate_failing() {
-        let contract = Contract::new()
-            .with_constraint(Constraint::min_contrast_wcag_aaa("#ffffff"));
+        let contract =
+            Contract::new().with_constraint(Constraint::min_contrast_wcag_aaa("#ffffff"));
 
         // Gray on white may not pass AAA
         let result = validate("#888888", &contract);
@@ -640,7 +741,8 @@ mod tests {
         assert!(response.contains("quality_score"));
 
         // Test score_pair JSON
-        let query = r##"{"action": "score_pair", "foreground": "#000000", "background": "#ffffff"}"##;
+        let query =
+            r##"{"action": "score_pair", "foreground": "#000000", "background": "#ffffff"}"##;
         let response = executor.execute_json(query).unwrap();
         assert!(response.contains("passes"));
         assert!(response.contains("overall"));

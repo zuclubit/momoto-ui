@@ -57,13 +57,21 @@ impl LabColor {
     /// Hue angle in degrees (0-360)
     pub fn hue_degrees(&self) -> f64 {
         let h = self.b.atan2(self.a) * 180.0 / PI;
-        if h < 0.0 { h + 360.0 } else { h }
+        if h < 0.0 {
+            h + 360.0
+        } else {
+            h
+        }
     }
 }
 
 impl Default for LabColor {
     fn default() -> Self {
-        Self { l: 50.0, a: 0.0, b: 0.0 }
+        Self {
+            l: 50.0,
+            a: 0.0,
+            b: 0.0,
+        }
     }
 }
 
@@ -83,7 +91,11 @@ impl XyzColor {
 
 impl Default for XyzColor {
     fn default() -> Self {
-        Self { x: 0.0, y: 0.0, z: 0.0 }
+        Self {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
     }
 }
 
@@ -176,9 +188,9 @@ pub fn rgb_to_xyz(rgb: [f64; 3]) -> XyzColor {
 /// Convert CIE XYZ to sRGB
 pub fn xyz_to_rgb(xyz: XyzColor) -> [f64; 3] {
     // XYZ to sRGB matrix (D65 illuminant)
-    let r =  3.2404542 * xyz.x - 1.5371385 * xyz.y - 0.4985314 * xyz.z;
+    let r = 3.2404542 * xyz.x - 1.5371385 * xyz.y - 0.4985314 * xyz.z;
     let g = -0.9692660 * xyz.x + 1.8760108 * xyz.y + 0.0415560 * xyz.z;
-    let b =  0.0556434 * xyz.x - 0.2040259 * xyz.y + 1.0572252 * xyz.z;
+    let b = 0.0556434 * xyz.x - 0.2040259 * xyz.y + 1.0572252 * xyz.z;
 
     // Apply sRGB gamma and clamp
     [
@@ -329,14 +341,22 @@ pub fn delta_e_2000(lab1: LabColor, lab2: LabColor) -> f64 {
         0.0
     } else {
         let h = b1.atan2(a1_prime) * 180.0 / PI;
-        if h < 0.0 { h + 360.0 } else { h }
+        if h < 0.0 {
+            h + 360.0
+        } else {
+            h
+        }
     };
 
     let h2_prime = if a2_prime == 0.0 && b2 == 0.0 {
         0.0
     } else {
         let h = b2.atan2(a2_prime) * 180.0 / PI;
-        if h < 0.0 { h + 360.0 } else { h }
+        if h < 0.0 {
+            h + 360.0
+        } else {
+            h
+        }
     };
 
     // Calculate differences
@@ -450,11 +470,11 @@ impl PerceptualLossConfig {
     pub fn material_matching() -> Self {
         Self {
             formula: DeltaEFormula::CIEDE2000,
-            weight_lightness: 1.2,  // Lightness differences more noticeable
+            weight_lightness: 1.2, // Lightness differences more noticeable
             weight_chroma: 1.0,
-            weight_hue: 0.8,        // Hue shifts less noticeable
+            weight_hue: 0.8, // Hue shifts less noticeable
             illuminant: Illuminant::D65,
-            exponent: 2.0,          // Penalize large errors more
+            exponent: 2.0, // Penalize large errors more
         }
     }
 
@@ -523,13 +543,16 @@ pub fn perceptual_loss_weighted(
             let h1 = lab_r.hue_degrees();
             let h2 = lab_t.hue_degrees();
             let diff = (h1 - h2).abs();
-            if diff > 180.0 { 360.0 - diff } else { diff }
+            if diff > 180.0 {
+                360.0 - diff
+            } else {
+                diff
+            }
         };
 
         // Weighted sum
-        let loss = config.weight_lightness * dl
-            + config.weight_chroma * dc
-            + config.weight_hue * dh;
+        let loss =
+            config.weight_lightness * dl + config.weight_chroma * dc + config.weight_hue * dh;
 
         total_loss += loss.powf(config.exponent);
     }
@@ -580,12 +603,18 @@ pub fn perceptual_loss_gradient(
 
 /// Convert batch of RGB values to LAB
 pub fn rgb_batch_to_lab(rgb_batch: &[[f64; 3]], illuminant: Illuminant) -> Vec<LabColor> {
-    rgb_batch.iter().map(|rgb| rgb_to_lab(*rgb, illuminant)).collect()
+    rgb_batch
+        .iter()
+        .map(|rgb| rgb_to_lab(*rgb, illuminant))
+        .collect()
 }
 
 /// Convert batch of LAB values to RGB
 pub fn lab_batch_to_rgb(lab_batch: &[LabColor], illuminant: Illuminant) -> Vec<[f64; 3]> {
-    lab_batch.iter().map(|lab| lab_to_rgb(*lab, illuminant)).collect()
+    lab_batch
+        .iter()
+        .map(|lab| lab_to_rgb(*lab, illuminant))
+        .collect()
 }
 
 /// Compute Delta E for batch of color pairs
@@ -737,16 +766,27 @@ mod tests {
     #[test]
     fn test_colors_match() {
         // Very similar colors should match
-        assert!(colors_match([0.5, 0.3, 0.8], [0.502, 0.301, 0.799], Illuminant::D65));
+        assert!(colors_match(
+            [0.5, 0.3, 0.8],
+            [0.502, 0.301, 0.799],
+            Illuminant::D65
+        ));
 
         // Different colors should not match
-        assert!(!colors_match([0.5, 0.3, 0.8], [0.8, 0.3, 0.5], Illuminant::D65));
+        assert!(!colors_match(
+            [0.5, 0.3, 0.8],
+            [0.8, 0.3, 0.5],
+            Illuminant::D65
+        ));
     }
 
     #[test]
     fn test_classify_difference() {
         assert_eq!(classify_difference(0.5), "Not perceptible");
-        assert_eq!(classify_difference(1.5), "Perceptible through close observation");
+        assert_eq!(
+            classify_difference(1.5),
+            "Perceptible through close observation"
+        );
         assert_eq!(classify_difference(3.0), "Perceptible at a glance");
         assert_eq!(classify_difference(4.5), "More similar than different");
         assert_eq!(classify_difference(10.0), "Obvious difference");
@@ -754,11 +794,7 @@ mod tests {
 
     #[test]
     fn test_batch_operations() {
-        let rgb_batch = vec![
-            [1.0, 0.0, 0.0],
-            [0.0, 1.0, 0.0],
-            [0.0, 0.0, 1.0],
-        ];
+        let rgb_batch = vec![[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]];
 
         let lab_batch = rgb_batch_to_lab(&rgb_batch, Illuminant::D65);
         assert_eq!(lab_batch.len(), 3);

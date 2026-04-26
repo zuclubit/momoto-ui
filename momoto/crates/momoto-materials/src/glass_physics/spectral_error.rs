@@ -25,7 +25,6 @@
 //! println!("Spectral Angle: {:.4} rad", metrics.spectral_angle);
 //! ```
 
-
 // ============================================================================
 // SPECTRAL ERROR METRICS
 // ============================================================================
@@ -612,8 +611,7 @@ pub fn delta_e_2000(lab1: [f64; 3], lab2: [f64; 3]) -> f64 {
         dh
     };
 
-    let dh_prime_capital =
-        2.0 * (c1_prime * c2_prime).sqrt() * (dh_prime.to_radians() / 2.0).sin();
+    let dh_prime_capital = 2.0 * (c1_prime * c2_prime).sqrt() * (dh_prime.to_radians() / 2.0).sin();
 
     let l_bar_prime = (l1 + l2) / 2.0;
     let c_bar_prime = (c1_prime + c2_prime) / 2.0;
@@ -633,9 +631,8 @@ pub fn delta_e_2000(lab1: [f64; 3], lab2: [f64; 3]) -> f64 {
         + 0.32 * (3.0 * h_bar_prime + 6.0).to_radians().cos()
         - 0.20 * (4.0 * h_bar_prime - 63.0).to_radians().cos();
 
-    let sl = 1.0
-        + (0.015 * (l_bar_prime - 50.0).powi(2))
-            / (20.0 + (l_bar_prime - 50.0).powi(2)).sqrt();
+    let sl =
+        1.0 + (0.015 * (l_bar_prime - 50.0).powi(2)) / (20.0 + (l_bar_prime - 50.0).powi(2)).sqrt();
     let sc = 1.0 + 0.045 * c_bar_prime;
     let sh = 1.0 + 0.015 * c_bar_prime * t;
 
@@ -847,9 +844,14 @@ mod tests {
         let lab2 = [51.0, 1.0, 0.0];
 
         let metrics = compute_comprehensive(
-            &measured, &rendered, &wavelengths,
-            lab1, lab2,
-            0.3, 0.5, 0.2,
+            &measured,
+            &rendered,
+            &wavelengths,
+            lab1,
+            lab2,
+            0.3,
+            0.5,
+            0.2,
         );
 
         assert!(metrics.overall_score > 0.0);
@@ -898,7 +900,10 @@ mod tests {
             delta_e_2000: 0.5,
             ..PerceptualErrorMetrics::zero()
         };
-        assert_eq!(perceptual.quality_grade(), PerceptualQualityGrade::Imperceptible);
+        assert_eq!(
+            perceptual.quality_grade(),
+            PerceptualQualityGrade::Imperceptible
+        );
     }
 
     #[test]

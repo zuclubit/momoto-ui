@@ -176,10 +176,7 @@ impl Default for CertificationMetadata {
             authority: "Momoto Materials Engine".to_string(),
             operator: None,
             software_version: env!("CARGO_PKG_VERSION").to_string(),
-            reference_standards: vec![
-                "ISO 10110-12:2019".to_string(),
-                "CIE 15:2018".to_string(),
-            ],
+            reference_standards: vec!["ISO 10110-12:2019".to_string(), "CIE 15:2018".to_string()],
             notes: Vec::new(),
             location: None,
             environment_hash: None,
@@ -376,7 +373,11 @@ impl CertifiedTwinProfile {
         // Twin Info
         report.push_str(&format!("Twin ID:      {}\n", self.twin_id));
         report.push_str(&format!("Name:         {}\n", self.name));
-        report.push_str(&format!("Level:        {} ({})\n", self.level, self.level.code()));
+        report.push_str(&format!(
+            "Level:        {} ({})\n",
+            self.level,
+            self.level.code()
+        ));
         report.push_str(&format!(
             "Status:       {}\n",
             if self.is_valid() { "VALID" } else { "EXPIRED" }
@@ -454,7 +455,10 @@ impl CertifiedTwinProfile {
         ));
 
         // Metadata
-        report.push_str(&format!("\nCertification Authority: {}\n", self.metadata.authority));
+        report.push_str(&format!(
+            "\nCertification Authority: {}\n",
+            self.metadata.authority
+        ));
         if let Some(ref op) = self.metadata.operator {
             report.push_str(&format!("Certified by: {}\n", op));
         }
@@ -569,7 +573,8 @@ mod tests {
             0.02,
         )];
 
-        let profile = CertifiedTwinProfile::new("Test Material", CertificationLevel::Research, results);
+        let profile =
+            CertifiedTwinProfile::new("Test Material", CertificationLevel::Research, results);
 
         assert!(!profile.name.is_empty());
         assert!(profile.is_valid());
@@ -592,10 +597,7 @@ mod tests {
     #[test]
     fn test_profile_with_failed_tests() {
         let results = vec![
-            TestResult::pass(
-                MandatoryTest::EnergyConservation { max_error: 0.05 },
-                0.02,
-            ),
+            TestResult::pass(MandatoryTest::EnergyConservation { max_error: 0.05 }, 0.02),
             TestResult::fail(
                 MandatoryTest::NeuralCorrectionBound { max_share: 0.05 },
                 0.08,
@@ -633,7 +635,8 @@ mod tests {
             0.02,
         )];
 
-        let profile = CertifiedTwinProfile::new("Test Material", CertificationLevel::Industrial, results);
+        let profile =
+            CertifiedTwinProfile::new("Test Material", CertificationLevel::Industrial, results);
         let report = profile.report();
 
         assert!(report.contains("CERTIFICATION REPORT"));
@@ -651,7 +654,10 @@ mod tests {
 
         assert_eq!(metadata.authority, "Test Lab");
         assert_eq!(metadata.operator, Some("Engineer A".to_string()));
-        assert!(metadata.reference_standards.iter().any(|s| s.contains("12345")));
+        assert!(metadata
+            .reference_standards
+            .iter()
+            .any(|s| s.contains("12345")));
     }
 
     #[test]

@@ -35,19 +35,29 @@ pub struct ColorDomain;
 
 impl Domain for ColorDomain {
     #[inline]
-    fn id(&self) -> DomainId { DomainId::Color }
+    fn id(&self) -> DomainId {
+        DomainId::Color
+    }
 
     #[inline]
-    fn name(&self) -> &'static str { "momoto-core" }
+    fn name(&self) -> &'static str {
+        "momoto-core"
+    }
 
     #[inline]
-    fn version(&self) -> &'static str { env!("CARGO_PKG_VERSION") }
+    fn version(&self) -> &'static str {
+        env!("CARGO_PKG_VERSION")
+    }
 
     #[inline]
-    fn is_deterministic(&self) -> bool { true }
+    fn is_deterministic(&self) -> bool {
+        true
+    }
 
     #[inline]
-    fn max_inplace_samples(&self) -> Option<usize> { None }
+    fn max_inplace_samples(&self) -> Option<usize> {
+        None
+    }
 }
 
 impl EnergyConserving for ColorDomain {
@@ -125,7 +135,6 @@ impl DomainVariant {
             }
         }
     }
-
 }
 
 // ── SystemEnergyReport ───────────────────────────────────────────────────────
@@ -268,7 +277,10 @@ impl MomotoEngine {
     ///
     /// Returns one `ComplianceReport` per domain, in registration order.
     pub fn validate_all(&self) -> Vec<ComplianceReport> {
-        self.domains.iter().map(|d| d.validate_compliance()).collect()
+        self.domains
+            .iter()
+            .map(|d| d.validate_compliance())
+            .collect()
     }
 
     /// Returns `true` iff every domain's compliance report passes.
@@ -369,9 +381,7 @@ impl MomotoEngine {
             .map(|(_, r)| *r)
             .fold(EnergyReport::lossless(0.0), |acc, r| acc + r);
 
-        let system_conserved = per_domain
-            .iter()
-            .all(|(_, r)| r.is_conserved(TOLERANCE));
+        let system_conserved = per_domain.iter().all(|(_, r)| r.is_conserved(TOLERANCE));
 
         let worst_efficiency = per_domain
             .iter()

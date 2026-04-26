@@ -21,7 +21,7 @@
 
 use std::f64::consts::PI;
 
-use super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse};
+use super::unified_bsdf::{BSDFContext, BSDFResponse, BSDF};
 
 /// Schlick approximation using pre-computed f0 (reflectance at normal incidence).
 /// F(θ) = f0 + (1 − f0) × (1 − cos θ)⁵
@@ -175,13 +175,7 @@ pub fn cook_torrance(
 /// # Returns
 ///
 /// BRDF value ≥ 0. At roughness=0 degenerates to Lambertian `albedo/π`.
-pub fn oren_nayar(
-    n_dot_l: f64,
-    n_dot_v: f64,
-    l_dot_v: f64,
-    roughness: f64,
-    albedo: f64,
-) -> f64 {
+pub fn oren_nayar(n_dot_l: f64, n_dot_v: f64, l_dot_v: f64, roughness: f64, albedo: f64) -> f64 {
     let n_dot_l = n_dot_l.max(0.0);
     let n_dot_v = n_dot_v.max(1e-4);
 
@@ -193,8 +187,7 @@ pub fn oren_nayar(
     // Azimuthal correction via Oren-Nayar approximation
     // cos(φ_l - φ_v) approximated from l·v and n·l, n·v
     let cos_phi_diff = (l_dot_v - n_dot_l * n_dot_v)
-        / ((1.0 - n_dot_l * n_dot_l).sqrt().max(1e-4)
-           * (1.0 - n_dot_v * n_dot_v).sqrt().max(1e-4));
+        / ((1.0 - n_dot_l * n_dot_l).sqrt().max(1e-4) * (1.0 - n_dot_v * n_dot_v).sqrt().max(1e-4));
 
     // sin(θ_max) = sin(max(θ_i, θ_o))
     // tan(θ_min) = tan(min(θ_i, θ_o)) = sin/cos of min angle
@@ -225,13 +218,7 @@ pub fn oren_nayar(
 /// * `h_dot_b` — component of half-vector along bitangent direction
 /// * `ax`, `ay` — roughness along tangent and bitangent axes (αx = αy → isotropic GGX)
 #[inline]
-pub fn ggx_anisotropic_ndf(
-    n_dot_h: f64,
-    h_dot_t: f64,
-    h_dot_b: f64,
-    ax: f64,
-    ay: f64,
-) -> f64 {
+pub fn ggx_anisotropic_ndf(n_dot_h: f64, h_dot_t: f64, h_dot_b: f64, ax: f64, ay: f64) -> f64 {
     let ax = ax.max(0.001);
     let ay = ay.max(0.001);
     let n_dot_h = n_dot_h.max(0.0);
@@ -367,12 +354,7 @@ pub fn cook_torrance_eval(
 }
 
 /// Evaluate Oren-Nayar diffuse BRDF as a standalone function.
-pub fn oren_nayar_eval(
-    n_dot_l: f64,
-    n_dot_v: f64,
-    l_dot_v: f64,
-    roughness: f64,
-) -> f64 {
+pub fn oren_nayar_eval(n_dot_l: f64, n_dot_v: f64, l_dot_v: f64, roughness: f64) -> f64 {
     oren_nayar(n_dot_l, n_dot_v, l_dot_v, roughness, 1.0)
 }
 
@@ -435,7 +417,9 @@ mod tests {
         let lambert = 1.0 / PI;
         assert!(
             (f - lambert).abs() < 0.01,
-            "Oren-Nayar at σ=0: {} vs Lambert {}", f, lambert
+            "Oren-Nayar at σ=0: {} vs Lambert {}",
+            f,
+            lambert
         );
     }
 
@@ -451,7 +435,8 @@ mod tests {
         let total = resp.reflectance + resp.transmittance + resp.absorption;
         assert!(
             (total - 1.0).abs() < 0.01,
-            "Energy conservation violated: total = {}", total
+            "Energy conservation violated: total = {}",
+            total
         );
     }
 

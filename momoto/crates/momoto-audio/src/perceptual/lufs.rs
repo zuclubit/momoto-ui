@@ -100,8 +100,8 @@ impl LufsAnalyzer {
             .collect::<Option<Vec<_>>>()?;
 
         // 3-second window in 400 ms blocks = 7.5 → use 8 blocks
-        let short_term_capacity = ((3.0 * sample_rate as f64) / (0.4 * sample_rate as f64))
-            .ceil() as usize;
+        let short_term_capacity =
+            ((3.0 * sample_rate as f64) / (0.4 * sample_rate as f64)).ceil() as usize;
         let short_term_capacity = short_term_capacity.max(1);
 
         Some(Self {
@@ -126,7 +126,10 @@ impl LufsAnalyzer {
     ///
     /// Applies K-weighting per channel and sums mean-squares equally (`G=1`).
     pub fn add_stereo_block(&mut self, interleaved: &[f32]) {
-        assert!(interleaved.len() % 2 == 0, "stereo buffer must have even length");
+        assert!(
+            interleaved.len() % 2 == 0,
+            "stereo buffer must have even length"
+        );
         let n = interleaved.len() / 2;
         let mut ms_l = 0.0_f64;
         let mut ms_r = 0.0_f64;
@@ -151,7 +154,10 @@ impl LufsAnalyzer {
     /// Returns `f64::NEG_INFINITY` if no blocks have been added.
     #[must_use]
     pub fn momentary(&self) -> f64 {
-        self.blocks.last().map(|b| b.momentary).unwrap_or(f64::NEG_INFINITY)
+        self.blocks
+            .last()
+            .map(|b| b.momentary)
+            .unwrap_or(f64::NEG_INFINITY)
     }
 
     /// Short-term loudness (3-second sliding window).
@@ -162,7 +168,11 @@ impl LufsAnalyzer {
         if self.short_term_blocks.is_empty() {
             return f64::NEG_INFINITY;
         }
-        let mean_sq: f64 = self.short_term_blocks.iter().map(|b| b.mean_square).sum::<f64>()
+        let mean_sq: f64 = self
+            .short_term_blocks
+            .iter()
+            .map(|b| b.mean_square)
+            .sum::<f64>()
             / self.short_term_blocks.len() as f64;
         Self::mean_sq_to_lufs(mean_sq)
     }
@@ -173,7 +183,9 @@ impl LufsAnalyzer {
     #[must_use]
     pub fn integrated(&self) -> f64 {
         // Pass 1: absolute gate (M ≥ -70 LUFS)
-        let pass1: Vec<&LoudnessBlock> = self.blocks.iter()
+        let pass1: Vec<&LoudnessBlock> = self
+            .blocks
+            .iter()
             .filter(|b| b.passes_absolute_gate())
             .collect();
 
@@ -182,12 +194,13 @@ impl LufsAnalyzer {
         }
 
         // Preliminary mean from pass-1 blocks
-        let prelim_mean: f64 = pass1.iter().map(|b| b.mean_square).sum::<f64>()
-            / pass1.len() as f64;
+        let prelim_mean: f64 =
+            pass1.iter().map(|b| b.mean_square).sum::<f64>() / pass1.len() as f64;
         let gamma_r = Self::mean_sq_to_lufs(prelim_mean) + RELATIVE_GATE_LU;
 
         // Pass 2: relative gate
-        let pass2: Vec<&LoudnessBlock> = pass1.into_iter()
+        let pass2: Vec<&LoudnessBlock> = pass1
+            .into_iter()
             .filter(|b| b.momentary >= gamma_r)
             .collect();
 
@@ -195,8 +208,7 @@ impl LufsAnalyzer {
             return f64::NEG_INFINITY;
         }
 
-        let final_mean: f64 = pass2.iter().map(|b| b.mean_square).sum::<f64>()
-            / pass2.len() as f64;
+        let final_mean: f64 = pass2.iter().map(|b| b.mean_square).sum::<f64>() / pass2.len() as f64;
         Self::mean_sq_to_lufs(final_mean)
     }
 
@@ -224,7 +236,9 @@ impl LufsAnalyzer {
     // ── Private helpers ───────────────────────────────────────────────────────
 
     fn k_weight_mono(&mut self, samples: &[f32]) -> f64 {
-        if samples.is_empty() { return 0.0; }
+        if samples.is_empty() {
+            return 0.0;
+        }
         let mut sum_sq = 0.0_f64;
         for &s in samples {
             // Flush NaN/Inf audio samples to silence — prevents K-filter corruption.
@@ -234,14 +248,25 @@ impl LufsAnalyzer {
         }
         let ms = sum_sq / samples.len() as f64;
         // Guard against NaN from accumulated arithmetic errors.
-        if ms.is_finite() && ms >= 0.0 { ms } else { 0.0 }
+        if ms.is_finite() && ms >= 0.0 {
+            ms
+        } else {
+            0.0
+        }
     }
 
     fn push_block(&mut self, mean_sq: f64) {
         // Sanitize: clamp any non-finite mean_sq to silence.
-        let mean_sq = if mean_sq.is_finite() && mean_sq >= 0.0 { mean_sq } else { 0.0 };
+        let mean_sq = if mean_sq.is_finite() && mean_sq >= 0.0 {
+            mean_sq
+        } else {
+            0.0
+        };
         let momentary = Self::mean_sq_to_lufs(mean_sq);
-        let block = LoudnessBlock { momentary, mean_square: mean_sq };
+        let block = LoudnessBlock {
+            momentary,
+            mean_square: mean_sq,
+        };
         self.blocks.push(block);
 
         // Update short-term window
@@ -289,7 +314,10 @@ mod tests {
         let block = sine_block(1000.0, 48000, 0.4);
         a.add_mono_block(&block);
         let m = a.momentary();
-        assert!(m < 0.0 && m > -50.0, "1kHz 0dBFS sine LUFS out of range: {m}");
+        assert!(
+            m < 0.0 && m > -50.0,
+            "1kHz 0dBFS sine LUFS out of range: {m}"
+        );
     }
 
     #[test]
@@ -329,7 +357,10 @@ mod tests {
             a.add_mono_block(&loud);
         }
         let st = a.short_term();
-        assert!(st.is_finite(), "short-term should be finite after loud blocks");
+        assert!(
+            st.is_finite(),
+            "short-term should be finite after loud blocks"
+        );
     }
 
     #[test]
@@ -360,7 +391,10 @@ mod tests {
         // mean_sq = 1.0 → LUFS = -0.691 + 10*log10(1.0) = -0.691
         a.add_raw_mean_square(1.0);
         let expected = LUFS_OFFSET;
-        assert!((a.momentary() - expected).abs() < 1e-6, "raw ms=1 → {expected} LUFS");
+        assert!(
+            (a.momentary() - expected).abs() < 1e-6,
+            "raw ms=1 → {expected} LUFS"
+        );
     }
 
     /// Golden regression test: -23.0 LUFS reference (EBU R128 broadcast target).
@@ -407,6 +441,9 @@ mod tests {
         // NaN mean_sq should be sanitized to 0 → silence → -inf LUFS
         let m = a.momentary();
         assert!(!m.is_nan(), "NaN mean_sq must not produce NaN LUFS");
-        assert!(m.is_infinite() && m.is_sign_negative(), "silence after NaN flush → -inf");
+        assert!(
+            m.is_infinite() && m.is_sign_negative(),
+            "silence after NaN flush → -inf"
+        );
     }
 }

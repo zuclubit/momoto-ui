@@ -148,7 +148,8 @@ impl GradientVerificationResult {
     pub fn from_checks(checks: Vec<GradientCheck>) -> Self {
         let all_passed = checks.iter().all(|c| c.passed);
         let max_error = checks.iter().map(|c| c.absolute_error).fold(0.0, f64::max);
-        let max_relative_error = checks.iter()
+        let max_relative_error = checks
+            .iter()
             .filter_map(|c| c.relative_error)
             .fold(0.0, f64::max);
 
@@ -174,7 +175,10 @@ impl GradientVerificationResult {
             if self.all_passed { "PASSED" } else { "FAILED" }
         ));
         report.push_str(&format!("Max absolute error: {:.2e}\n", self.max_error));
-        report.push_str(&format!("Max relative error: {:.2e}\n", self.max_relative_error));
+        report.push_str(&format!(
+            "Max relative error: {:.2e}\n",
+            self.max_relative_error
+        ));
         report.push_str("\nParameter Details:\n");
 
         for check in &self.checks {
@@ -244,8 +248,14 @@ pub fn verify_bsdf_gradients<B: DifferentiableBSDF + Clone>(
     config: &VerificationConfig,
 ) -> GradientVerificationResult {
     let param_names = [
-        "ior", "extinction", "roughness", "absorption",
-        "scattering", "asymmetry_g", "film_thickness", "film_ior",
+        "ior",
+        "extinction",
+        "roughness",
+        "absorption",
+        "scattering",
+        "asymmetry_g",
+        "film_thickness",
+        "film_ior",
     ];
 
     let result = material.eval_with_gradients(ctx);
@@ -254,14 +264,13 @@ pub fn verify_bsdf_gradients<B: DifferentiableBSDF + Clone>(
 
     let mut checks = Vec::new();
 
-    for (i, &name) in param_names.iter().enumerate().take(base_params.len().min(8)) {
+    for (i, &name) in param_names
+        .iter()
+        .enumerate()
+        .take(base_params.len().min(8))
+    {
         // Compute numerical gradient
-        let numeric = compute_numeric_bsdf_gradient::<B>(
-            &base_params,
-            ctx,
-            i,
-            config.epsilon,
-        );
+        let numeric = compute_numeric_bsdf_gradient::<B>(&base_params, ctx, i, config.epsilon);
 
         let analytic = if i < analytic_grads.len() {
             analytic_grads[i] * result.gradients.d_reflectance
@@ -337,7 +346,8 @@ impl BatchVerification {
         contexts: &[BSDFContext],
         config: &VerificationConfig,
     ) -> Self {
-        let results: Vec<_> = contexts.iter()
+        let results: Vec<_> = contexts
+            .iter()
             .map(|ctx| {
                 let result = verify_bsdf_gradients(material, ctx, config);
                 (ctx.clone(), result)
@@ -345,9 +355,7 @@ impl BatchVerification {
             .collect();
 
         let all_passed = results.iter().all(|(_, r)| r.all_passed);
-        let global_max_error = results.iter()
-            .map(|(_, r)| r.max_error)
-            .fold(0.0, f64::max);
+        let global_max_error = results.iter().map(|(_, r)| r.max_error).fold(0.0, f64::max);
 
         Self {
             results,
@@ -359,13 +367,13 @@ impl BatchVerification {
     /// Get standard test contexts.
     pub fn standard_contexts() -> Vec<BSDFContext> {
         vec![
-            standard_test_context(1.0, 550.0),   // Normal incidence
-            standard_test_context(0.9, 550.0),   // Small angle
-            standard_test_context(0.7, 550.0),   // 45°
-            standard_test_context(0.5, 550.0),   // 60°
-            standard_test_context(0.3, 550.0),   // Grazing
-            standard_test_context(0.8, 450.0),   // Blue
-            standard_test_context(0.8, 650.0),   // Red
+            standard_test_context(1.0, 550.0), // Normal incidence
+            standard_test_context(0.9, 550.0), // Small angle
+            standard_test_context(0.7, 550.0), // 45°
+            standard_test_context(0.5, 550.0), // 60°
+            standard_test_context(0.3, 550.0), // Grazing
+            standard_test_context(0.8, 450.0), // Blue
+            standard_test_context(0.8, 650.0), // Red
         ]
     }
 }
@@ -420,10 +428,10 @@ pub fn full_verify_with_report<B: DifferentiableBSDF + Clone>(material: &B) -> S
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use super::super::differentiable::dielectric::DifferentiableDielectric;
     use super::super::differentiable::conductor::DifferentiableConductor;
+    use super::super::differentiable::dielectric::DifferentiableDielectric;
     use super::super::differentiable::thin_film::DifferentiableThinFilm;
+    use super::*;
 
     #[test]
     fn test_numerical_gradient_central() {

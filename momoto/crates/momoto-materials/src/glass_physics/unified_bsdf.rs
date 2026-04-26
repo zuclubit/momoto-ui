@@ -33,8 +33,8 @@ use std::f64::consts::PI;
 
 use serde::{Deserialize, Serialize};
 
-use super::fresnel::{fresnel_schlick, fresnel_full};
-use super::complex_ior::{ComplexIOR, SpectralComplexIOR, fresnel_conductor_unpolarized};
+use super::complex_ior::{fresnel_conductor_unpolarized, ComplexIOR, SpectralComplexIOR};
+use super::fresnel::{fresnel_full, fresnel_schlick};
 use super::thin_film::ThinFilm;
 
 // ============================================================================
@@ -59,19 +59,31 @@ impl Vector3 {
     /// Create a unit vector along Z (surface normal)
     #[inline]
     pub const fn unit_z() -> Self {
-        Self { x: 0.0, y: 0.0, z: 1.0 }
+        Self {
+            x: 0.0,
+            y: 0.0,
+            z: 1.0,
+        }
     }
 
     /// Create a unit vector along X (tangent)
     #[inline]
     pub const fn unit_x() -> Self {
-        Self { x: 1.0, y: 0.0, z: 0.0 }
+        Self {
+            x: 1.0,
+            y: 0.0,
+            z: 0.0,
+        }
     }
 
     /// Create a unit vector along Y (bitangent)
     #[inline]
     pub const fn unit_y() -> Self {
-        Self { x: 0.0, y: 1.0, z: 0.0 }
+        Self {
+            x: 0.0,
+            y: 1.0,
+            z: 0.0,
+        }
     }
 
     /// Dot product
@@ -412,7 +424,12 @@ pub struct BSDFSample {
 impl BSDFSample {
     /// Create a new sample
     pub fn new(wo: Vector3, value: BSDFResponse, pdf: f64, is_delta: bool) -> Self {
-        Self { wo, value, pdf, is_delta }
+        Self {
+            wo,
+            value,
+            pdf,
+            is_delta,
+        }
     }
 
     /// Create a delta reflection sample
@@ -571,13 +588,22 @@ impl DispersionModel {
     }
 
     /// Crown glass preset (low dispersion)
-    pub const CROWN_GLASS: Self = Self { n_d: 1.52, abbe_number: 64.0 };
+    pub const CROWN_GLASS: Self = Self {
+        n_d: 1.52,
+        abbe_number: 64.0,
+    };
 
     /// Flint glass preset (high dispersion)
-    pub const FLINT_GLASS: Self = Self { n_d: 1.62, abbe_number: 36.0 };
+    pub const FLINT_GLASS: Self = Self {
+        n_d: 1.62,
+        abbe_number: 36.0,
+    };
 
     /// Diamond preset
-    pub const DIAMOND: Self = Self { n_d: 2.42, abbe_number: 55.0 };
+    pub const DIAMOND: Self = Self {
+        n_d: 2.42,
+        abbe_number: 55.0,
+    };
 }
 
 impl DielectricBSDF {
@@ -1012,7 +1038,9 @@ pub struct LambertianBSDF {
 impl LambertianBSDF {
     /// Create a new Lambertian BSDF
     pub fn new(albedo: f64) -> Self {
-        Self { albedo: albedo.clamp(0.0, 1.0) }
+        Self {
+            albedo: albedo.clamp(0.0, 1.0),
+        }
     }
 
     /// White matte surface
@@ -1119,14 +1147,14 @@ pub fn validate_energy_conservation(bsdf: &dyn BSDF) -> EnergyValidation {
 /// Total memory used by unified BSDF module
 pub fn total_unified_bsdf_memory() -> usize {
     // Struct sizes
-    std::mem::size_of::<Vector3>() * 10 +
-    std::mem::size_of::<BSDFContext>() +
-    std::mem::size_of::<BSDFResponse>() +
-    std::mem::size_of::<DielectricBSDF>() +
-    std::mem::size_of::<ConductorBSDF>() +
-    std::mem::size_of::<ThinFilmBSDF>() +
-    std::mem::size_of::<LambertianBSDF>() +
-    1_000 // Overhead
+    std::mem::size_of::<Vector3>() * 10
+        + std::mem::size_of::<BSDFContext>()
+        + std::mem::size_of::<BSDFResponse>()
+        + std::mem::size_of::<DielectricBSDF>()
+        + std::mem::size_of::<ConductorBSDF>()
+        + std::mem::size_of::<ThinFilmBSDF>()
+        + std::mem::size_of::<LambertianBSDF>()
+        + 1_000 // Overhead
 }
 
 // ============================================================================
@@ -1194,7 +1222,11 @@ mod tests {
         // At normal incidence, glass reflects ~4%
         let ctx_normal = BSDFContext::new_simple(1.0);
         let r_normal = glass.evaluate(&ctx_normal).reflectance;
-        assert!((r_normal - 0.04).abs() < 0.01, "Normal incidence: {}", r_normal);
+        assert!(
+            (r_normal - 0.04).abs() < 0.01,
+            "Normal incidence: {}",
+            r_normal
+        );
 
         // At grazing angles, reflectance increases
         let ctx_grazing = BSDFContext::new_simple(0.1);
@@ -1210,7 +1242,11 @@ mod tests {
         let response = gold.evaluate(&ctx);
 
         // Gold should have high reflectivity
-        assert!(response.reflectance > 0.5, "Gold reflectance: {}", response.reflectance);
+        assert!(
+            response.reflectance > 0.5,
+            "Gold reflectance: {}",
+            response.reflectance
+        );
 
         // Conductors don't transmit
         assert!(response.transmittance < 0.01);
@@ -1227,7 +1263,12 @@ mod tests {
         let r_red = soap.evaluate(&ctx_red).reflectance;
 
         // Thin-film should show wavelength-dependent interference
-        assert!((r_blue - r_red).abs() > 0.01, "Should show color: {} vs {}", r_blue, r_red);
+        assert!(
+            (r_blue - r_red).abs() > 0.01,
+            "Should show color: {} vs {}",
+            r_blue,
+            r_red
+        );
     }
 
     #[test]
@@ -1338,7 +1379,12 @@ mod tests {
 
         for bsdf in presets {
             let validation = validate_energy_conservation(bsdf.as_ref());
-            assert!(validation.conserved, "{}: {}", bsdf.name(), validation.details);
+            assert!(
+                validation.conserved,
+                "{}: {}",
+                bsdf.name(),
+                validation.details
+            );
         }
     }
 }

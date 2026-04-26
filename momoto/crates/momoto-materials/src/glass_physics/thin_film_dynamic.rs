@@ -63,10 +63,10 @@ impl DynamicFilmLayer {
             n_base: n,
             k_base: 0.0,
             thickness_nm,
-            dn_dt: 1e-5,           // Typical value for glass
-            t_ref: 293.0,          // 20°C
-            alpha_thermal: 5e-6,   // Typical for SiO2
-            youngs_modulus: 70.0,  // GPa, typical for glass
+            dn_dt: 1e-5,          // Typical value for glass
+            t_ref: 293.0,         // 20°C
+            alpha_thermal: 5e-6,  // Typical for SiO2
+            youngs_modulus: 70.0, // GPa, typical for glass
             poisson_ratio: 0.17,
             temperature: 293.0,
             stress: [0.0; 6],
@@ -190,11 +190,20 @@ impl HeightMap {
             }
         }
 
-        Self { heights, resolution, size }
+        Self {
+            heights,
+            resolution,
+            size,
+        }
     }
 
     /// Create sinusoidal ripple
-    pub fn sinusoidal(resolution: (usize, usize), size: (f64, f64), amplitude: f64, period: f64) -> Self {
+    pub fn sinusoidal(
+        resolution: (usize, usize),
+        size: (f64, f64),
+        amplitude: f64,
+        period: f64,
+    ) -> Self {
         let mut heights = vec![vec![0.0; resolution.0]; resolution.1];
 
         for y in 0..resolution.1 {
@@ -204,7 +213,11 @@ impl HeightMap {
             }
         }
 
-        Self { heights, resolution, size }
+        Self {
+            heights,
+            resolution,
+            size,
+        }
     }
 
     /// Sample height at position (0-1 normalized coordinates)
@@ -281,7 +294,7 @@ pub struct SubstrateProperties {
 impl Default for SubstrateProperties {
     fn default() -> Self {
         Self {
-            n: 1.52,     // BK7 glass
+            n: 1.52, // BK7 glass
             k: 0.0,
             alpha: 7e-6, // BK7 thermal expansion
         }
@@ -382,10 +395,13 @@ impl DynamicThinFilmStack {
     fn effective_layers_at(&self, pos: Vec2) -> Vec<(f64, f64, f64)> {
         let curvature_factor = self.curvature_thickness_factor(pos);
 
-        self.layers.iter().map(|layer| {
-            let (n, k, d) = layer.effective_properties();
-            (n, k, d * curvature_factor)
-        }).collect()
+        self.layers
+            .iter()
+            .map(|layer| {
+                let (n, k, d) = layer.effective_properties();
+                (n, k, d * curvature_factor)
+            })
+            .collect()
     }
 
     /// Calculate reflectance at a position using transfer matrix method
@@ -413,24 +429,36 @@ impl DynamicThinFilmStack {
     }
 
     /// Single layer reflectance (Airy formula)
-    fn single_layer_reflectance(&self, wavelength: f64, n_film: f64, d: f64, cos_theta: f64) -> f64 {
+    fn single_layer_reflectance(
+        &self,
+        wavelength: f64,
+        n_film: f64,
+        d: f64,
+        cos_theta: f64,
+    ) -> f64 {
         let r01 = (self.n_ambient - n_film) / (self.n_ambient + n_film);
         let r12 = (n_film - self.substrate.n) / (n_film + self.substrate.n);
 
         let cos_theta_film = (1.0 - (self.n_ambient / n_film).powi(2) * (1.0 - cos_theta.powi(2)))
-            .max(0.0).sqrt();
+            .max(0.0)
+            .sqrt();
         let delta = 4.0 * PI * n_film * d * cos_theta_film / wavelength;
 
         let cos_delta = delta.cos();
         let r01_sq = r01 * r01;
         let r12_sq = r12 * r12;
 
-        (r01_sq + r12_sq + 2.0 * r01 * r12 * cos_delta) /
-        (1.0 + r01_sq * r12_sq + 2.0 * r01 * r12 * cos_delta)
+        (r01_sq + r12_sq + 2.0 * r01 * r12 * cos_delta)
+            / (1.0 + r01_sq * r12_sq + 2.0 * r01 * r12 * cos_delta)
     }
 
     /// Multi-layer transfer matrix reflectance
-    fn transfer_matrix_reflectance(&self, layers: &[(f64, f64, f64)], wavelength: f64, cos_theta: f64) -> f64 {
+    fn transfer_matrix_reflectance(
+        &self,
+        layers: &[(f64, f64, f64)],
+        wavelength: f64,
+        cos_theta: f64,
+    ) -> f64 {
         // Build interface matrices
         let mut m = [[1.0, 0.0], [0.0, 1.0]]; // Identity
 
@@ -462,8 +490,8 @@ impl DynamicThinFilmStack {
         // Final interface to substrate
         let sin_sub = (self.n_ambient / self.substrate.n) * (1.0 - cos_theta.powi(2)).sqrt();
         let cos_sub = (1.0 - sin_sub.powi(2)).max(0.0).sqrt();
-        let r_sub = (n_prev * cos_prev - self.substrate.n * cos_sub) /
-                   (n_prev * cos_prev + self.substrate.n * cos_sub);
+        let r_sub = (n_prev * cos_prev - self.substrate.n * cos_sub)
+            / (n_prev * cos_prev + self.substrate.n * cos_sub);
         let t_sub = 2.0 * n_prev * cos_prev / (n_prev * cos_prev + self.substrate.n * cos_sub);
 
         let m_final = [[1.0 / t_sub, r_sub / t_sub], [r_sub / t_sub, 1.0 / t_sub]];
@@ -475,8 +503,14 @@ impl DynamicThinFilmStack {
 
     fn mat_mul(&self, a: &[[f64; 2]; 2], b: &[[f64; 2]; 2]) -> [[f64; 2]; 2] {
         [
-            [a[0][0] * b[0][0] + a[0][1] * b[1][0], a[0][0] * b[0][1] + a[0][1] * b[1][1]],
-            [a[1][0] * b[0][0] + a[1][1] * b[1][0], a[1][0] * b[0][1] + a[1][1] * b[1][1]],
+            [
+                a[0][0] * b[0][0] + a[0][1] * b[1][0],
+                a[0][0] * b[0][1] + a[0][1] * b[1][1],
+            ],
+            [
+                a[1][0] * b[0][0] + a[1][1] * b[1][0],
+                a[1][0] * b[0][1] + a[1][1] * b[1][1],
+            ],
         ]
     }
 
@@ -575,15 +609,18 @@ pub mod dynamic_presets {
 
     /// Soap bubble with temperature response
     pub fn soap_bubble(temp_k: f64) -> DynamicThinFilmStack {
-        let mut stack = DynamicThinFilmStack::new(1.0, SubstrateProperties {
-            n: 1.0,  // Air on other side
-            k: 0.0,
-            alpha: 0.0,
-        });
+        let mut stack = DynamicThinFilmStack::new(
+            1.0,
+            SubstrateProperties {
+                n: 1.0, // Air on other side
+                k: 0.0,
+                alpha: 0.0,
+            },
+        );
 
         let layer = DynamicFilmLayer::new(1.33, 300.0)
-            .with_dn_dt(1e-4)  // Water has high dn/dT
-            .with_thermal_expansion(2e-4);  // Water film expands significantly
+            .with_dn_dt(1e-4) // Water has high dn/dT
+            .with_thermal_expansion(2e-4); // Water film expands significantly
 
         stack.add_layer(layer);
         stack.set_environment(temp_k, 101325.0, 0.8);
@@ -592,18 +629,22 @@ pub mod dynamic_presets {
 
     /// Morpho butterfly wing with curvature
     pub fn morpho_curved(height_map: HeightMap) -> DynamicThinFilmStack {
-        let mut stack = DynamicThinFilmStack::new(1.0, SubstrateProperties {
-            n: 1.56,
-            k: 0.0,
-            alpha: 1e-5,
-        }).with_height_map(height_map);
+        let mut stack = DynamicThinFilmStack::new(
+            1.0,
+            SubstrateProperties {
+                n: 1.56,
+                k: 0.0,
+                alpha: 1e-5,
+            },
+        )
+        .with_height_map(height_map);
 
         // Chitin/air alternating layers
         for i in 0..5 {
             let (n, d) = if i % 2 == 0 {
-                (1.56, 85.0)  // Chitin
+                (1.56, 85.0) // Chitin
             } else {
-                (1.0, 95.0)   // Air
+                (1.0, 95.0) // Air
             };
             stack.add_layer(DynamicFilmLayer::new(n, d));
         }
@@ -615,7 +656,7 @@ pub mod dynamic_presets {
     pub fn ar_coating_stressed(stress_mpa: f64) -> DynamicThinFilmStack {
         let mut stack = DynamicThinFilmStack::new(1.0, SubstrateProperties::default());
 
-        let mut layer = DynamicFilmLayer::new(1.38, 100.0)  // MgF2
+        let mut layer = DynamicFilmLayer::new(1.38, 100.0) // MgF2
             .with_dn_dt(1e-6)
             .with_thermal_expansion(1e-5)
             .with_mechanical(50.0, 0.25);
@@ -629,13 +670,17 @@ pub mod dynamic_presets {
     pub fn oil_slick_rippled() -> DynamicThinFilmStack {
         let height_map = HeightMap::sinusoidal((64, 64), (10.0, 10.0), 0.5, 2.0);
 
-        let mut stack = DynamicThinFilmStack::new(1.0, SubstrateProperties {
-            n: 1.33,  // Water
-            k: 0.0,
-            alpha: 2e-4,
-        }).with_height_map(height_map);
+        let mut stack = DynamicThinFilmStack::new(
+            1.0,
+            SubstrateProperties {
+                n: 1.33, // Water
+                k: 0.0,
+                alpha: 2e-4,
+            },
+        )
+        .with_height_map(height_map);
 
-        stack.add_layer(DynamicFilmLayer::new(1.5, 500.0));  // Oil layer
+        stack.add_layer(DynamicFilmLayer::new(1.5, 500.0)); // Oil layer
         stack
     }
 
@@ -684,7 +729,10 @@ pub fn to_css_iridescence(map: &IridescenceMap, angle_deg: f64) -> String {
 }
 
 /// Generate animated CSS for temperature change
-pub fn to_css_temperature_animation(stack: &DynamicThinFilmStack, temp_range: (f64, f64)) -> String {
+pub fn to_css_temperature_animation(
+    stack: &DynamicThinFilmStack,
+    temp_range: (f64, f64),
+) -> String {
     let mut keyframes = String::from("@keyframes temperature-shift {\n");
 
     let steps = 5;
@@ -702,7 +750,10 @@ pub fn to_css_temperature_animation(stack: &DynamicThinFilmStack, temp_range: (f
 
         keyframes.push_str(&format!(
             "  {}% {{ background-color: rgb({}, {}, {}); }}\n",
-            (t * 100.0) as u8, r, g, b
+            (t * 100.0) as u8,
+            r,
+            g,
+            b
         ));
     }
 
@@ -720,8 +771,7 @@ mod tests {
 
     #[test]
     fn test_dynamic_layer_temperature() {
-        let mut layer = DynamicFilmLayer::new(1.5, 100.0)
-            .with_dn_dt(1e-4);
+        let mut layer = DynamicFilmLayer::new(1.5, 100.0).with_dn_dt(1e-4);
 
         layer.set_temperature(293.0);
         let n_cold = layer.effective_n();
@@ -736,8 +786,7 @@ mod tests {
 
     #[test]
     fn test_dynamic_layer_thermal_expansion() {
-        let mut layer = DynamicFilmLayer::new(1.5, 100.0)
-            .with_thermal_expansion(1e-4);
+        let mut layer = DynamicFilmLayer::new(1.5, 100.0).with_thermal_expansion(1e-4);
 
         layer.set_temperature(293.0);
         let d_cold = layer.effective_thickness();
@@ -751,8 +800,7 @@ mod tests {
 
     #[test]
     fn test_dynamic_layer_stress() {
-        let mut layer = DynamicFilmLayer::new(1.5, 100.0)
-            .with_mechanical(70.0, 0.17);
+        let mut layer = DynamicFilmLayer::new(1.5, 100.0).with_mechanical(70.0, 0.17);
 
         let d_unstressed = layer.effective_thickness();
 
@@ -772,7 +820,12 @@ mod tests {
         let h_center = hm.sample(Vec2::new(0.5, 0.5));
         let h_edge = hm.sample(Vec2::new(0.0, 0.5));
 
-        assert!(h_center >= h_edge, "Center {} should be >= edge {}", h_center, h_edge);
+        assert!(
+            h_center >= h_edge,
+            "Center {} should be >= edge {}",
+            h_center,
+            h_edge
+        );
     }
 
     #[test]

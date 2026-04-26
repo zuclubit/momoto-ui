@@ -16,18 +16,16 @@
 use std::time::Instant;
 
 use super::differentiable_render::{
-    fresnel_schlick_diff, beer_lambert_diff, henyey_greenstein_diff,
-    MaterialParams, ParamGradient,
+    beer_lambert_diff, fresnel_schlick_diff, henyey_greenstein_diff, MaterialParams, ParamGradient,
 };
-use super::thin_film_dynamic::{DynamicFilmLayer, HeightMap, Vec2, dynamic_presets};
 use super::metal_oxidation_dynamic::{
-    OxidationKinetics, DynamicOxidizedMetal, Element, OxidationSimulation,
-    oxidation_presets,
+    oxidation_presets, DynamicOxidizedMetal, Element, OxidationKinetics, OxidationSimulation,
 };
 use super::mie_physics::{
-    Particle, MediumProperties, ParticleDynamics, ParticleEnsemble,
-    ScatteringField, mie_approximation, ensemble_presets,
+    ensemble_presets, mie_approximation, MediumProperties, Particle, ParticleDynamics,
+    ParticleEnsemble, ScatteringField,
 };
+use super::thin_film_dynamic::{dynamic_presets, DynamicFilmLayer, HeightMap, Vec2};
 
 // ============================================================================
 // DIFFERENTIABLE RENDERING VALIDATION
@@ -259,8 +257,10 @@ pub fn validate_metal_oxidation() -> ValidationResult {
         result.add_check(
             "Oxide growth",
             metal.state.oxide_thickness > initial_thickness,
-            format!("thickness: {:.2} -> {:.2} nm",
-                    initial_thickness, metal.state.oxide_thickness),
+            format!(
+                "thickness: {:.2} -> {:.2} nm",
+                initial_thickness, metal.state.oxide_thickness
+            ),
         );
     }
 
@@ -330,7 +330,10 @@ pub fn validate_mie_physics() -> ValidationResult {
         result.add_check(
             "Stokes settling scaling",
             v_large > v_small * 50.0,
-            format!("v(1µm) = {:.2e} m/s, v(10µm) = {:.2e} m/s", v_small, v_large),
+            format!(
+                "v(1µm) = {:.2e} m/s, v(10µm) = {:.2e} m/s",
+                v_small, v_large
+            ),
         );
     }
 
@@ -370,8 +373,10 @@ pub fn validate_mie_physics() -> ValidationResult {
         result.add_check(
             "Mie regimes differ",
             q_ext_g > q_ext_r && g_g > g_r,
-            format!("Qext: {:.3} -> {:.3}, g: {:.3} -> {:.3}",
-                    q_ext_r, q_ext_g, g_r, g_g),
+            format!(
+                "Qext: {:.3} -> {:.3}, g: {:.3} -> {:.3}",
+                q_ext_r, q_ext_g, g_r, g_g
+            ),
         );
     }
 
@@ -427,11 +432,7 @@ pub fn benchmark_phase5() -> BenchmarkResults {
         }
 
         let elapsed = start.elapsed();
-        results.add_benchmark(
-            "Gradient computation (3 ops)",
-            n_iterations,
-            elapsed,
-        );
+        results.add_benchmark("Gradient computation (3 ops)", n_iterations, elapsed);
     }
 
     // Benchmark 2: Oxidation time step
@@ -447,11 +448,7 @@ pub fn benchmark_phase5() -> BenchmarkResults {
         }
 
         let elapsed = start.elapsed();
-        results.add_benchmark(
-            "Oxidation time step",
-            n_iterations,
-            elapsed,
-        );
+        results.add_benchmark("Oxidation time step", n_iterations, elapsed);
     }
 
     // Benchmark 3: Particle ensemble step
@@ -483,11 +480,7 @@ pub fn benchmark_phase5() -> BenchmarkResults {
         }
 
         let elapsed = start.elapsed();
-        results.add_benchmark(
-            "Scattering field 16³",
-            n_iterations,
-            elapsed,
-        );
+        results.add_benchmark("Scattering field 16³", n_iterations, elapsed);
     }
 
     // Benchmark 5: Mie approximation
@@ -501,11 +494,7 @@ pub fn benchmark_phase5() -> BenchmarkResults {
         }
 
         let elapsed = start.elapsed();
-        results.add_benchmark(
-            "Mie approximation",
-            n_iterations,
-            elapsed,
-        );
+        results.add_benchmark("Mie approximation", n_iterations, elapsed);
     }
 
     results
@@ -530,12 +519,15 @@ pub fn analyze_memory() -> MemoryAnalysis {
 
     // HeightMap 64x64
     let hm = HeightMap::flat((64, 64), (1000.0, 1000.0));
-    let hm_size = std::mem::size_of_val(&hm) +
-        hm.heights.len() * hm.heights.get(0).map(|v| v.len() * 8).unwrap_or(0);
+    let hm_size = std::mem::size_of_val(&hm)
+        + hm.heights.len() * hm.heights.get(0).map(|v| v.len() * 8).unwrap_or(0);
     analysis.add_component("HeightMap 64×64", hm_size);
 
     // DynamicOxidizedMetal
-    analysis.add_component("DynamicOxidizedMetal", std::mem::size_of::<DynamicOxidizedMetal>());
+    analysis.add_component(
+        "DynamicOxidizedMetal",
+        std::mem::size_of::<DynamicOxidizedMetal>(),
+    );
 
     // Particle
     analysis.add_component("Particle", std::mem::size_of::<Particle>());
@@ -543,11 +535,13 @@ pub fn analyze_memory() -> MemoryAnalysis {
     // ParticleEnsemble base
     let ensemble_base = std::mem::size_of::<ParticleEnsemble>();
     let particle_size = std::mem::size_of::<Particle>();
-    analysis.add_component("ParticleEnsemble (1000 particles)",
-                          ensemble_base + 1000 * particle_size);
+    analysis.add_component(
+        "ParticleEnsemble (1000 particles)",
+        ensemble_base + 1000 * particle_size,
+    );
 
     // ScatteringField 32³
-    let field_size = std::mem::size_of::<ScatteringField>() + 32*32*32 * 3 * 8;
+    let field_size = std::mem::size_of::<ScatteringField>() + 32 * 32 * 32 * 3 * 8;
     analysis.add_component("ScatteringField 32³", field_size);
 
     analysis
@@ -585,9 +579,11 @@ pub fn validate_integration() -> ValidationResult {
         result.add_check(
             "Particle → scattering field",
             has_particles && has_scattering,
-            format!("{} particles, {} non-zero voxels",
-                    ensemble.particles.len(),
-                    field.scattering.iter().filter(|&&s| s > 0.0).count()),
+            format!(
+                "{} particles, {} non-zero voxels",
+                ensemble.particles.len(),
+                field.scattering.iter().filter(|&&s| s > 0.0).count()
+            ),
         );
     }
 
@@ -658,8 +654,10 @@ impl ValidationResult {
 
         for check in &self.checks {
             let status = if check.passed { "PASS" } else { "FAIL" };
-            md.push_str(&format!("| {} | {} | {} |\n",
-                                check.name, status, check.details));
+            md.push_str(&format!(
+                "| {} | {} | {} |\n",
+                check.name, status, check.details
+            ));
         }
 
         md
@@ -706,8 +704,10 @@ impl BenchmarkResults {
         md.push_str("|-----------|------------|------------|---------------|\n");
 
         for b in &self.benchmarks {
-            md.push_str(&format!("| {} | {} | {} | {:.2} |\n",
-                                b.name, b.iterations, b.total_time_us, b.per_iteration_us));
+            md.push_str(&format!(
+                "| {} | {} | {} | {:.2} |\n",
+                b.name, b.iterations, b.total_time_us, b.per_iteration_us
+            ));
         }
 
         md
@@ -722,7 +722,9 @@ pub struct MemoryAnalysis {
 
 impl MemoryAnalysis {
     pub fn new() -> Self {
-        Self { components: Vec::new() }
+        Self {
+            components: Vec::new(),
+        }
     }
 
     pub fn add_component(&mut self, name: &str, size_bytes: usize) {
@@ -739,13 +741,19 @@ impl MemoryAnalysis {
         md.push_str("|-----------|--------------|----------|\n");
 
         for (name, size) in &self.components {
-            md.push_str(&format!("| {} | {} | {:.2} |\n",
-                                name, size, *size as f64 / 1024.0));
+            md.push_str(&format!(
+                "| {} | {} | {:.2} |\n",
+                name,
+                size,
+                *size as f64 / 1024.0
+            ));
         }
 
-        md.push_str(&format!("\n**Total: {} bytes ({:.2} KB)**\n",
-                            self.total_bytes(),
-                            self.total_bytes() as f64 / 1024.0));
+        md.push_str(&format!(
+            "\n**Total: {} bytes ({:.2} KB)**\n",
+            self.total_bytes(),
+            self.total_bytes() as f64 / 1024.0
+        ));
 
         md
     }
@@ -781,8 +789,14 @@ pub fn generate_validation_report() -> String {
     let validations = run_all_validations();
     let all_passed = validations.iter().all(|v| v.all_passed());
 
-    report.push_str(&format!("**Overall Status:** {}\n\n",
-                            if all_passed { "ALL PASSED" } else { "SOME FAILURES" }));
+    report.push_str(&format!(
+        "**Overall Status:** {}\n\n",
+        if all_passed {
+            "ALL PASSED"
+        } else {
+            "SOME FAILURES"
+        }
+    ));
 
     report.push_str("## Summary\n\n");
     for v in &validations {
@@ -817,7 +831,11 @@ mod tests {
     #[test]
     fn test_gradient_validation() {
         let result = validate_differentiable_gradients();
-        assert!(result.all_passed(), "Gradient validation failed: {}", result.summary());
+        assert!(
+            result.all_passed(),
+            "Gradient validation failed: {}",
+            result.summary()
+        );
     }
 
     #[test]
@@ -829,25 +847,41 @@ mod tests {
     #[test]
     fn test_dynamic_thin_film_validation() {
         let result = validate_dynamic_thin_film();
-        assert!(result.all_passed(), "Thin-film validation failed: {}", result.summary());
+        assert!(
+            result.all_passed(),
+            "Thin-film validation failed: {}",
+            result.summary()
+        );
     }
 
     #[test]
     fn test_metal_oxidation_validation() {
         let result = validate_metal_oxidation();
-        assert!(result.all_passed(), "Oxidation validation failed: {}", result.summary());
+        assert!(
+            result.all_passed(),
+            "Oxidation validation failed: {}",
+            result.summary()
+        );
     }
 
     #[test]
     fn test_mie_physics_validation() {
         let result = validate_mie_physics();
-        assert!(result.all_passed(), "Mie physics validation failed: {}", result.summary());
+        assert!(
+            result.all_passed(),
+            "Mie physics validation failed: {}",
+            result.summary()
+        );
     }
 
     #[test]
     fn test_integration_validation() {
         let result = validate_integration();
-        assert!(result.all_passed(), "Integration validation failed: {}", result.summary());
+        assert!(
+            result.all_passed(),
+            "Integration validation failed: {}",
+            result.summary()
+        );
     }
 
     #[test]
@@ -856,8 +890,12 @@ mod tests {
         assert!(!results.benchmarks.is_empty());
 
         for b in &results.benchmarks {
-            assert!(b.per_iteration_us < 100000.0,
-                    "{} took too long: {} µs/iter", b.name, b.per_iteration_us);
+            assert!(
+                b.per_iteration_us < 100000.0,
+                "{} took too long: {} µs/iter",
+                b.name,
+                b.per_iteration_us
+            );
         }
     }
 
@@ -865,8 +903,11 @@ mod tests {
     fn test_memory_analysis() {
         let analysis = analyze_memory();
         assert!(!analysis.components.is_empty());
-        assert!(analysis.total_bytes() < 1024 * 1024,
-                "Memory usage too high: {} bytes", analysis.total_bytes());
+        assert!(
+            analysis.total_bytes() < 1024 * 1024,
+            "Memory usage too high: {} bytes",
+            analysis.total_bytes()
+        );
     }
 
     #[test]

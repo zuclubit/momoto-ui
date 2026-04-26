@@ -6,37 +6,29 @@
 // Single source of truth — NO TypeScript reimplementation.
 // =============================================================================
 
-use wasm_bindgen::prelude::*;
+use momoto_core::color::Color as CoreColor;
 use momoto_intelligence::{
-    context::{
-        UsageContext as CoreUsageContext,
-        ComplianceTarget as CoreComplianceTarget,
-        RecommendationContext as CoreRecommendationContext,
+    adaptive::{
+        ConvergenceConfig as CoreConvergenceConfig, ConvergenceDetector as CoreConvergenceDetector,
+        ConvergenceStatus as CoreConvergenceStatus, CostEstimator as CoreCostEstimator,
+        StepSelector as CoreStepSelector,
     },
-    scoring::{QualityScore as CoreQualityScore, QualityScorer as CoreQualityScorer},
-    recommendation::{
-        Recommendation as CoreRecommendation,
-        Modification as CoreModification,
-        RecommendationEngine as CoreRecommendationEngine,
+    advanced_scoring::{AdvancedScore as CoreAdvancedScore, AdvancedScorer as CoreAdvancedScorer},
+    context::{
+        ComplianceTarget as CoreComplianceTarget,
+        RecommendationContext as CoreRecommendationContext, UsageContext as CoreUsageContext,
     },
     explanation::{
-        ExplanationGenerator as CoreExplanationGenerator,
+        ExplanationGenerator as CoreExplanationGenerator, OklchChanges as CoreOklchChanges,
         RecommendationExplanation as CoreExplanation,
-        OklchChanges as CoreOklchChanges,
     },
-    advanced_scoring::{
-        AdvancedScore as CoreAdvancedScore,
-        AdvancedScorer as CoreAdvancedScorer,
+    recommendation::{
+        Modification as CoreModification, Recommendation as CoreRecommendation,
+        RecommendationEngine as CoreRecommendationEngine,
     },
-    adaptive::{
-        StepSelector as CoreStepSelector,
-        CostEstimator as CoreCostEstimator,
-        ConvergenceDetector as CoreConvergenceDetector,
-        ConvergenceConfig as CoreConvergenceConfig,
-        ConvergenceStatus as CoreConvergenceStatus,
-    },
+    scoring::{QualityScore as CoreQualityScore, QualityScorer as CoreQualityScorer},
 };
-use momoto_core::color::Color as CoreColor;
+use wasm_bindgen::prelude::*;
 
 // =============================================================================
 // UsageContext extensions
@@ -103,10 +95,8 @@ impl RecommendationEngine {
         usage: u8,
         target: u8,
     ) -> Result<Recommendation, JsValue> {
-        let context = CoreRecommendationContext::new(
-            usage_from_u8(usage),
-            compliance_from_u8(target),
-        );
+        let context =
+            CoreRecommendationContext::new(usage_from_u8(usage), compliance_from_u8(target));
         let rec = self.inner.recommend_foreground(bg.to_core(), context);
         Ok(Recommendation::from_core(rec))
     }
@@ -120,11 +110,11 @@ impl RecommendationEngine {
         usage: u8,
         target: u8,
     ) -> Result<Recommendation, JsValue> {
-        let context = CoreRecommendationContext::new(
-            usage_from_u8(usage),
-            compliance_from_u8(target),
-        );
-        let rec = self.inner.improve_foreground(fg.to_core(), bg.to_core(), context);
+        let context =
+            CoreRecommendationContext::new(usage_from_u8(usage), compliance_from_u8(target));
+        let rec = self
+            .inner
+            .improve_foreground(fg.to_core(), bg.to_core(), context);
         Ok(Recommendation::from_core(rec))
     }
 }
@@ -295,10 +285,16 @@ impl ExplanationGenerator {
         delta_h: f64,
     ) -> RecommendationExplanation {
         let before = CoreQualityScore::new(
-            before_overall, before_compliance, before_perceptual, before_appropriateness,
+            before_overall,
+            before_compliance,
+            before_perceptual,
+            before_appropriateness,
         );
         let after = CoreQualityScore::new(
-            after_overall, after_compliance, after_perceptual, after_appropriateness,
+            after_overall,
+            after_compliance,
+            after_perceptual,
+            after_appropriateness,
         );
         let changes = CoreOklchChanges::new(delta_l, delta_c, delta_h);
         let core = self.inner.generate_quality_improvement(
@@ -350,10 +346,12 @@ impl RecommendationExplanation {
     /// Get a reasoning point by index.
     #[wasm_bindgen(js_name = "reasoningAt")]
     pub fn reasoning_at(&self, index: usize) -> Result<JsValue, JsValue> {
-        let point = self.inner.reasoning.get(index)
+        let point = self
+            .inner
+            .reasoning
+            .get(index)
             .ok_or_else(|| JsValue::from_str("Index out of bounds"))?;
-        Ok(serde_wasm_bindgen::to_value(point)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?)
+        Ok(serde_wasm_bindgen::to_value(point).map_err(|e| JsValue::from_str(&e.to_string()))?)
     }
 
     /// Get benefits as JSON array of strings.
@@ -414,14 +412,20 @@ impl AdvancedScorer {
         delta_h: f64,
     ) -> AdvancedScore {
         let before = CoreQualityScore::new(
-            before_overall, before_compliance, before_perceptual, before_appropriateness,
+            before_overall,
+            before_compliance,
+            before_perceptual,
+            before_appropriateness,
         );
         let after = CoreQualityScore::new(
-            after_overall, after_compliance, after_perceptual, after_appropriateness,
+            after_overall,
+            after_compliance,
+            after_perceptual,
+            after_appropriateness,
         );
-        let core = self.inner.score_recommendation(
-            category, &before, &after, delta_l, delta_c, delta_h,
-        );
+        let core = self
+            .inner
+            .score_recommendation(category, &before, &after, delta_l, delta_c, delta_h);
         AdvancedScore { inner: core }
     }
 }
@@ -438,19 +442,29 @@ pub struct AdvancedScore {
 #[wasm_bindgen]
 impl AdvancedScore {
     #[wasm_bindgen(getter, js_name = "qualityOverall")]
-    pub fn quality_overall(&self) -> f64 { self.inner.quality_overall }
+    pub fn quality_overall(&self) -> f64 {
+        self.inner.quality_overall
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn impact(&self) -> f64 { self.inner.impact }
+    pub fn impact(&self) -> f64 {
+        self.inner.impact
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn effort(&self) -> f64 { self.inner.effort }
+    pub fn effort(&self) -> f64 {
+        self.inner.effort
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn confidence(&self) -> f64 { self.inner.confidence }
+    pub fn confidence(&self) -> f64 {
+        self.inner.confidence
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn priority(&self) -> f64 { self.inner.priority }
+    pub fn priority(&self) -> f64 {
+        self.inner.priority
+    }
 
     #[wasm_bindgen(js_name = "recommendationStrength")]
     pub fn recommendation_strength(&self) -> f64 {
@@ -568,8 +582,7 @@ impl ConvergenceDetector {
     #[wasm_bindgen]
     pub fn stats(&self) -> Result<JsValue, JsValue> {
         let stats = self.inner.stats();
-        Ok(serde_wasm_bindgen::to_value(&stats)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?)
+        Ok(serde_wasm_bindgen::to_value(&stats).map_err(|e| JsValue::from_str(&e.to_string()))?)
     }
 }
 
@@ -599,14 +612,9 @@ impl StepSelector {
 
     /// Record outcome of a step execution.
     #[wasm_bindgen(js_name = "recordOutcome")]
-    pub fn record_outcome(
-        &mut self,
-        step_type: &str,
-        improvement: f64,
-        cost: f64,
-        success: bool,
-    ) {
-        self.inner.record_outcome(step_type, improvement, cost, success);
+    pub fn record_outcome(&mut self, step_type: &str, improvement: f64, cost: f64, success: bool) {
+        self.inner
+            .record_outcome(step_type, improvement, cost, success);
     }
 
     /// Get the next recommended step as JSON, or null if goal achieved.
@@ -662,12 +670,17 @@ impl CostEstimator {
     ) -> Result<JsValue, JsValue> {
         use momoto_intelligence::adaptive::cost_estimator::CostFactors;
         let mut factors = CostFactors::new().with_color_count(color_count);
-        if spectral { factors = factors.with_spectral(); }
-        if neural { factors = factors.with_neural(); }
-        if material { factors = factors.with_material(); }
+        if spectral {
+            factors = factors.with_spectral();
+        }
+        if neural {
+            factors = factors.with_neural();
+        }
+        if material {
+            factors = factors.with_material();
+        }
         let est = self.inner.estimate(step_type, &factors);
-        Ok(serde_wasm_bindgen::to_value(&est)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?)
+        Ok(serde_wasm_bindgen::to_value(&est).map_err(|e| JsValue::from_str(&e.to_string()))?)
     }
 
     /// Estimate sequential cost for multiple steps.
@@ -678,20 +691,26 @@ impl CostEstimator {
                 .map_err(|e| JsValue::from_str(&e.to_string()))?;
 
         use momoto_intelligence::adaptive::cost_estimator::CostFactors;
-        let step_refs: Vec<(&str, CostFactors)> = steps.iter().map(|(s, cc, sp, ne, ma)| {
-            let mut f = CostFactors::new().with_color_count(*cc);
-            if *sp { f = f.with_spectral(); }
-            if *ne { f = f.with_neural(); }
-            if *ma { f = f.with_material(); }
-            (s.as_str(), f)
-        }).collect();
-
-        let pairs: Vec<(&str, &CostFactors)> = step_refs.iter()
-            .map(|(s, f)| (*s, f))
+        let step_refs: Vec<(&str, CostFactors)> = steps
+            .iter()
+            .map(|(s, cc, sp, ne, ma)| {
+                let mut f = CostFactors::new().with_color_count(*cc);
+                if *sp {
+                    f = f.with_spectral();
+                }
+                if *ne {
+                    f = f.with_neural();
+                }
+                if *ma {
+                    f = f.with_material();
+                }
+                (s.as_str(), f)
+            })
             .collect();
+
+        let pairs: Vec<(&str, &CostFactors)> = step_refs.iter().map(|(s, f)| (*s, f)).collect();
         let est = self.inner.estimate_sequential(&pairs);
-        Ok(serde_wasm_bindgen::to_value(&est)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?)
+        Ok(serde_wasm_bindgen::to_value(&est).map_err(|e| JsValue::from_str(&e.to_string()))?)
     }
 }
 
@@ -704,7 +723,7 @@ impl CostEstimator {
 pub fn score_pairs_batch(pairs: &[f64]) -> Result<Box<[f64]>, JsValue> {
     if pairs.len() % 8 != 0 {
         return Err(JsValue::from_str(
-            "Input must be multiple of 8: [fg_r, fg_g, fg_b, bg_r, bg_g, bg_b, usage, target]"
+            "Input must be multiple of 8: [fg_r, fg_g, fg_b, bg_r, bg_g, bg_b, usage, target]",
         ));
     }
 
@@ -743,7 +762,7 @@ pub fn score_pairs_batch(pairs: &[f64]) -> Result<Box<[f64]>, JsValue> {
 pub fn recommend_foreground_batch(backgrounds: &[u8]) -> Result<js_sys::Array, JsValue> {
     if backgrounds.len() % 5 != 0 {
         return Err(JsValue::from_str(
-            "Input must be multiple of 5: [bg_r, bg_g, bg_b, usage, target]"
+            "Input must be multiple of 5: [bg_r, bg_g, bg_b, usage, target]",
         ));
     }
 
@@ -804,21 +823,30 @@ fn compliance_from_u8(v: u8) -> CoreComplianceTarget {
 
 fn convergence_status_to_js(status: &CoreConvergenceStatus) -> serde_json::Value {
     match status {
-        CoreConvergenceStatus::Converging { rate, estimated_iterations } => {
+        CoreConvergenceStatus::Converging {
+            rate,
+            estimated_iterations,
+        } => {
             serde_json::json!({
                 "type": "Converging",
                 "rate": rate,
                 "estimatedIterations": estimated_iterations,
             })
         }
-        CoreConvergenceStatus::Converged { iterations, final_value } => {
+        CoreConvergenceStatus::Converged {
+            iterations,
+            final_value,
+        } => {
             serde_json::json!({
                 "type": "Converged",
                 "iterations": iterations,
                 "finalValue": final_value,
             })
         }
-        CoreConvergenceStatus::Oscillating { amplitude, frequency } => {
+        CoreConvergenceStatus::Oscillating {
+            amplitude,
+            frequency,
+        } => {
             serde_json::json!({
                 "type": "Oscillating",
                 "amplitude": amplitude,
@@ -831,14 +859,20 @@ fn convergence_status_to_js(status: &CoreConvergenceStatus) -> serde_json::Value
                 "rate": rate,
             })
         }
-        CoreConvergenceStatus::Stalled { stuck_at, iterations_stuck } => {
+        CoreConvergenceStatus::Stalled {
+            stuck_at,
+            iterations_stuck,
+        } => {
             serde_json::json!({
                 "type": "Stalled",
                 "stuckAt": stuck_at,
                 "iterationsStuck": iterations_stuck,
             })
         }
-        CoreConvergenceStatus::Undetermined { current, iterations } => {
+        CoreConvergenceStatus::Undetermined {
+            current,
+            iterations,
+        } => {
             serde_json::json!({
                 "type": "Undetermined",
                 "current": current,
@@ -852,15 +886,12 @@ fn convergence_status_to_js(status: &CoreConvergenceStatus) -> serde_json::Value
 // COLOR HARMONY BINDINGS
 // =============================================================================
 
-use momoto_intelligence::harmony::{
-    HarmonyType as CoreHarmonyType,
-    generate_palette as core_generate_palette,
-    harmony_score as core_harmony_score,
-    shades as core_shades,
-    temperature_palette as core_temperature_palette,
-    oklch_to_hex, hex_to_oklch,
-};
 use momoto_core::space::oklch::OKLCH as CoreOKLCH;
+use momoto_intelligence::harmony::{
+    generate_palette as core_generate_palette, harmony_score as core_harmony_score, hex_to_oklch,
+    oklch_to_hex, shades as core_shades, temperature_palette as core_temperature_palette,
+    HarmonyType as CoreHarmonyType,
+};
 
 /// Harmony type selector for WASM.
 #[wasm_bindgen]
@@ -1011,8 +1042,7 @@ pub fn hex_to_oklch_wasm(hex: &str) -> Box<[f64]> {
 // =============================================================================
 
 use momoto_core::color::cvd::{
-    CVDType, simulate_cvd, cvd_delta_e,
-    simulate_cvd_hex, parse_hex, to_hex,
+    cvd_delta_e, parse_hex, simulate_cvd, simulate_cvd_hex, to_hex, CVDType,
 };
 
 /// Simulate how a hex color appears to a dichromat.
@@ -1065,10 +1095,8 @@ pub fn simulate_cvd_oklch(l: f64, c: f64, h: f64, cvd_type: &str) -> Box<[f64]> 
 // =============================================================================
 
 use momoto_intelligence::constraints::{
-    ConstraintSolver as CoreConstraintSolver,
-    ColorConstraint as CoreColorConstraint,
-    ConstraintKind as CoreConstraintKind,
-    SolverConfig as CoreSolverConfig,
+    ColorConstraint as CoreColorConstraint, ConstraintKind as CoreConstraintKind,
+    ConstraintSolver as CoreConstraintSolver, SolverConfig as CoreSolverConfig,
 };
 
 /// Solve a set of color constraints for a palette.
@@ -1106,10 +1134,8 @@ pub fn solve_color_constraints(
     let specs: Vec<serde_json::Value> = serde_json::from_str(constraints_json)
         .map_err(|e| JsValue::from_str(&format!("Invalid constraints JSON: {}", e)))?;
 
-    let constraints: Vec<CoreColorConstraint> = specs
-        .iter()
-        .filter_map(parse_wasm_constraint)
-        .collect();
+    let constraints: Vec<CoreColorConstraint> =
+        specs.iter().filter_map(parse_wasm_constraint).collect();
 
     let mut config = CoreSolverConfig::default();
     if max_iterations > 0 {
@@ -1119,18 +1145,18 @@ pub fn solve_color_constraints(
     let mut solver = CoreConstraintSolver::new(colors, constraints, config);
     let result = solver.solve();
 
-    let colors_flat: Vec<f64> = result.colors
-        .iter()
-        .flat_map(|c| [c.l, c.c, c.h])
-        .collect();
+    let colors_flat: Vec<f64> = result.colors.iter().flat_map(|c| [c.l, c.c, c.h]).collect();
 
-    let violations_json: Vec<serde_json::Value> = result.violations
+    let violations_json: Vec<serde_json::Value> = result
+        .violations
         .iter()
-        .map(|v| serde_json::json!({
-            "colorIdx": v.color_idx,
-            "description": v.description,
-            "magnitude": v.magnitude,
-        }))
+        .map(|v| {
+            serde_json::json!({
+                "colorIdx": v.color_idx,
+                "description": v.description,
+                "magnitude": v.magnitude,
+            })
+        })
         .collect();
 
     let out = serde_json::json!({
@@ -1141,8 +1167,7 @@ pub fn solve_color_constraints(
         "violations": violations_json,
     });
 
-    serde_wasm_bindgen::to_value(&out)
-        .map_err(|e| JsValue::from_str(&e.to_string()))
+    serde_wasm_bindgen::to_value(&out).map_err(|e| JsValue::from_str(&e.to_string()))
 }
 
 fn parse_wasm_constraint(c: &serde_json::Value) -> Option<CoreColorConstraint> {

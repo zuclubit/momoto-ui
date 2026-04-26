@@ -15,19 +15,17 @@
 
 use std::time::Instant;
 
+use super::combined_effects::presets as combined_presets;
+use super::material_datasets::{MaterialCategory, MaterialDatabase};
 use super::perceptual_loss::{
-    rgb_to_lab, delta_e_2000, delta_e_76, delta_e_94,
-    perceptual_loss, LabColor, Illuminant, PerceptualLossConfig,
-};
-use super::material_datasets::{
-    MaterialDatabase, MaterialCategory,
+    delta_e_2000, delta_e_76, delta_e_94, perceptual_loss, rgb_to_lab, Illuminant, LabColor,
+    PerceptualLossConfig,
 };
 use super::simd_batch::{
-    SimdBatchInput, SimdBatchEvaluator, SimdConfig,
-    fresnel_schlick_scalar, beer_lambert_scalar, henyey_greenstein_scalar,
-    fresnel_batch, beer_lambert_batch, henyey_greenstein_batch,
+    beer_lambert_batch, beer_lambert_scalar, fresnel_batch, fresnel_schlick_scalar,
+    henyey_greenstein_batch, henyey_greenstein_scalar, SimdBatchEvaluator, SimdBatchInput,
+    SimdConfig,
 };
-use super::combined_effects::presets as combined_presets;
 
 // ============================================================================
 // VALIDATION STRUCTURES
@@ -81,8 +79,10 @@ impl ValidationResult {
 
         for check in &self.checks {
             let status = if check.passed { "PASS" } else { "FAIL" };
-            md.push_str(&format!("| {} | {} | {} |\n",
-                                check.name, status, check.details));
+            md.push_str(&format!(
+                "| {} | {} | {} |\n",
+                check.name, status, check.details
+            ));
         }
 
         md
@@ -126,25 +126,41 @@ impl Phase6BenchmarkResults {
         md.push_str("## Phase 6 Performance Benchmarks\n\n");
 
         md.push_str("### SIMD Batch Evaluation\n\n");
-        md.push_str(&format!("- Materials: {}\n", self.simd_benchmarks.n_materials));
-        md.push_str(&format!("- Scalar throughput: {:.0} ops/sec\n", self.simd_benchmarks.scalar_throughput));
-        md.push_str(&format!("- Batch throughput: {:.0} ops/sec\n", self.simd_benchmarks.batch_throughput));
-        md.push_str(&format!("- Speedup: {:.2}x\n\n", self.simd_benchmarks.speedup));
+        md.push_str(&format!(
+            "- Materials: {}\n",
+            self.simd_benchmarks.n_materials
+        ));
+        md.push_str(&format!(
+            "- Scalar throughput: {:.0} ops/sec\n",
+            self.simd_benchmarks.scalar_throughput
+        ));
+        md.push_str(&format!(
+            "- Batch throughput: {:.0} ops/sec\n",
+            self.simd_benchmarks.batch_throughput
+        ));
+        md.push_str(&format!(
+            "- Speedup: {:.2}x\n\n",
+            self.simd_benchmarks.speedup
+        ));
 
         md.push_str("### Combined Effects\n\n");
         md.push_str("| Operation | Iterations | Total (µs) | Per Iter (µs) |\n");
         md.push_str("|-----------|------------|------------|---------------|\n");
         for b in &self.combined_effects_benchmarks {
-            md.push_str(&format!("| {} | {} | {} | {:.2} |\n",
-                                b.name, b.iterations, b.total_time_us, b.per_iteration_us));
+            md.push_str(&format!(
+                "| {} | {} | {} | {:.2} |\n",
+                b.name, b.iterations, b.total_time_us, b.per_iteration_us
+            ));
         }
 
         md.push_str("\n### Perceptual Functions\n\n");
         md.push_str("| Operation | Iterations | Total (µs) | Per Iter (µs) |\n");
         md.push_str("|-----------|------------|------------|---------------|\n");
         for b in &self.perceptual_benchmarks {
-            md.push_str(&format!("| {} | {} | {} | {:.2} |\n",
-                                b.name, b.iterations, b.total_time_us, b.per_iteration_us));
+            md.push_str(&format!(
+                "| {} | {} | {} | {:.2} |\n",
+                b.name, b.iterations, b.total_time_us, b.per_iteration_us
+            ));
         }
 
         md
@@ -194,18 +210,36 @@ impl Phase6MemoryAnalysis {
         md.push_str("| Component | Size (bytes) | Size (KB) |\n");
         md.push_str("|-----------|--------------|----------|\n");
 
-        md.push_str(&format!("| Perceptual LUTs | {} | {:.2} |\n",
-                            self.perceptual_luts, self.perceptual_luts as f64 / 1024.0));
-        md.push_str(&format!("| Material Datasets | {} | {:.2} |\n",
-                            self.material_datasets, self.material_datasets as f64 / 1024.0));
-        md.push_str(&format!("| SIMD Buffers | {} | {:.2} |\n",
-                            self.simd_buffers, self.simd_buffers as f64 / 1024.0));
-        md.push_str(&format!("| Combined Effects | {} | {:.2} |\n",
-                            self.combined_effects, self.combined_effects as f64 / 1024.0));
-        md.push_str(&format!("| **Total Phase 6** | **{}** | **{:.2}** |\n",
-                            self.total_phase6, self.total_phase6 as f64 / 1024.0));
-        md.push_str(&format!("| Total All Phases | {} | {:.2} |\n",
-                            self.total_all_phases, self.total_all_phases as f64 / 1024.0));
+        md.push_str(&format!(
+            "| Perceptual LUTs | {} | {:.2} |\n",
+            self.perceptual_luts,
+            self.perceptual_luts as f64 / 1024.0
+        ));
+        md.push_str(&format!(
+            "| Material Datasets | {} | {:.2} |\n",
+            self.material_datasets,
+            self.material_datasets as f64 / 1024.0
+        ));
+        md.push_str(&format!(
+            "| SIMD Buffers | {} | {:.2} |\n",
+            self.simd_buffers,
+            self.simd_buffers as f64 / 1024.0
+        ));
+        md.push_str(&format!(
+            "| Combined Effects | {} | {:.2} |\n",
+            self.combined_effects,
+            self.combined_effects as f64 / 1024.0
+        ));
+        md.push_str(&format!(
+            "| **Total Phase 6** | **{}** | **{:.2}** |\n",
+            self.total_phase6,
+            self.total_phase6 as f64 / 1024.0
+        ));
+        md.push_str(&format!(
+            "| Total All Phases | {} | {:.2} |\n",
+            self.total_all_phases,
+            self.total_all_phases as f64 / 1024.0
+        ));
 
         md
     }
@@ -237,11 +271,7 @@ pub fn validate_perceptual_loss() -> ValidationResult {
     {
         let lab = LabColor::new(50.0, 25.0, -30.0);
         let de = delta_e_2000(lab, lab);
-        result.add_check(
-            "Delta E same color",
-            de < 1e-10,
-            format!("ΔE = {:.10}", de),
-        );
+        result.add_check("Delta E same color", de < 1e-10, format!("ΔE = {:.10}", de));
     }
 
     // Test 3: Delta E formulas consistency
@@ -254,8 +284,8 @@ pub fn validate_perceptual_loss() -> ValidationResult {
         let de2000 = delta_e_2000(lab1, lab2);
 
         // All should be positive and in similar range
-        let consistent = de76 > 0.0 && de94 > 0.0 && de2000 > 0.0
-            && de76 < 20.0 && de94 < 20.0 && de2000 < 20.0;
+        let consistent =
+            de76 > 0.0 && de94 > 0.0 && de2000 > 0.0 && de76 < 20.0 && de94 < 20.0 && de2000 < 20.0;
 
         result.add_check(
             "Delta E formulas consistent",
@@ -267,14 +297,16 @@ pub fn validate_perceptual_loss() -> ValidationResult {
     // Test 4: White point
     {
         let white_lab = rgb_to_lab([1.0, 1.0, 1.0], Illuminant::D65);
-        let is_white = (white_lab.l - 100.0).abs() < 0.5
-            && white_lab.a.abs() < 0.5
-            && white_lab.b.abs() < 0.5;
+        let is_white =
+            (white_lab.l - 100.0).abs() < 0.5 && white_lab.a.abs() < 0.5 && white_lab.b.abs() < 0.5;
 
         result.add_check(
             "White point accuracy",
             is_white,
-            format!("L*={:.2}, a*={:.2}, b*={:.2}", white_lab.l, white_lab.a, white_lab.b),
+            format!(
+                "L*={:.2}, a*={:.2}, b*={:.2}",
+                white_lab.l, white_lab.a, white_lab.b
+            ),
         );
     }
 
@@ -691,8 +723,14 @@ pub fn generate_validation_report() -> String {
     let validations = run_all_validations();
     let all_passed = validations.iter().all(|v| v.all_passed());
 
-    report.push_str(&format!("**Overall Status:** {}\n\n",
-                            if all_passed { "ALL PASSED" } else { "SOME FAILURES" }));
+    report.push_str(&format!(
+        "**Overall Status:** {}\n\n",
+        if all_passed {
+            "ALL PASSED"
+        } else {
+            "SOME FAILURES"
+        }
+    ));
 
     report.push_str("## Summary\n\n");
     for v in &validations {
@@ -727,19 +765,31 @@ mod tests {
     #[test]
     fn test_perceptual_validation() {
         let result = validate_perceptual_loss();
-        assert!(result.all_passed(), "Perceptual validation failed: {}", result.summary());
+        assert!(
+            result.all_passed(),
+            "Perceptual validation failed: {}",
+            result.summary()
+        );
     }
 
     #[test]
     fn test_material_datasets_validation() {
         let result = validate_material_datasets();
-        assert!(result.all_passed(), "Material datasets validation failed: {}", result.summary());
+        assert!(
+            result.all_passed(),
+            "Material datasets validation failed: {}",
+            result.summary()
+        );
     }
 
     #[test]
     fn test_simd_batch_validation() {
         let result = validate_simd_batch();
-        assert!(result.all_passed(), "SIMD batch validation failed: {}", result.summary());
+        assert!(
+            result.all_passed(),
+            "SIMD batch validation failed: {}",
+            result.summary()
+        );
     }
 
     #[test]
@@ -748,7 +798,11 @@ mod tests {
         if !result.all_passed() {
             eprintln!("{}", result.to_markdown());
         }
-        assert!(result.all_passed(), "Combined effects validation failed: {}", result.summary());
+        assert!(
+            result.all_passed(),
+            "Combined effects validation failed: {}",
+            result.summary()
+        );
     }
 
     #[test]
@@ -758,16 +812,23 @@ mod tests {
         // SIMD speedup varies by system load and CPU. In test environments,
         // timing can be inconsistent. We just verify it runs without being
         // catastrophically slow (>10x slower than scalar would indicate a bug).
-        assert!(benchmarks.simd_benchmarks.speedup > 0.1,
-                "SIMD speedup catastrophically low: {}", benchmarks.simd_benchmarks.speedup);
+        assert!(
+            benchmarks.simd_benchmarks.speedup > 0.1,
+            "SIMD speedup catastrophically low: {}",
+            benchmarks.simd_benchmarks.speedup
+        );
 
         // Combined effects should complete
         assert!(!benchmarks.combined_effects_benchmarks.is_empty());
 
         // Perceptual should be fast
         for b in &benchmarks.perceptual_benchmarks {
-            assert!(b.per_iteration_us < 100.0,
-                    "{} too slow: {} µs", b.name, b.per_iteration_us);
+            assert!(
+                b.per_iteration_us < 100.0,
+                "{} too slow: {} µs",
+                b.name,
+                b.per_iteration_us
+            );
         }
     }
 
@@ -776,8 +837,11 @@ mod tests {
         let memory = Phase6MemoryAnalysis::analyze();
 
         // Phase 6 should be under 500KB
-        assert!(memory.total_phase6 < 500_000,
-                "Phase 6 memory too high: {} bytes", memory.total_phase6);
+        assert!(
+            memory.total_phase6 < 500_000,
+            "Phase 6 memory too high: {} bytes",
+            memory.total_phase6
+        );
     }
 
     #[test]

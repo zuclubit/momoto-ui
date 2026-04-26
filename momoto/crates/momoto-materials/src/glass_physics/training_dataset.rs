@@ -218,15 +218,14 @@ impl TrainingDataset {
             // Random material parameters
             let ior = 1.0 + rng.uniform(0.0, 3.0);
             let roughness = rng.uniform(0.0, 1.0);
-            let k = rng.uniform(0.0, 5.0);  // Extinction (for conductors)
+            let k = rng.uniform(0.0, 5.0); // Extinction (for conductors)
 
             // Determine if dielectric or conductor
             let is_conductor = rng.uniform(0.0, 1.0) > 0.7;
 
             for angle_idx in 0..angle_samples {
                 // Sample cos_theta uniformly in [0, 1] for better coverage
-                let cos_theta = (angle_idx as f64 + rng.uniform(0.0, 1.0))
-                    / angle_samples as f64;
+                let cos_theta = (angle_idx as f64 + rng.uniform(0.0, 1.0)) / angle_samples as f64;
                 let cos_theta = cos_theta.clamp(0.01, 1.0);
 
                 for &wavelength in &wavelengths {
@@ -234,14 +233,14 @@ impl TrainingDataset {
                     let input = CorrectionInput::new(
                         wavelength,
                         cos_theta,
-                        cos_theta,  // Same for reflection
+                        cos_theta, // Same for reflection
                         roughness,
                         ior,
                         if is_conductor { k } else { 0.0 },
-                        0.0,  // thickness
-                        0.0,  // absorption
-                        0.0,  // scattering
-                        0.0,  // g
+                        0.0, // thickness
+                        0.0, // absorption
+                        0.0, // scattering
+                        0.0, // g
                     );
 
                     // Compute "reference" response (simulated ground truth)
@@ -399,7 +398,10 @@ impl TrainingDataset {
                 sample.input.roughness,
                 sample.input.ior_normalized * 3.0 + 1.0,
                 sample.input.k_normalized * 10.0,
-                0.0, 0.0, 0.0, 0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
             );
 
             // Target stays the same (slight perturbation of physical)
@@ -453,7 +455,7 @@ fn compute_reference_response(
         let r_s = ((a - cos_theta).powi(2)) / ((a + cos_theta).powi(2));
 
         // Simplified conductor reflectance
-        let r = r_s * (1.0 - roughness * 0.3);  // Roughness reduces specular
+        let r = r_s * (1.0 - roughness * 0.3); // Roughness reduces specular
         (r.clamp(0.0, 1.0), 0.0)
     } else {
         // Dielectric: Fresnel equations
@@ -505,8 +507,12 @@ fn compute_approximate_response(
     let r = f0 + (1.0 - f0) * one_minus_cos.powi(5);
 
     // Simplified roughness effect (introduces error vs reference)
-    let r = r * (1.0 - roughness * 0.15);  // Different coefficient than reference
-    let t = if k > 0.01 { 0.0 } else { (1.0 - r) * (1.0 - roughness * 0.05) };
+    let r = r * (1.0 - roughness * 0.15); // Different coefficient than reference
+    let t = if k > 0.01 {
+        0.0
+    } else {
+        (1.0 - r) * (1.0 - roughness * 0.05)
+    };
 
     BSDFResponse::new(r.clamp(0.0, 1.0), t.clamp(0.0, 1.0), 1.0 - r - t)
 }
@@ -560,8 +566,7 @@ impl SimpleRng {
 
 /// Estimate memory usage of a dataset
 pub fn estimate_dataset_memory(num_samples: usize) -> usize {
-    let sample_size = std::mem::size_of::<TrainingSample>()
-        + 32;  // Estimated String allocation for material_id
+    let sample_size = std::mem::size_of::<TrainingSample>() + 32; // Estimated String allocation for material_id
 
     sample_size * num_samples
         + std::mem::size_of::<DatasetMetadata>()
@@ -595,7 +600,7 @@ mod tests {
     fn test_generate_synthetic() {
         let dataset = TrainingDataset::generate_synthetic(5, 5, 3, 42);
 
-        assert_eq!(dataset.len(), 5 * 5 * 3);  // materials * angles * wavelengths
+        assert_eq!(dataset.len(), 5 * 5 * 3); // materials * angles * wavelengths
         assert!(dataset.metadata.mean_error > 0.0);
     }
 
@@ -609,7 +614,10 @@ mod tests {
 
         // Same seed should produce same shuffle
         for (s1, s2) in dataset1.samples.iter().zip(dataset2.samples.iter()) {
-            assert_eq!(s1.input.wavelength_normalized, s2.input.wavelength_normalized);
+            assert_eq!(
+                s1.input.wavelength_normalized,
+                s2.input.wavelength_normalized
+            );
         }
     }
 
@@ -641,7 +649,7 @@ mod tests {
         assert_eq!(batch.len(), 10);
 
         let batch = dataset.get_batch(dataset.len() - 5, 10);
-        assert_eq!(batch.len(), 5);  // Capped at remaining
+        assert_eq!(batch.len(), 5); // Capped at remaining
     }
 
     #[test]
@@ -659,6 +667,10 @@ mod tests {
     #[test]
     fn test_memory_estimate() {
         let memory = estimate_dataset_memory(1000);
-        assert!(memory < 500_000, "Memory {} too large for 1000 samples", memory);
+        assert!(
+            memory < 500_000,
+            "Memory {} too large for 1000 samples",
+            memory
+        );
     }
 }

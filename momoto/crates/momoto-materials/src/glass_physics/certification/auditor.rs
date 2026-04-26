@@ -4,10 +4,10 @@
 //! Performs mandatory tests and generates certification reports.
 
 use super::levels::{CertificationLevel, CertificationMetrics};
-use super::profiles::{CertifiedTwinProfile, CertificationMetadata, NeuralCorrectionStats};
+use super::profiles::{CertificationMetadata, CertifiedTwinProfile, NeuralCorrectionStats};
 use super::requirements::{required_tests, MandatoryTest, TestResult, TestSuiteResult};
 
-use crate::glass_physics::metrology::{ToleranceBudget, TraceabilityChain, CertificationTolerance};
+use crate::glass_physics::metrology::{CertificationTolerance, ToleranceBudget, TraceabilityChain};
 
 // ============================================================================
 // CERTIFICATION AUDITOR
@@ -161,7 +161,11 @@ impl CertificationAuditor {
                     TestResult::fail(
                         test.clone(),
                         actual,
-                        format!("Neural share {:.1}% exceeds {:.0}%", actual * 100.0, max_share * 100.0),
+                        format!(
+                            "Neural share {:.1}% exceeds {:.0}%",
+                            actual * 100.0,
+                            max_share * 100.0
+                        ),
                     )
                 }
             }
@@ -193,7 +197,10 @@ impl CertificationAuditor {
                     TestResult::fail(test.clone(), actual, "Fresnel deviation exceeded")
                 }
             }
-            MandatoryTest::ColorAccuracy { max_delta_e, illuminant } => {
+            MandatoryTest::ColorAccuracy {
+                max_delta_e,
+                illuminant,
+            } => {
                 let actual = data.color_delta_e.unwrap_or(0.0);
                 if actual <= *max_delta_e {
                     TestResult::pass(test.clone(), actual)
@@ -212,7 +219,11 @@ impl CertificationAuditor {
                 } else {
                     TestResult::fail(
                         test.clone(),
-                        if actual_min < *min { actual_min } else { actual_max },
+                        if actual_min < *min {
+                            actual_min
+                        } else {
+                            actual_max
+                        },
                         format!("{} out of bounds", property),
                     )
                 }
@@ -480,19 +491,17 @@ impl CertificationResult {
             if !result.passed {
                 match &result.test {
                     MandatoryTest::EnergyConservation { .. } => {
-                        suggestions.push(
-                            "Review BRDF normalization and ensure R + T <= 1".to_string(),
-                        );
+                        suggestions
+                            .push("Review BRDF normalization and ensure R + T <= 1".to_string());
                     }
                     MandatoryTest::NeuralCorrectionBound { .. } => {
                         suggestions.push(
-                            "Reduce neural network contribution; improve physical model".to_string(),
+                            "Reduce neural network contribution; improve physical model"
+                                .to_string(),
                         );
                     }
                     MandatoryTest::GroundTruthComparison { .. } => {
-                        suggestions.push(
-                            "Calibrate against measured reference data".to_string(),
-                        );
+                        suggestions.push("Calibrate against measured reference data".to_string());
                     }
                     MandatoryTest::ReproducibilityCheck { .. } => {
                         suggestions.push(
@@ -555,7 +564,8 @@ mod tests {
 
     #[test]
     fn test_audit_failure() {
-        let auditor = CertificationAuditor::new(CertificationLevel::Reference).with_strict_mode(true);
+        let auditor =
+            CertificationAuditor::new(CertificationLevel::Reference).with_strict_mode(true);
         let data = MaterialAuditData::research_grade(); // Too low for Reference
 
         let result = auditor.audit(&data);
@@ -632,7 +642,9 @@ mod tests {
         // Should suggest reducing neural contribution
         assert!(
             suggestions.is_empty()
-                || suggestions.iter().any(|s| s.contains("neural") || s.contains("Neural"))
+                || suggestions
+                    .iter()
+                    .any(|s| s.contains("neural") || s.contains("Neural"))
         );
     }
 

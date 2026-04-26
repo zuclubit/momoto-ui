@@ -3,10 +3,10 @@
 //! Provides multi-turn conversation sessions, bot authentication,
 //! rate limiting, and session persistence for the Momoto agent layer.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::{Arc, Mutex};
-use serde::{Deserialize, Serialize};
 
 // ============================================================================
 // Primitive Types
@@ -240,7 +240,11 @@ pub struct ContextVariable {
 
 impl ContextVariable {
     /// Create a new context variable.
-    pub fn new(name: impl Into<String>, value: impl Into<String>, variable_type: impl Into<String>) -> Self {
+    pub fn new(
+        name: impl Into<String>,
+        value: impl Into<String>,
+        variable_type: impl Into<String>,
+    ) -> Self {
         ContextVariable {
             name: name.into(),
             value: value.into(),
@@ -683,7 +687,10 @@ impl SessionManager {
     }
 
     /// Create a manager with a custom store.
-    pub fn with_store(config: SessionManagerConfig, store: Arc<dyn SessionStore + Send + Sync>) -> Self {
+    pub fn with_store(
+        config: SessionManagerConfig,
+        store: Arc<dyn SessionStore + Send + Sync>,
+    ) -> Self {
         SessionManager { config, store }
     }
 
@@ -754,12 +761,7 @@ impl SessionManager {
         self.store
             .list_ids()
             .iter()
-            .filter(|id| {
-                self.store
-                    .get(id)
-                    .map(|s| !s.is_expired())
-                    .unwrap_or(false)
-            })
+            .filter(|id| self.store.get(id).map(|s| !s.is_expired()).unwrap_or(false))
             .count()
     }
 }
@@ -1162,7 +1164,10 @@ mod tests {
         let mgr = SessionManager::new(SessionManagerConfig::default());
         let id = mgr.create_session(None);
         mgr.delete_session(&id).unwrap();
-        assert!(matches!(mgr.get_session(&id), Err(SessionError::NotFound(_))));
+        assert!(matches!(
+            mgr.get_session(&id),
+            Err(SessionError::NotFound(_))
+        ));
     }
 
     #[test]

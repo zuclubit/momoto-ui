@@ -12,11 +12,11 @@
 // - Correction magnitude penalty (prefer small corrections)
 // ============================================================================
 
-use super::neural_correction::NeuralCorrectionMLP;
 use super::neural_constraints::ConstraintValidator;
+use super::neural_correction::NeuralCorrectionMLP;
+use super::perceptual_loss::{delta_e_2000, rgb_to_lab, Illuminant};
 use super::training_dataset::{TrainingDataset, TrainingSample};
 use super::unified_bsdf::BSDFResponse;
-use super::perceptual_loss::{rgb_to_lab, delta_e_2000, Illuminant};
 use std::collections::VecDeque;
 
 // ============================================================================
@@ -270,11 +270,8 @@ impl TrainingPipeline {
                 let batch_indices = &indices[batch_start..batch_end];
 
                 // Compute gradients for this batch
-                let (batch_loss, gradients) = self.compute_batch_gradients(
-                    network,
-                    dataset,
-                    batch_indices,
-                );
+                let (batch_loss, gradients) =
+                    self.compute_batch_gradients(network, dataset, batch_indices);
 
                 // Update network
                 if let Some(ref mut adam) = self.adam {
@@ -337,7 +334,7 @@ impl TrainingPipeline {
         let mut gradients = vec![0.0; num_params];
         let mut batch_loss = 0.0;
 
-        let eps = 1e-4;  // Finite difference epsilon
+        let eps = 1e-4; // Finite difference epsilon
 
         for &idx in batch_indices {
             let sample = &dataset.samples[idx];
@@ -380,19 +377,14 @@ impl TrainingPipeline {
     }
 
     /// Compute loss for a single sample
-    fn compute_sample_loss(
-        &self,
-        network: &NeuralCorrectionMLP,
-        sample: &TrainingSample,
-    ) -> f64 {
+    fn compute_sample_loss(&self, network: &NeuralCorrectionMLP, sample: &TrainingSample) -> f64 {
         // Get neural correction
         let correction = network.forward(&sample.input);
 
         // Apply correction with constraints
-        let (corrected, penalties) = self.constraint_validator.validate_and_clamp(
-            &sample.physical_response,
-            &correction,
-        );
+        let (corrected, penalties) = self
+            .constraint_validator
+            .validate_and_clamp(&sample.physical_response, &correction);
 
         // Compute individual loss terms
 
@@ -430,10 +422,9 @@ impl TrainingPipeline {
 
         for sample in &dataset.samples {
             let correction = network.forward(&sample.input);
-            let (corrected, _) = self.constraint_validator.validate_and_clamp(
-                &sample.physical_response,
-                &correction,
-            );
+            let (corrected, _) = self
+                .constraint_validator
+                .validate_and_clamp(&sample.physical_response, &correction);
 
             let corrected_rgb = response_to_rgb(&corrected);
             let target_rgb = response_to_rgb(&sample.target_response);
@@ -504,7 +495,7 @@ pub fn total_training_pipeline_memory() -> usize {
         + std::mem::size_of::<TrainingConfig>()
         + std::mem::size_of::<LossWeights>()
         + std::mem::size_of::<AdamState>()
-        + 1000  // Estimated VecDeque and Vec overhead
+        + 1000 // Estimated VecDeque and Vec overhead
 }
 
 // ============================================================================
@@ -524,8 +515,8 @@ mod tests {
 
         assert_eq!(updates.len(), 5);
         // Updates should be in opposite direction of gradients
-        assert!(updates[0] < 0.0);  // gradient positive -> update negative
-        assert!(updates[1] > 0.0);  // gradient negative -> update positive
+        assert!(updates[0] < 0.0); // gradient positive -> update negative
+        assert!(updates[1] > 0.0); // gradient negative -> update positive
     }
 
     #[test]
@@ -608,8 +599,8 @@ mod tests {
     #[test]
     fn test_early_stopping() {
         let config = TrainingConfig {
-            epochs: 1000,  // High limit
-            patience: 3,   // Stop after 3 epochs without improvement
+            epochs: 1000, // High limit
+            patience: 3,  // Stop after 3 epochs without improvement
             batch_size: 4,
             ..Default::default()
         };

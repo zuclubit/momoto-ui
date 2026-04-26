@@ -4,16 +4,8 @@
 
 // Re-export core BSDF types from unified_bsdf
 pub use super::super::super::unified_bsdf::{
-    BSDF,
-    BSDFContext,
-    BSDFResponse,
-    BSDFSample,
-    EnergyValidation,
-    DielectricBSDF,
-    ConductorBSDF,
-    ThinFilmBSDF,
-    LayeredBSDF,
-    LambertianBSDF,
+    BSDFContext, BSDFResponse, BSDFSample, ConductorBSDF, DielectricBSDF, EnergyValidation,
+    LambertianBSDF, LayeredBSDF, ThinFilmBSDF, BSDF,
 };
 
 // ============================================================================

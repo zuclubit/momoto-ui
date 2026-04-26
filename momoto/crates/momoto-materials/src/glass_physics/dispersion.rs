@@ -80,8 +80,8 @@ pub trait Dispersion: Send + Sync {
     /// Lower values = more dispersion (flint glass ~30)
     fn abbe_number(&self) -> f64 {
         let n_d = self.n(wavelengths::SODIUM_D);
-        let n_f = self.n(wavelengths::BLUE);  // F-line
-        let n_c = self.n(wavelengths::RED);   // C-line
+        let n_f = self.n(wavelengths::BLUE); // F-line
+        let n_c = self.n(wavelengths::RED); // C-line
 
         (n_d - 1.0) / (n_f - n_c)
     }
@@ -154,7 +154,11 @@ impl CauchyDispersion {
 
     /// Create non-dispersive model (constant IOR)
     pub const fn constant(ior: f64) -> Self {
-        Self { a: ior, b: 0.0, c: 0.0 }
+        Self {
+            a: ior,
+            b: 0.0,
+            c: 0.0,
+        }
     }
 
     // ========================================================================
@@ -278,7 +282,11 @@ impl SellmeierDispersion {
     pub const fn fused_silica() -> Self {
         Self::new(
             [0.6961663, 0.4079426, 0.8974794],
-            [0.0684043 * 0.0684043, 0.1162414 * 0.1162414, 9.896161 * 9.896161],
+            [
+                0.0684043 * 0.0684043,
+                0.1162414 * 0.1162414,
+                9.896161 * 9.896161,
+            ],
         )
     }
 
@@ -439,10 +447,7 @@ pub fn chromatic_aberration_strength<D: Dispersion>(dispersion: &D) -> f64 {
 ///
 /// Returns the angular separation between red and blue rays
 /// at a given incident angle.
-pub fn chromatic_angle_separation<D: Dispersion>(
-    dispersion: &D,
-    incident_angle_rad: f64,
-) -> f64 {
+pub fn chromatic_angle_separation<D: Dispersion>(dispersion: &D, incident_angle_rad: f64) -> f64 {
     let n_red = dispersion.n(wavelengths::RED);
     let n_blue = dispersion.n(wavelengths::BLUE);
 
@@ -473,7 +478,10 @@ mod tests {
 
         // Check d-line index
         let n_d = crown.n(wavelengths::SODIUM_D);
-        assert!((n_d - 1.517).abs() < 0.01, "Crown glass n_d should be ~1.517");
+        assert!(
+            (n_d - 1.517).abs() < 0.01,
+            "Crown glass n_d should be ~1.517"
+        );
 
         // Check dispersion (blue should be higher than red)
         let n_blue = crown.n(wavelengths::BLUE);
@@ -482,7 +490,11 @@ mod tests {
 
         // Check Abbe number (~64 for crown glass)
         let abbe = crown.abbe_number();
-        assert!(abbe > 55.0 && abbe < 75.0, "Crown glass Abbe ~60-70, got {}", abbe);
+        assert!(
+            abbe > 55.0 && abbe < 75.0,
+            "Crown glass Abbe ~60-70, got {}",
+            abbe
+        );
     }
 
     #[test]
@@ -491,7 +503,11 @@ mod tests {
 
         // Flint glass should have higher dispersion (lower Abbe number)
         let abbe = flint.abbe_number();
-        assert!(abbe > 20.0 && abbe < 35.0, "Flint glass Abbe ~25-30, got {}", abbe);
+        assert!(
+            abbe > 20.0 && abbe < 35.0,
+            "Flint glass Abbe ~25-30, got {}",
+            abbe
+        );
 
         // Higher IOR than crown
         assert!(flint.n_base() > 1.7);
@@ -503,10 +519,16 @@ mod tests {
 
         // Check against known values
         let n_546 = silica.n(546.1);
-        assert!((n_546 - 1.4601).abs() < 0.001, "Fused silica n at 546nm should be ~1.4601");
+        assert!(
+            (n_546 - 1.4601).abs() < 0.001,
+            "Fused silica n at 546nm should be ~1.4601"
+        );
 
-        let n_633 = silica.n(632.8);  // HeNe laser line
-        assert!((n_633 - 1.4570).abs() < 0.001, "Fused silica n at 633nm should be ~1.4570");
+        let n_633 = silica.n(632.8); // HeNe laser line
+        assert!(
+            (n_633 - 1.4570).abs() < 0.001,
+            "Fused silica n at 633nm should be ~1.4570"
+        );
     }
 
     #[test]
@@ -567,7 +589,10 @@ mod tests {
         let ca_flint = chromatic_aberration_strength(&flint);
 
         // Flint should have stronger chromatic aberration
-        assert!(ca_flint > ca_crown, "Flint should have more chromatic aberration");
+        assert!(
+            ca_flint > ca_crown,
+            "Flint should have more chromatic aberration"
+        );
     }
 
     #[test]

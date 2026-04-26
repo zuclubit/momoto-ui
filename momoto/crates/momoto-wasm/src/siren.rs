@@ -13,8 +13,8 @@
 // to match the TypeScript implementation exactly.
 // =============================================================================
 
-use wasm_bindgen::prelude::*;
 use std::sync::LazyLock;
+use wasm_bindgen::prelude::*;
 
 // =============================================================================
 // CONSTANTS
@@ -108,7 +108,14 @@ impl SirenWeights {
         let w3 = initialize_weights(OUTPUT_DIM, HIDDEN_DIM, &mut rng, false);
         let b3 = initialize_bias(OUTPUT_DIM, &mut rng, 0.1);
 
-        Self { w1, b1, w2, b2, w3, b3 }
+        Self {
+            w1,
+            b1,
+            w2,
+            b2,
+            w3,
+            b3,
+        }
     }
 }
 
@@ -148,22 +155,49 @@ fn forward(input: &[f64; INPUT_DIM]) -> [f64; OUTPUT_DIM] {
     let weights = &*WEIGHTS;
 
     let mut z1 = [0.0f64; HIDDEN_DIM];
-    mat_vec_mul_add(&weights.w1, input, &weights.b1, HIDDEN_DIM, INPUT_DIM, &mut z1);
+    mat_vec_mul_add(
+        &weights.w1,
+        input,
+        &weights.b1,
+        HIDDEN_DIM,
+        INPUT_DIM,
+        &mut z1,
+    );
     siren_activation(&mut z1, OMEGA_0);
 
     let mut z2 = [0.0f64; HIDDEN_DIM];
-    mat_vec_mul_add(&weights.w2, &z1, &weights.b2, HIDDEN_DIM, HIDDEN_DIM, &mut z2);
+    mat_vec_mul_add(
+        &weights.w2,
+        &z1,
+        &weights.b2,
+        HIDDEN_DIM,
+        HIDDEN_DIM,
+        &mut z2,
+    );
     siren_activation(&mut z2, 1.0);
 
     let mut output = [0.0f64; OUTPUT_DIM];
-    mat_vec_mul_add(&weights.w3, &z2, &weights.b3, OUTPUT_DIM, HIDDEN_DIM, &mut output);
+    mat_vec_mul_add(
+        &weights.w3,
+        &z2,
+        &weights.b3,
+        OUTPUT_DIM,
+        HIDDEN_DIM,
+        &mut output,
+    );
 
     output
 }
 
 #[inline]
 fn clamp(value: f64, min: f64, max: f64) -> f64 {
-    if value < min { min } else if value > max { max } else { value }
+    if value < min {
+        min
+    } else if value > max {
+        max
+    } else {
+        value
+    }
 }
 
 // =============================================================================
@@ -180,13 +214,19 @@ pub struct SirenCorrection {
 #[wasm_bindgen]
 impl SirenCorrection {
     #[wasm_bindgen(getter, js_name = "deltaL")]
-    pub fn delta_l(&self) -> f64 { self.delta_l }
+    pub fn delta_l(&self) -> f64 {
+        self.delta_l
+    }
 
     #[wasm_bindgen(getter, js_name = "deltaC")]
-    pub fn delta_c(&self) -> f64 { self.delta_c }
+    pub fn delta_c(&self) -> f64 {
+        self.delta_c
+    }
 
     #[wasm_bindgen(getter, js_name = "deltaH")]
-    pub fn delta_h(&self) -> f64 { self.delta_h }
+    pub fn delta_h(&self) -> f64 {
+        self.delta_h
+    }
 }
 
 /// Compute SIREN neural correction for a foreground/background color pair.
@@ -297,8 +337,7 @@ pub fn siren_metadata() -> Result<JsValue, JsValue> {
         ],
     });
 
-    Ok(serde_wasm_bindgen::to_value(&metadata)
-        .map_err(|e| JsValue::from_str(&e.to_string()))?)
+    Ok(serde_wasm_bindgen::to_value(&metadata).map_err(|e| JsValue::from_str(&e.to_string()))?)
 }
 
 /// Export raw network weights for inspection/debugging.
@@ -314,8 +353,7 @@ pub fn siren_weights() -> Result<JsValue, JsValue> {
         "B3": { "shape": [OUTPUT_DIM], "data": w.b3 },
     });
 
-    Ok(serde_wasm_bindgen::to_value(&data)
-        .map_err(|e| JsValue::from_str(&e.to_string()))?)
+    Ok(serde_wasm_bindgen::to_value(&data).map_err(|e| JsValue::from_str(&e.to_string()))?)
 }
 
 // =============================================================================
@@ -347,9 +385,7 @@ mod tests {
     #[test]
     fn test_weight_count() {
         let w = &*WEIGHTS;
-        let total = w.w1.len() + w.b1.len()
-                  + w.w2.len() + w.b2.len()
-                  + w.w3.len() + w.b3.len();
+        let total = w.w1.len() + w.b1.len() + w.w2.len() + w.b2.len() + w.w3.len() + w.b3.len();
         assert_eq!(total, 483, "Expected 483 parameters, got {}", total);
     }
 
@@ -383,13 +419,18 @@ mod tests {
 
     #[test]
     fn test_batch_matches_single() {
-        let bg_l = 0.2; let bg_c = 0.15; let bg_h = 250.0;
-        let fg_l = 0.9; let fg_c = 0.03; let fg_h = 250.0;
-        let apca = 75.0; let wcag = 8.5; let quality = 72.0;
+        let bg_l = 0.2;
+        let bg_c = 0.15;
+        let bg_h = 250.0;
+        let fg_l = 0.9;
+        let fg_c = 0.03;
+        let fg_h = 250.0;
+        let apca = 75.0;
+        let wcag = 8.5;
+        let quality = 72.0;
 
-        let single = compute_siren_correction(
-            bg_l, bg_c, bg_h, fg_l, fg_c, fg_h, apca, wcag, quality,
-        );
+        let single =
+            compute_siren_correction(bg_l, bg_c, bg_h, fg_l, fg_c, fg_h, apca, wcag, quality);
 
         let batch_input = vec![bg_l, bg_c, bg_h, fg_l, fg_c, fg_h, apca, wcag, quality];
         let batch = compute_siren_correction_batch(&batch_input).unwrap();

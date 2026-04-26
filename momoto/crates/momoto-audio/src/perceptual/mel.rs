@@ -111,14 +111,18 @@ impl MelFilterbank {
 
         for b in 0..n_bands {
             band_offsets.push(raw_weights.len());
-            let left   = bin_points[b];
+            let left = bin_points[b];
             let center = bin_points[b + 1];
-            let right  = bin_points[b + 2];
+            let right = bin_points[b + 2];
 
             // Slaney normalisation: area = 2 / (right - left) in Hz domain
             let hz_l = mel_to_hz(mel_points[b]);
             let hz_r = mel_to_hz(mel_points[b + 2]);
-            let norm = if hz_r > hz_l { 2.0 / (hz_r - hz_l) } else { 1.0 };
+            let norm = if hz_r > hz_l {
+                2.0 / (hz_r - hz_l)
+            } else {
+                1.0
+            };
 
             // Rising slope: left → center
             if center > left {
@@ -148,11 +152,15 @@ impl MelFilterbank {
 
     /// Number of mel bands.
     #[must_use]
-    pub fn n_bands(&self) -> usize { self.n_bands }
+    pub fn n_bands(&self) -> usize {
+        self.n_bands
+    }
 
     /// Number of FFT bins this filterbank expects.
     #[must_use]
-    pub fn n_bins(&self) -> usize { self.n_bins }
+    pub fn n_bins(&self) -> usize {
+        self.n_bins
+    }
 
     /// Apply the filterbank to a power spectrum.
     ///
@@ -174,17 +182,21 @@ impl MelFilterbank {
     /// Panics if slice lengths do not match.
     pub fn apply_into(&self, power_spectrum: &[f32], out: &mut [f32]) {
         assert_eq!(
-            power_spectrum.len(), self.n_bins,
-            "power_spectrum must have n_bins={} elements", self.n_bins
+            power_spectrum.len(),
+            self.n_bins,
+            "power_spectrum must have n_bins={} elements",
+            self.n_bins
         );
         assert_eq!(
-            out.len(), self.n_bands,
-            "output must have n_bands={} elements", self.n_bands
+            out.len(),
+            self.n_bands,
+            "output must have n_bands={} elements",
+            self.n_bands
         );
 
         for b in 0..self.n_bands {
             let start = self.band_offsets[b];
-            let end   = self.band_offsets[b + 1];
+            let end = self.band_offsets[b + 1];
             let mut energy = 0.0_f32;
             for &(bin, weight) in &self.weights[start..end] {
                 energy += weight * power_spectrum[bin];
@@ -198,8 +210,16 @@ impl MelFilterbank {
     /// `samples` length must equal the FFT size this filterbank was built for.
     /// Returns `n_bands` mel-band energies.
     pub fn transform(&self, samples: &[f32], plan: &FftPlan) -> Box<[f32]> {
-        assert_eq!(samples.len(), plan.len(), "samples length must match FFT plan");
-        assert_eq!(plan.len() / 2 + 1, self.n_bins, "FFT plan must match filterbank n_bins");
+        assert_eq!(
+            samples.len(),
+            plan.len(),
+            "samples length must match FFT plan"
+        );
+        assert_eq!(
+            plan.len() / 2 + 1,
+            self.n_bins,
+            "FFT plan must match filterbank n_bins"
+        );
         let ps = plan.power_spectrum(samples);
         self.apply(&ps)
     }
@@ -213,7 +233,10 @@ mod tests {
     fn hz_mel_roundtrip() {
         for hz in [20.0, 100.0, 440.0, 1000.0, 4000.0, 8000.0, 20000.0_f32] {
             let roundtrip = mel_to_hz(hz_to_mel(hz));
-            assert!((roundtrip - hz).abs() / hz < 1e-4, "roundtrip failed at {hz} Hz");
+            assert!(
+                (roundtrip - hz).abs() / hz < 1e-4,
+                "roundtrip failed at {hz} Hz"
+            );
         }
     }
 
@@ -274,6 +297,9 @@ mod tests {
         assert_eq!(mel.len(), 40);
         // Energy should be spread across bands (impulse has flat spectrum)
         let total_energy: f32 = mel.iter().sum();
-        assert!(total_energy > 0.0, "impulse should produce non-zero mel energy");
+        assert!(
+            total_energy > 0.0,
+            "impulse should produce non-zero mel energy"
+        );
     }
 }

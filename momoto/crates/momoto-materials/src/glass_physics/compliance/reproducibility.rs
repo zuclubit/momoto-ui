@@ -462,7 +462,9 @@ mod tests {
 
     #[test]
     fn test_reproducibility_non_deterministic() {
-        let test = ReproducibilityTest::new().with_runs(5).with_max_variation(0.0);
+        let test = ReproducibilityTest::new()
+            .with_runs(5)
+            .with_max_variation(0.0);
 
         use std::cell::Cell;
         let counter = Cell::new(0u64);

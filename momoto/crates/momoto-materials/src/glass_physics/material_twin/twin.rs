@@ -2,11 +2,11 @@
 //!
 //! The MaterialTwin struct and TwinBuilder for creating digital material twins.
 
-use super::variants::TwinVariant;
-use super::identity::SpectralIdentity;
+use super::super::differentiable::DifferentiableBSDF;
 use super::super::material_fingerprint::MaterialFingerprint;
 use super::super::temporal::TemporalEvolution;
-use super::super::differentiable::DifferentiableBSDF;
+use super::identity::SpectralIdentity;
+use super::variants::TwinVariant;
 
 // ============================================================================
 // TWIN ID
@@ -305,7 +305,9 @@ impl<M: DifferentiableBSDF + Clone> MaterialTwin<M> {
 
     /// Get twin name or short ID.
     pub fn display_name(&self) -> String {
-        self.name.clone().unwrap_or_else(|| format!("twin-{}", self.id.short()))
+        self.name
+            .clone()
+            .unwrap_or_else(|| format!("twin-{}", self.id.short()))
     }
 
     /// Check if twin is calibrated.
@@ -503,8 +505,8 @@ fn current_timestamp() -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::super::differentiable::DifferentiableDielectric;
+    use super::*;
 
     #[test]
     fn test_twin_id_generate() {
@@ -656,9 +658,7 @@ mod tests {
     fn test_twin_builder_measured() {
         let glass = DifferentiableDielectric::glass();
 
-        let twin = TwinBuilder::new(glass)
-            .as_measured("MERL-100")
-            .build();
+        let twin = TwinBuilder::new(glass).as_measured("MERL-100").build();
 
         assert_eq!(twin.variant, TwinVariant::Measured);
         assert!(twin.has_tag("source:MERL-100"));

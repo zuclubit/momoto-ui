@@ -279,12 +279,7 @@ pub fn calculate_highlight_position(light_dir: Vec3) -> (f64, f64) {
 /// assert!(css.contains("radial-gradient"));
 /// assert!(css.contains("at 28% 18%"));
 /// ```
-pub fn to_css_specular_highlight(
-    intensity: f64,
-    size: f64,
-    pos_x: f64,
-    pos_y: f64,
-) -> String {
+pub fn to_css_specular_highlight(intensity: f64, size: f64, pos_x: f64, pos_y: f64) -> String {
     let intensity = intensity.clamp(0.0, 1.0);
     let size = size.clamp(10.0, 100.0);
     let pos_x = pos_x.clamp(0.0, 100.0);
@@ -308,10 +303,10 @@ pub fn to_css_specular_highlight(
         height,
         pos_x,
         pos_y,
-        boosted,          // Bright center
-        boosted * 0.75,   // Still visible
-        boosted * 0.4,    // Fading
-        boosted * 0.15,   // Nearly gone
+        boosted,        // Bright center
+        boosted * 0.75, // Still visible
+        boosted * 0.4,  // Fading
+        boosted * 0.15, // Nearly gone
     )
 }
 
@@ -380,13 +375,13 @@ pub fn to_css_inner_highlight(intensity: f64, light_mode: bool) -> String {
          rgba({}, {:.3}) 20%, \
          transparent 35%)",
         color,
-        boosted,           // Bright top edge
+        boosted, // Bright top edge
         color,
-        boosted * 0.7,     // Still strong
+        boosted * 0.7, // Still strong
         color,
-        boosted * 0.35,    // Fading
+        boosted * 0.35, // Fading
         color,
-        boosted * 0.12,    // Nearly gone
+        boosted * 0.12, // Nearly gone
     )
 }
 
@@ -422,11 +417,11 @@ pub fn to_css_inner_glow(intensity: f64, light_mode: bool) -> String {
          rgba({}, {:.3}) 60%, \
          transparent 100%)",
         color,
-        opacity * 0.8,   // Soft center glow
+        opacity * 0.8, // Soft center glow
         color,
-        opacity * 0.5,   // Mid-fade
+        opacity * 0.5, // Mid-fade
         color,
-        opacity * 0.2,   // Outer fade
+        opacity * 0.2, // Outer fade
     )
 }
 

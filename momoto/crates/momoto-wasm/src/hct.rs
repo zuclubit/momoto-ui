@@ -5,9 +5,9 @@
 // Exposes HCT (Hue-Chroma-Tone) and CAM16 from momoto-core via wasm-bindgen.
 // =============================================================================
 
-use wasm_bindgen::prelude::*;
-use momoto_core::space::hct::HCT as CoreHCT;
 use momoto_core::color::Color as CoreColor;
+use momoto_core::space::hct::HCT as CoreHCT;
+use wasm_bindgen::prelude::*;
 
 // =============================================================================
 // HCT struct
@@ -28,7 +28,9 @@ impl HCT {
     /// Create an HCT color from hue, chroma, and tone.
     #[wasm_bindgen(constructor)]
     pub fn new(hue: f64, chroma: f64, tone: f64) -> Self {
-        Self { inner: CoreHCT::new(hue, chroma, tone) }
+        Self {
+            inner: CoreHCT::new(hue, chroma, tone),
+        }
     }
 
     /// Convert an sRGB hex string to HCT.
@@ -42,28 +44,40 @@ impl HCT {
     pub fn from_hex(hex: &str) -> Self {
         use momoto_core::color::cvd::parse_hex;
         match parse_hex(hex) {
-            Some(c) => Self { inner: CoreHCT::from_color(&c) },
-            None => Self { inner: CoreHCT::new(0.0, 0.0, 0.0) },
+            Some(c) => Self {
+                inner: CoreHCT::from_color(&c),
+            },
+            None => Self {
+                inner: CoreHCT::new(0.0, 0.0, 0.0),
+            },
         }
     }
 
     /// Convert from ARGB integer (0xAARRGGBB).
     #[wasm_bindgen(js_name = "fromArgb")]
     pub fn from_argb(argb: u32) -> Self {
-        Self { inner: CoreHCT::from_argb(argb) }
+        Self {
+            inner: CoreHCT::from_argb(argb),
+        }
     }
 
     /// CAM16 hue angle in degrees (0–360°).
     #[wasm_bindgen(getter)]
-    pub fn hue(&self) -> f64 { self.inner.hue }
+    pub fn hue(&self) -> f64 {
+        self.inner.hue
+    }
 
     /// CAM16 chroma (non-negative; maximum varies with tone and hue).
     #[wasm_bindgen(getter)]
-    pub fn chroma(&self) -> f64 { self.inner.chroma }
+    pub fn chroma(&self) -> f64 {
+        self.inner.chroma
+    }
 
     /// CIELAB L* tone (0 = black, 100 = white).
     #[wasm_bindgen(getter)]
-    pub fn tone(&self) -> f64 { self.inner.tone }
+    pub fn tone(&self) -> f64 {
+        self.inner.tone
+    }
 
     /// Convert HCT to an ARGB integer (0xFF_RR_GG_BB).
     #[wasm_bindgen(js_name = "toArgb")]
@@ -114,7 +128,9 @@ impl HCT {
     /// Clamp chroma to the maximum achievable in the sRGB gamut.
     #[wasm_bindgen(js_name = "clampToGamut")]
     pub fn clamp_to_gamut(&self) -> HCT {
-        HCT { inner: self.inner.clamp_to_gamut() }
+        HCT {
+            inner: self.inner.clamp_to_gamut(),
+        }
     }
 }
 
@@ -171,7 +187,9 @@ pub fn oklch_to_hct(l: f64, c: f64, h: f64) -> Box<[f64]> {
 /// 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99, 100 (13 steps).
 #[wasm_bindgen(js_name = "hctTonalPalette")]
 pub fn hct_tonal_palette(hue: f64, chroma: f64) -> Box<[f64]> {
-    const TONES: [f64; 13] = [0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 95.0, 99.0, 100.0];
+    const TONES: [f64; 13] = [
+        0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 95.0, 99.0, 100.0,
+    ];
     let mut out = Vec::with_capacity(TONES.len() * 3);
     for &tone in &TONES {
         let hct = CoreHCT::new(hue, chroma, tone);
@@ -196,7 +214,11 @@ pub fn hct_max_chroma(hue: f64, tone: f64) -> f64 {
         let hct = CoreHCT::new(hue, mid, tone);
         let color = hct.to_color();
         let all_in_gamut = color.srgb.iter().all(|&ch| ch >= -0.001 && ch <= 1.001);
-        if all_in_gamut { lo = mid; } else { hi = mid; }
+        if all_in_gamut {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
     }
     lo
 }

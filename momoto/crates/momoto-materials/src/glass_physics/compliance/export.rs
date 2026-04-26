@@ -206,7 +206,10 @@ impl MetrologicalExporter {
         json.push_str("{\n");
 
         // Basic info
-        json.push_str(&format!("{}\"twin_id\": \"{}\",\n", indent, profile.twin_id));
+        json.push_str(&format!(
+            "{}\"twin_id\": \"{}\",\n",
+            indent, profile.twin_id
+        ));
         json.push_str(&format!("{}\"name\": \"{}\",\n", indent, profile.name));
         json.push_str(&format!(
             "{}\"certification_level\": \"{}\",\n",
@@ -368,7 +371,11 @@ impl MetrologicalExporter {
 
         report.push_str(&format!(
             "Current Status:       {}\n",
-            if profile.is_valid() { "VALID" } else { "EXPIRED" }
+            if profile.is_valid() {
+                "VALID"
+            } else {
+                "EXPIRED"
+            }
         ));
 
         report.push('\n');
@@ -497,7 +504,10 @@ impl MetrologicalExporter {
 
         if let Some(ref cal) = profile.traceability.root_calibration {
             report.push_str(&format!("Root Calibration:     {}\n", cal.name));
-            report.push_str(&format!("Certificate ID:       {}\n", cal.certificate_id.as_deref().unwrap_or("N/A")));
+            report.push_str(&format!(
+                "Certificate ID:       {}\n",
+                cal.certificate_id.as_deref().unwrap_or("N/A")
+            ));
         }
 
         report.push('\n');
@@ -505,7 +515,10 @@ impl MetrologicalExporter {
         // Certification Authority
         report.push_str("CERTIFICATION AUTHORITY\n");
         report.push_str("──────────────────────────────────────────────────────────────────\n");
-        report.push_str(&format!("Authority:            {}\n", profile.metadata.authority));
+        report.push_str(&format!(
+            "Authority:            {}\n",
+            profile.metadata.authority
+        ));
 
         if let Some(ref op) = profile.metadata.operator {
             report.push_str(&format!("Certified By:         {}\n", op));
@@ -560,10 +573,7 @@ impl MetrologicalExporter {
             "neural_share,{}\n",
             profile.neural_correction_stats.correction_share
         ));
-        csv.push_str(&format!(
-            "tests_passed,{}\n",
-            profile.passed_test_count()
-        ));
+        csv.push_str(&format!("tests_passed,{}\n", profile.passed_test_count()));
         csv.push_str(&format!("tests_total,{}\n", profile.test_results.len()));
 
         csv
@@ -624,8 +634,8 @@ pub fn batch_export(profiles: &[CertifiedTwinProfile], format: ExportFormat) -> 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::glass_physics::certification::requirements::{MandatoryTest, TestResult};
     use crate::glass_physics::certification::levels::CertificationLevel;
+    use crate::glass_physics::certification::requirements::{MandatoryTest, TestResult};
 
     fn make_test_profile() -> CertifiedTwinProfile {
         let results = vec![TestResult::pass(

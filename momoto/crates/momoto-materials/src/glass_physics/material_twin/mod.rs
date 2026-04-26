@@ -47,22 +47,19 @@
 //! println!("Fingerprint: {}", twin.fingerprint.short_hash());
 //! ```
 
+mod identity;
 mod twin;
 mod variants;
-mod identity;
 
-pub use twin::{
-    TwinId, MaterialTwin, TwinBuilder,
-    CalibrationMetadata, CalibrationQuality,
-};
+pub use twin::{CalibrationMetadata, CalibrationQuality, MaterialTwin, TwinBuilder, TwinId};
 
 pub use variants::{
-    TwinVariant, StaticTwinData, TemporalTwinData, LayeredTwinData, MeasuredTwinData,
+    LayeredTwinData, MeasuredTwinData, StaticTwinData, TemporalTwinData, TwinVariant,
 };
 
 pub use identity::{
-    SpectralIdentity, SpectralSignature, SpectralDistance,
-    IDENTITY_WAVELENGTHS, compute_spectral_distance,
+    compute_spectral_distance, SpectralDistance, SpectralIdentity, SpectralSignature,
+    IDENTITY_WAVELENGTHS,
 };
 
 // ============================================================================

@@ -27,9 +27,9 @@
 //! | `QualityTier` | Rendering quality levels |
 
 // Submodules
-pub mod material;
 pub mod bsdf;
 pub mod context;
+pub mod material;
 pub mod prelude;
 
 // Version info
@@ -53,16 +53,16 @@ pub fn is_compatible(required: (u32, u32, u32)) -> bool {
 }
 
 // Re-exports from submodules
-pub use material::{Material, Layer, MaterialBuilder, MaterialPreset};
 pub use bsdf::{
-    BSDF, BSDFResponse, BSDFSample, EnergyValidation,
-    DielectricBSDF, ConductorBSDF, ThinFilmBSDF, LayeredBSDF, LambertianBSDF,
+    BSDFResponse, BSDFSample, ConductorBSDF, DielectricBSDF, EnergyValidation, LambertianBSDF,
+    LayeredBSDF, ThinFilmBSDF, BSDF,
 };
 pub use context::{EvaluationContext, Vector3};
+pub use material::{Layer, Material, MaterialBuilder, MaterialPreset};
 
 // Re-exports from other modules (stable types)
-pub use super::super::enhanced_presets::QualityTier;
 pub use super::super::anisotropic_brdf::AnisotropicGGX;
+pub use super::super::enhanced_presets::QualityTier;
 
 // ============================================================================
 // TESTS

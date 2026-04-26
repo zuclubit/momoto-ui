@@ -9,19 +9,12 @@
 //! ```
 
 // Material types
-pub use super::material::{Material, Layer, MaterialBuilder, MaterialPreset};
+pub use super::material::{Layer, Material, MaterialBuilder, MaterialPreset};
 
 // BSDF types
 pub use super::bsdf::{
-    BSDF,
-    BSDFResponse,
-    BSDFSample,
-    EnergyValidation,
-    DielectricBSDF,
-    ConductorBSDF,
-    ThinFilmBSDF,
-    LayeredBSDF,
-    LambertianBSDF,
+    BSDFResponse, BSDFSample, ConductorBSDF, DielectricBSDF, EnergyValidation, LambertianBSDF,
+    LayeredBSDF, ThinFilmBSDF, BSDF,
 };
 
 // Context types
@@ -34,4 +27,4 @@ pub use super::super::super::enhanced_presets::QualityTier;
 pub use super::AnisotropicGGX;
 
 // Version info
-pub use super::{API_VERSION, API_VERSION_STRING, is_compatible};
+pub use super::{is_compatible, API_VERSION, API_VERSION_STRING};

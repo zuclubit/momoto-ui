@@ -2,8 +2,8 @@
 //!
 //! Full Jacobian of BSDF response (R, T, A) w.r.t. material parameters.
 
-use super::traits::{DifferentiableBSDF, ParameterGradients};
 use super::super::unified_bsdf::BSDFContext;
+use super::traits::{DifferentiableBSDF, ParameterGradients};
 
 // ============================================================================
 // JACOBIAN MATRIX
@@ -318,8 +318,8 @@ pub struct JacobianVerification {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::traits::ParameterGradients;
+    use super::*;
 
     #[test]
     fn test_jacobian_zeros() {

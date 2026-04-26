@@ -19,21 +19,12 @@
 use std::time::Instant;
 
 use super::lut_compression::{
-    CompressedLUT1D, SparseLUT1D, DeltaEncodedLUT,
-    CompressedFresnelLUT, CompressedHGLUT,
+    CompressedFresnelLUT, CompressedHGLUT, CompressedLUT1D, DeltaEncodedLUT, SparseLUT1D,
 };
-use super::thin_film_advanced::{
-    TransferMatrixFilm, Polarization,
-    advanced_presets as tf_presets,
-};
-use super::metal_temp::{
-    drude_metals, oxidized_presets,
-};
-use super::mie_dynamic::{
-    SizeDistribution, DynamicMieParams,
-    dynamic_presets,
-};
+use super::metal_temp::{drude_metals, oxidized_presets};
+use super::mie_dynamic::{dynamic_presets, DynamicMieParams, SizeDistribution};
 use super::thin_film::ThinFilm;
+use super::thin_film_advanced::{advanced_presets as tf_presets, Polarization, TransferMatrixFilm};
 
 // ============================================================================
 // LUT COMPRESSION BENCHMARKS
@@ -55,7 +46,7 @@ impl CompressionBenchmark {
     pub fn meets_targets(&self) -> bool {
         self.compression_ratio >= 0.4 && // At least 40% reduction
         self.max_error < 0.015 &&         // Max 1.5% error
-        self.avg_error < 0.005            // Avg 0.5% error
+        self.avg_error < 0.005 // Avg 0.5% error
     }
 }
 
@@ -90,14 +81,18 @@ pub fn benchmark_lut_compression() -> Vec<(&'static str, CompressionBenchmark)> 
             sum_error += error;
         }
 
-        results.push(("U16 Quantization", CompressionBenchmark {
-            original_size_bytes: original_data.len() * 8,
-            compressed_size_bytes: compressed.memory_bytes(),
-            compression_ratio: 1.0 - (compressed.memory_bytes() as f64 / (original_data.len() * 8) as f64),
-            max_error,
-            avg_error: sum_error / original_data.len() as f64,
-            lookup_time_ns: measure_compressed_lut_time(&compressed, 10000),
-        }));
+        results.push((
+            "U16 Quantization",
+            CompressionBenchmark {
+                original_size_bytes: original_data.len() * 8,
+                compressed_size_bytes: compressed.memory_bytes(),
+                compression_ratio: 1.0
+                    - (compressed.memory_bytes() as f64 / (original_data.len() * 8) as f64),
+                max_error,
+                avg_error: sum_error / original_data.len() as f64,
+                lookup_time_ns: measure_compressed_lut_time(&compressed, 10000),
+            },
+        ));
     }
 
     // Test 2: Sparse sampling (4x reduction) with cubic interpolation
@@ -114,14 +109,18 @@ pub fn benchmark_lut_compression() -> Vec<(&'static str, CompressionBenchmark)> 
             sum_error += error;
         }
 
-        results.push(("Sparse 4x + Cubic", CompressionBenchmark {
-            original_size_bytes: original_data.len() * 8,
-            compressed_size_bytes: sparse.memory_bytes(),
-            compression_ratio: 1.0 - (sparse.memory_bytes() as f64 / (original_data.len() * 8) as f64),
-            max_error,
-            avg_error: sum_error / original_data.len() as f64,
-            lookup_time_ns: measure_sparse_lut_time(&sparse, 10000),
-        }));
+        results.push((
+            "Sparse 4x + Cubic",
+            CompressionBenchmark {
+                original_size_bytes: original_data.len() * 8,
+                compressed_size_bytes: sparse.memory_bytes(),
+                compression_ratio: 1.0
+                    - (sparse.memory_bytes() as f64 / (original_data.len() * 8) as f64),
+                max_error,
+                avg_error: sum_error / original_data.len() as f64,
+                lookup_time_ns: measure_sparse_lut_time(&sparse, 10000),
+            },
+        ));
     }
 
     // Test 3: Delta encoding
@@ -138,14 +137,18 @@ pub fn benchmark_lut_compression() -> Vec<(&'static str, CompressionBenchmark)> 
             sum_error += error;
         }
 
-        results.push(("Delta Encoding", CompressionBenchmark {
-            original_size_bytes: original_data.len() * 8,
-            compressed_size_bytes: delta.memory_bytes(),
-            compression_ratio: 1.0 - (delta.memory_bytes() as f64 / (original_data.len() * 8) as f64),
-            max_error,
-            avg_error: sum_error / original_data.len() as f64,
-            lookup_time_ns: measure_delta_lut_time(&delta, 10000),
-        }));
+        results.push((
+            "Delta Encoding",
+            CompressionBenchmark {
+                original_size_bytes: original_data.len() * 8,
+                compressed_size_bytes: delta.memory_bytes(),
+                compression_ratio: 1.0
+                    - (delta.memory_bytes() as f64 / (original_data.len() * 8) as f64),
+                max_error,
+                avg_error: sum_error / original_data.len() as f64,
+                lookup_time_ns: measure_delta_lut_time(&delta, 10000),
+            },
+        ));
     }
 
     // Test 4: Compressed Fresnel LUT
@@ -162,14 +165,18 @@ pub fn benchmark_lut_compression() -> Vec<(&'static str, CompressionBenchmark)> 
             sum_error += error;
         }
 
-        results.push(("Compressed Fresnel", CompressionBenchmark {
-            original_size_bytes: original_data.len() * 8,
-            compressed_size_bytes: fresnel_lut.memory_bytes(),
-            compression_ratio: 1.0 - (fresnel_lut.memory_bytes() as f64 / (original_data.len() * 8) as f64),
-            max_error,
-            avg_error: sum_error / original_data.len() as f64,
-            lookup_time_ns: 0.0,
-        }));
+        results.push((
+            "Compressed Fresnel",
+            CompressionBenchmark {
+                original_size_bytes: original_data.len() * 8,
+                compressed_size_bytes: fresnel_lut.memory_bytes(),
+                compression_ratio: 1.0
+                    - (fresnel_lut.memory_bytes() as f64 / (original_data.len() * 8) as f64),
+                max_error,
+                avg_error: sum_error / original_data.len() as f64,
+                lookup_time_ns: 0.0,
+            },
+        ));
     }
 
     results
@@ -281,10 +288,8 @@ pub fn compare_thin_film_methods() -> Vec<ThinFilmComparisonResult> {
     let bragg = tf_presets::bragg_mirror(2.35, 1.46, 550.0, 5);
     let morpho = tf_presets::morpho_butterfly();
 
-    let multi_layer_presets: [(&str, TransferMatrixFilm); 2] = [
-        ("Bragg Mirror 5-pair", bragg),
-        ("Morpho Butterfly", morpho),
-    ];
+    let multi_layer_presets: [(&str, TransferMatrixFilm); 2] =
+        [("Bragg Mirror 5-pair", bragg), ("Morpho Butterfly", morpho)];
 
     for (name, tm) in multi_layer_presets {
         let start = Instant::now();
@@ -399,8 +404,8 @@ pub fn compare_metal_temperatures() -> Vec<MetalTempResult> {
     ];
 
     let wavelength = 550.0; // nm
-    let cold_temp = 300.0;  // K (room temp)
-    let hot_temp = 600.0;   // K (elevated)
+    let cold_temp = 300.0; // K (room temp)
+    let hot_temp = 600.0; // K (elevated)
 
     for (name, drude) in metals {
         let ior_cold = drude.complex_ior(wavelength, cold_temp);
@@ -444,7 +449,12 @@ pub fn validate_oxidation_effects() -> Vec<(&'static str, f64, f64, f64)> {
     let r_patina = copper_patina.effective_reflectance(wavelength, cos_theta);
 
     results.push(("Copper Fresh", r_fresh, 0.0, r_fresh));
-    results.push(("Copper Tarnished", r_tarnished, r_fresh - r_tarnished, r_tarnished));
+    results.push((
+        "Copper Tarnished",
+        r_tarnished,
+        r_fresh - r_tarnished,
+        r_tarnished,
+    ));
     results.push(("Copper Patina", r_patina, r_fresh - r_patina, r_patina));
 
     // Test silver tarnish
@@ -455,7 +465,12 @@ pub fn validate_oxidation_effects() -> Vec<(&'static str, f64, f64, f64)> {
     let r_silver_tarnished = silver_tarnished.effective_reflectance(wavelength, cos_theta);
 
     results.push(("Silver Fresh", r_silver_fresh, 0.0, r_silver_fresh));
-    results.push(("Silver Tarnished", r_silver_tarnished, r_silver_fresh - r_silver_tarnished, r_silver_tarnished));
+    results.push((
+        "Silver Tarnished",
+        r_silver_tarnished,
+        r_silver_fresh - r_silver_tarnished,
+        r_silver_tarnished,
+    ));
 
     results
 }
@@ -477,7 +492,7 @@ pub struct DynamicMieResult {
 
 /// Compare dynamic Mie presets
 pub fn compare_dynamic_mie_presets() -> Vec<DynamicMieResult> {
-    use super::mie_dynamic::{polydisperse_phase, anisotropic_phase, effective_asymmetry_g};
+    use super::mie_dynamic::{anisotropic_phase, effective_asymmetry_g, polydisperse_phase};
 
     let mut results = Vec::new();
 
@@ -599,8 +614,8 @@ pub fn phase4_memory_analysis() -> Phase4MemoryAnalysis {
     let compressed_hg = CompressedHGLUT::build(32, 64).memory_bytes();
 
     // Estimate total compressed (60% reduction target)
-    let compressed_lut_bytes = compressed_fresnel + compressed_hg +
-                              (original_lut_bytes as f64 * 0.35) as usize;
+    let compressed_lut_bytes =
+        compressed_fresnel + compressed_hg + (original_lut_bytes as f64 * 0.35) as usize;
 
     // New module overhead
     // TransferMatrixFilm: Complex matrices, negligible static allocation
@@ -612,15 +627,16 @@ pub fn phase4_memory_analysis() -> Phase4MemoryAnalysis {
     // DynamicMieParams: Size distributions + anisotropy
     let mie_dynamic_bytes = 20_000; // ~20KB for presets + distribution sampling
 
-    let total_phase4_bytes = compressed_lut_bytes + thin_film_advanced_bytes +
-                             metal_temp_bytes + mie_dynamic_bytes;
+    let total_phase4_bytes =
+        compressed_lut_bytes + thin_film_advanced_bytes + metal_temp_bytes + mie_dynamic_bytes;
 
     let net_change = total_phase4_bytes as i64 - original_lut_bytes as i64;
 
     Phase4MemoryAnalysis {
         original_lut_bytes,
         compressed_lut_bytes,
-        lut_savings_percent: (1.0 - compressed_lut_bytes as f64 / original_lut_bytes as f64) * 100.0,
+        lut_savings_percent: (1.0 - compressed_lut_bytes as f64 / original_lut_bytes as f64)
+            * 100.0,
         thin_film_advanced_bytes,
         metal_temp_bytes,
         mie_dynamic_bytes,
@@ -727,14 +743,35 @@ pub fn full_phase4_report() -> String {
     // Memory Analysis
     report.push_str("\n## 5. Memory Analysis\n\n");
     let mem = phase4_memory_analysis();
-    report.push_str(&format!("- Original LUT memory: {} KB\n", mem.original_lut_bytes / 1024));
-    report.push_str(&format!("- Compressed LUT memory: {} KB ({:.0}% reduction)\n",
-        mem.compressed_lut_bytes / 1024, mem.lut_savings_percent));
-    report.push_str(&format!("- Thin-film advanced: {} KB\n", mem.thin_film_advanced_bytes / 1024));
-    report.push_str(&format!("- Metal temperature: {} KB\n", mem.metal_temp_bytes / 1024));
-    report.push_str(&format!("- Dynamic Mie: {} KB\n", mem.mie_dynamic_bytes / 1024));
-    report.push_str(&format!("- **Total Phase 4: {} KB**\n", mem.total_phase4_bytes / 1024));
-    report.push_str(&format!("- **Net change: {} KB**\n", mem.net_change_bytes / 1024));
+    report.push_str(&format!(
+        "- Original LUT memory: {} KB\n",
+        mem.original_lut_bytes / 1024
+    ));
+    report.push_str(&format!(
+        "- Compressed LUT memory: {} KB ({:.0}% reduction)\n",
+        mem.compressed_lut_bytes / 1024,
+        mem.lut_savings_percent
+    ));
+    report.push_str(&format!(
+        "- Thin-film advanced: {} KB\n",
+        mem.thin_film_advanced_bytes / 1024
+    ));
+    report.push_str(&format!(
+        "- Metal temperature: {} KB\n",
+        mem.metal_temp_bytes / 1024
+    ));
+    report.push_str(&format!(
+        "- Dynamic Mie: {} KB\n",
+        mem.mie_dynamic_bytes / 1024
+    ));
+    report.push_str(&format!(
+        "- **Total Phase 4: {} KB**\n",
+        mem.total_phase4_bytes / 1024
+    ));
+    report.push_str(&format!(
+        "- **Net change: {} KB**\n",
+        mem.net_change_bytes / 1024
+    ));
 
     report
 }
@@ -764,8 +801,7 @@ mod tests {
             assert!(
                 *passed,
                 "Thin-film test '{}' failed with value: {}",
-                test_name,
-                value
+                test_name, value
             );
         }
     }
@@ -800,7 +836,8 @@ mod tests {
         let copper_fresh = results.iter().find(|(n, _, _, _)| *n == "Copper Fresh");
         let copper_patina = results.iter().find(|(n, _, _, _)| *n == "Copper Patina");
 
-        if let (Some((_, r_fresh, _, _)), Some((_, r_patina, _, _))) = (copper_fresh, copper_patina) {
+        if let (Some((_, r_fresh, _, _)), Some((_, r_patina, _, _))) = (copper_fresh, copper_patina)
+        {
             assert!(
                 r_patina < r_fresh,
                 "Patina should reduce reflectance: fresh={}, patina={}",
@@ -837,7 +874,11 @@ mod tests {
             (mono - broad).abs() > 0.01 || (*ratio - 1.0).abs() > 0.05
         });
 
-        assert!(has_difference, "Polydisperse should differ from monodisperse. Results: {:?}", results);
+        assert!(
+            has_difference,
+            "Polydisperse should differ from monodisperse. Results: {:?}",
+            results
+        );
     }
 
     #[test]

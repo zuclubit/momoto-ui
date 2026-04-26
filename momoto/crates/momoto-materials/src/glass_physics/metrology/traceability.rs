@@ -13,48 +13,29 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub enum TraceabilityOperation {
     /// Direct measurement from instrument.
-    DirectMeasurement {
-        instrument: String,
-        method: String,
-    },
+    DirectMeasurement { instrument: String, method: String },
     /// Calibration against reference.
     Calibration {
         reference: String,
         certificate_id: Option<String>,
     },
     /// Interpolation between points.
-    Interpolation {
-        method: String,
-    },
+    Interpolation { method: String },
     /// Model-based prediction.
     ModelPrediction {
         model_name: String,
         model_version: String,
     },
     /// Neural network correction.
-    NeuralCorrection {
-        magnitude: f64,
-        share: f64,
-    },
+    NeuralCorrection { magnitude: f64, share: f64 },
     /// Aggregation of multiple sources.
-    Aggregation {
-        method: String,
-        source_count: usize,
-    },
+    Aggregation { method: String, source_count: usize },
     /// Unit conversion.
-    UnitConversion {
-        from_unit: String,
-        to_unit: String,
-    },
+    UnitConversion { from_unit: String, to_unit: String },
     /// Error propagation.
-    ErrorPropagation {
-        method: String,
-    },
+    ErrorPropagation { method: String },
     /// Manual entry or correction.
-    ManualEntry {
-        operator: String,
-        reason: String,
-    },
+    ManualEntry { operator: String, reason: String },
 }
 
 impl TraceabilityOperation {
@@ -146,13 +127,24 @@ impl fmt::Display for TraceabilityOperation {
             Self::Interpolation { method } => {
                 write!(f, "Interpolated using {}", method)
             }
-            Self::ModelPrediction { model_name, model_version } => {
+            Self::ModelPrediction {
+                model_name,
+                model_version,
+            } => {
                 write!(f, "Predicted by {} v{}", model_name, model_version)
             }
             Self::NeuralCorrection { magnitude, share } => {
-                write!(f, "Neural correction: {:.4} ({:.1}% share)", magnitude, share * 100.0)
+                write!(
+                    f,
+                    "Neural correction: {:.4} ({:.1}% share)",
+                    magnitude,
+                    share * 100.0
+                )
             }
-            Self::Aggregation { method, source_count } => {
+            Self::Aggregation {
+                method,
+                source_count,
+            } => {
                 write!(f, "Aggregated {} sources using {}", source_count, method)
             }
             Self::UnitConversion { from_unit, to_unit } => {
@@ -355,12 +347,7 @@ impl TraceabilityChain {
     }
 
     /// Add measurement operation.
-    pub fn record_measurement(
-        &mut self,
-        instrument: &str,
-        method: &str,
-        output: MeasurementId,
-    ) {
+    pub fn record_measurement(&mut self, instrument: &str, method: &str, output: MeasurementId) {
         let step_id = self.next_step_id();
         let entry = TraceabilityEntry::new(
             step_id,
@@ -458,12 +445,16 @@ impl TraceabilityChain {
     pub fn summary(&self) -> ChainSummary {
         ChainSummary {
             total_steps: self.entries.len(),
-            measurement_steps: self.entries.iter().filter(|e| {
-                matches!(e.operation, TraceabilityOperation::DirectMeasurement { .. })
-            }).count(),
-            model_steps: self.entries.iter().filter(|e| {
-                matches!(e.operation, TraceabilityOperation::ModelPrediction { .. })
-            }).count(),
+            measurement_steps: self
+                .entries
+                .iter()
+                .filter(|e| matches!(e.operation, TraceabilityOperation::DirectMeasurement { .. }))
+                .count(),
+            model_steps: self
+                .entries
+                .iter()
+                .filter(|e| matches!(e.operation, TraceabilityOperation::ModelPrediction { .. }))
+                .count(),
             neural_steps: self.neural_operation_count(),
             has_calibration: self.is_calibrated(),
             calibration_valid: self.is_calibration_valid(),
@@ -476,7 +467,10 @@ impl TraceabilityChain {
         let mut lines = Vec::new();
 
         lines.push("=== Traceability Chain Report ===".to_string());
-        lines.push(format!("Created: {}", format_timestamp(self.metadata.created_at)));
+        lines.push(format!(
+            "Created: {}",
+            format_timestamp(self.metadata.created_at)
+        ));
         lines.push(format!("Steps: {}", self.entries.len()));
 
         if let Some(ref cal) = self.root_calibration {
@@ -486,25 +480,32 @@ impl TraceabilityChain {
             if let Some(ref cert) = cal.certificate_id {
                 lines.push(format!("  Certificate: {}", cert));
             }
-            lines.push(format!("  Valid: {}", if cal.is_valid() { "Yes" } else { "No" }));
+            lines.push(format!(
+                "  Valid: {}",
+                if cal.is_valid() { "Yes" } else { "No" }
+            ));
         }
 
         lines.push(format!("\nChain Steps:"));
         for entry in &self.entries {
             lines.push(format!(
                 "  [{}] {} ({})",
-                entry.step_id,
-                entry.operation,
-                entry.operator
+                entry.step_id, entry.operation, entry.operator
             ));
         }
 
         let summary = self.summary();
         lines.push(format!("\nSummary:"));
-        lines.push(format!("  Measurement steps: {}", summary.measurement_steps));
+        lines.push(format!(
+            "  Measurement steps: {}",
+            summary.measurement_steps
+        ));
         lines.push(format!("  Model steps: {}", summary.model_steps));
         lines.push(format!("  Neural steps: {}", summary.neural_steps));
-        lines.push(format!("  Total neural share: {:.1}%", summary.total_neural_share * 100.0));
+        lines.push(format!(
+            "  Total neural share: {:.1}%",
+            summary.total_neural_share * 100.0
+        ));
 
         lines.join("\n")
     }

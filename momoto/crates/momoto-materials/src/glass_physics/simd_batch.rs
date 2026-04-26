@@ -163,10 +163,10 @@ impl SimdBatchInput {
     /// Validate input consistency
     pub fn is_valid(&self) -> bool {
         let n = self.ior.len();
-        self.cos_theta.len() == n &&
-        self.absorption.len() == n &&
-        self.thickness.len() == n &&
-        self.g.len() == n
+        self.cos_theta.len() == n
+            && self.absorption.len() == n
+            && self.thickness.len() == n
+            && self.g.len() == n
     }
 }
 
@@ -253,12 +253,7 @@ impl SimdBatchEvaluator {
             let chunk_end = (chunk_start + chunk_size).min(n);
 
             // Process chunk with unrolled loops
-            self.evaluate_chunk(
-                input,
-                &mut result,
-                chunk_start,
-                chunk_end,
-            );
+            self.evaluate_chunk(input, &mut result, chunk_start, chunk_end);
         }
 
         result
@@ -278,15 +273,21 @@ impl SimdBatchEvaluator {
         while i + 4 <= end {
             // Fresnel (unrolled 4x)
             result.fresnel[i] = fresnel_schlick_scalar(input.cos_theta[i], input.ior[i]);
-            result.fresnel[i + 1] = fresnel_schlick_scalar(input.cos_theta[i + 1], input.ior[i + 1]);
-            result.fresnel[i + 2] = fresnel_schlick_scalar(input.cos_theta[i + 2], input.ior[i + 2]);
-            result.fresnel[i + 3] = fresnel_schlick_scalar(input.cos_theta[i + 3], input.ior[i + 3]);
+            result.fresnel[i + 1] =
+                fresnel_schlick_scalar(input.cos_theta[i + 1], input.ior[i + 1]);
+            result.fresnel[i + 2] =
+                fresnel_schlick_scalar(input.cos_theta[i + 2], input.ior[i + 2]);
+            result.fresnel[i + 3] =
+                fresnel_schlick_scalar(input.cos_theta[i + 3], input.ior[i + 3]);
 
             // Beer-Lambert (unrolled 4x)
             result.transmittance[i] = beer_lambert_scalar(input.absorption[i], input.thickness[i]);
-            result.transmittance[i + 1] = beer_lambert_scalar(input.absorption[i + 1], input.thickness[i + 1]);
-            result.transmittance[i + 2] = beer_lambert_scalar(input.absorption[i + 2], input.thickness[i + 2]);
-            result.transmittance[i + 3] = beer_lambert_scalar(input.absorption[i + 3], input.thickness[i + 3]);
+            result.transmittance[i + 1] =
+                beer_lambert_scalar(input.absorption[i + 1], input.thickness[i + 1]);
+            result.transmittance[i + 2] =
+                beer_lambert_scalar(input.absorption[i + 2], input.thickness[i + 2]);
+            result.transmittance[i + 3] =
+                beer_lambert_scalar(input.absorption[i + 3], input.thickness[i + 3]);
 
             // HG phase function (unrolled 4x)
             result.phase[i] = henyey_greenstein_scalar(input.cos_theta[i], input.g[i]);
@@ -296,9 +297,12 @@ impl SimdBatchEvaluator {
 
             // Combined (unrolled 4x)
             result.combined[i] = result.fresnel[i] * result.transmittance[i] * result.phase[i];
-            result.combined[i + 1] = result.fresnel[i + 1] * result.transmittance[i + 1] * result.phase[i + 1];
-            result.combined[i + 2] = result.fresnel[i + 2] * result.transmittance[i + 2] * result.phase[i + 2];
-            result.combined[i + 3] = result.fresnel[i + 3] * result.transmittance[i + 3] * result.phase[i + 3];
+            result.combined[i + 1] =
+                result.fresnel[i + 1] * result.transmittance[i + 1] * result.phase[i + 1];
+            result.combined[i + 2] =
+                result.fresnel[i + 2] * result.transmittance[i + 2] * result.phase[i + 2];
+            result.combined[i + 3] =
+                result.fresnel[i + 3] * result.transmittance[i + 3] * result.phase[i + 3];
 
             i += 4;
         }

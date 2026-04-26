@@ -27,8 +27,8 @@
 
 use std::f64::consts::PI;
 
-use super::fresnel::fresnel_schlick;
 use super::enhanced_presets::QualityTier;
+use super::fresnel::fresnel_schlick;
 
 // ============================================================================
 // EFFECT LAYER DEFINITIONS
@@ -38,10 +38,7 @@ use super::enhanced_presets::QualityTier;
 #[derive(Debug, Clone)]
 pub enum EffectLayer {
     /// Base Fresnel reflection
-    Fresnel {
-        ior: f64,
-        spectral: bool,
-    },
+    Fresnel { ior: f64, spectral: bool },
 
     /// Thin-film interference
     ThinFilm {
@@ -51,28 +48,22 @@ pub enum EffectLayer {
     },
 
     /// Metal with complex IOR
-    Metal {
-        n: f64,
-        k: f64,
-    },
+    Metal { n: f64, k: f64 },
 
     /// Mie scattering from particles
     Mie {
-        g: f64,           // Asymmetry parameter
-        extinction: f64,  // Extinction coefficient
+        g: f64,          // Asymmetry parameter
+        extinction: f64, // Extinction coefficient
     },
 
     /// Surface roughness
     Roughness {
-        value: f64,       // 0-1 roughness
+        value: f64, // 0-1 roughness
         model: RoughnessModel,
     },
 
     /// Absorption (Beer-Lambert)
-    Absorption {
-        coefficient: f64,
-        thickness: f64,
-    },
+    Absorption { coefficient: f64, thickness: f64 },
 
     /// Oxidation layer
     Oxidation {
@@ -223,33 +214,38 @@ impl CombinedMaterial {
     /// Evaluate single layer
     fn evaluate_layer(&self, layer: &EffectLayer, wavelength_nm: f64, cos_theta: f64) -> f64 {
         match layer {
-            EffectLayer::Fresnel { ior, spectral: _ } => {
-                fresnel_schlick(1.0, *ior, cos_theta)
-            }
+            EffectLayer::Fresnel { ior, spectral: _ } => fresnel_schlick(1.0, *ior, cos_theta),
 
-            EffectLayer::ThinFilm { n_film, thickness_nm, n_substrate } => {
-                thin_film_reflectance(wavelength_nm, *n_film, *thickness_nm, *n_substrate, cos_theta)
-            }
+            EffectLayer::ThinFilm {
+                n_film,
+                thickness_nm,
+                n_substrate,
+            } => thin_film_reflectance(
+                wavelength_nm,
+                *n_film,
+                *thickness_nm,
+                *n_substrate,
+                cos_theta,
+            ),
 
-            EffectLayer::Metal { n, k } => {
-                metal_fresnel(*n, *k, cos_theta)
-            }
+            EffectLayer::Metal { n, k } => metal_fresnel(*n, *k, cos_theta),
 
             EffectLayer::Mie { g, extinction } => {
                 henyey_greenstein_phase(cos_theta, *g) * (1.0 - (-*extinction).exp())
             }
 
-            EffectLayer::Roughness { value, model } => {
-                roughness_factor(cos_theta, *value, *model)
-            }
+            EffectLayer::Roughness { value, model } => roughness_factor(cos_theta, *value, *model),
 
-            EffectLayer::Absorption { coefficient, thickness } => {
-                (-*coefficient * *thickness).exp()
-            }
+            EffectLayer::Absorption {
+                coefficient,
+                thickness,
+            } => (-*coefficient * *thickness).exp(),
 
-            EffectLayer::Oxidation { oxide_n, oxide_k, thickness_nm } => {
-                oxide_reflectance(*oxide_n, *oxide_k, *thickness_nm, wavelength_nm)
-            }
+            EffectLayer::Oxidation {
+                oxide_n,
+                oxide_k,
+                thickness_nm,
+            } => oxide_reflectance(*oxide_n, *oxide_k, *thickness_nm, wavelength_nm),
         }
     }
 
@@ -291,12 +287,18 @@ impl CombinedMaterial {
 
             keyframes.push_str(&format!(
                 "  {}% {{ background-color: rgb({}, {}, {}); }}\n",
-                (t * 100.0).round() as u32, r, g, b
+                (t * 100.0).round() as u32,
+                r,
+                g,
+                b
             ));
         }
 
         keyframes.push_str("}\n\n");
-        keyframes.push_str(&format!(".iridescent {{ animation: iridescence {}s ease-in-out infinite alternate; }}", duration_s));
+        keyframes.push_str(&format!(
+            ".iridescent {{ animation: iridescence {}s ease-in-out infinite alternate; }}",
+            duration_s
+        ));
 
         keyframes
     }
@@ -315,7 +317,10 @@ impl CombinedMaterial {
 impl Default for CombinedMaterial {
     fn default() -> Self {
         Self {
-            layers: vec![EffectLayer::Fresnel { ior: 1.5, spectral: false }],
+            layers: vec![EffectLayer::Fresnel {
+                ior: 1.5,
+                spectral: false,
+            }],
             blend_mode: BlendMode::PhysicallyBased,
             quality_tier: QualityTier::High,
             base_ior: 1.5,
@@ -350,20 +355,30 @@ impl CombinedMaterialBuilder {
     /// Add Fresnel layer
     pub fn add_fresnel(mut self, ior: f64) -> Self {
         self.base_ior = ior;
-        self.layers.push(EffectLayer::Fresnel { ior, spectral: false });
+        self.layers.push(EffectLayer::Fresnel {
+            ior,
+            spectral: false,
+        });
         self
     }
 
     /// Add spectral Fresnel layer
     pub fn add_fresnel_spectral(mut self, ior: f64) -> Self {
         self.base_ior = ior;
-        self.layers.push(EffectLayer::Fresnel { ior, spectral: true });
+        self.layers.push(EffectLayer::Fresnel {
+            ior,
+            spectral: true,
+        });
         self
     }
 
     /// Add thin-film layer
     pub fn add_thin_film(mut self, n_film: f64, thickness_nm: f64, n_substrate: f64) -> Self {
-        self.layers.push(EffectLayer::ThinFilm { n_film, thickness_nm, n_substrate });
+        self.layers.push(EffectLayer::ThinFilm {
+            n_film,
+            thickness_nm,
+            n_substrate,
+        });
         self
     }
 
@@ -381,7 +396,10 @@ impl CombinedMaterialBuilder {
 
     /// Add roughness layer
     pub fn add_roughness(mut self, value: f64) -> Self {
-        self.layers.push(EffectLayer::Roughness { value, model: RoughnessModel::GGX });
+        self.layers.push(EffectLayer::Roughness {
+            value,
+            model: RoughnessModel::GGX,
+        });
         self
     }
 
@@ -393,13 +411,20 @@ impl CombinedMaterialBuilder {
 
     /// Add absorption layer
     pub fn add_absorption(mut self, coefficient: f64, thickness: f64) -> Self {
-        self.layers.push(EffectLayer::Absorption { coefficient, thickness });
+        self.layers.push(EffectLayer::Absorption {
+            coefficient,
+            thickness,
+        });
         self
     }
 
     /// Add oxidation layer
     pub fn add_oxidation(mut self, oxide_n: f64, oxide_k: f64, thickness_nm: f64) -> Self {
-        self.layers.push(EffectLayer::Oxidation { oxide_n, oxide_k, thickness_nm });
+        self.layers.push(EffectLayer::Oxidation {
+            oxide_n,
+            oxide_k,
+            thickness_nm,
+        });
         self
     }
 
@@ -431,7 +456,13 @@ impl CombinedMaterialBuilder {
 // ============================================================================
 
 /// Thin-film interference reflectance (simplified)
-fn thin_film_reflectance(wavelength_nm: f64, n_film: f64, thickness_nm: f64, n_substrate: f64, cos_theta: f64) -> f64 {
+fn thin_film_reflectance(
+    wavelength_nm: f64,
+    n_film: f64,
+    thickness_nm: f64,
+    n_substrate: f64,
+    cos_theta: f64,
+) -> f64 {
     // Phase difference
     let delta = 4.0 * PI * n_film * thickness_nm * cos_theta / wavelength_nm;
 
@@ -662,9 +693,7 @@ mod tests {
 
     #[test]
     fn test_evaluate_fresnel() {
-        let material = CombinedMaterial::builder()
-            .add_fresnel(1.5)
-            .build();
+        let material = CombinedMaterial::builder().add_fresnel(1.5).build();
 
         let r_normal = material.evaluate(550.0, 1.0);
         let r_grazing = material.evaluate(550.0, 0.0);
@@ -676,9 +705,7 @@ mod tests {
 
     #[test]
     fn test_evaluate_rgb() {
-        let material = CombinedMaterial::builder()
-            .add_fresnel(1.5)
-            .build();
+        let material = CombinedMaterial::builder().add_fresnel(1.5).build();
 
         let rgb = material.evaluate_rgb(0.7);
 
@@ -689,9 +716,7 @@ mod tests {
 
     #[test]
     fn test_spectral() {
-        let material = CombinedMaterial::builder()
-            .add_fresnel(1.5)
-            .build();
+        let material = CombinedMaterial::builder().add_fresnel(1.5).build();
 
         let spectrum = material.evaluate_spectral(0.7);
 
@@ -730,8 +755,14 @@ mod tests {
             .add_fresnel(1.5)
             .add_roughness(0.1);
 
-        let additive = base_material.clone().blend_mode(BlendMode::Additive).build();
-        let multiplicative = base_material.clone().blend_mode(BlendMode::Multiplicative).build();
+        let additive = base_material
+            .clone()
+            .blend_mode(BlendMode::Additive)
+            .build();
+        let multiplicative = base_material
+            .clone()
+            .blend_mode(BlendMode::Multiplicative)
+            .build();
         let physical = base_material.blend_mode(BlendMode::PhysicallyBased).build();
 
         let r_add = additive.evaluate(550.0, 0.7);

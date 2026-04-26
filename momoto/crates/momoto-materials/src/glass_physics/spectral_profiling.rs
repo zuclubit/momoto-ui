@@ -9,8 +9,8 @@
 //! - Cost per number of λ samples
 //! - Memory usage per operation
 
-use std::time::Instant;
 use std::collections::HashMap;
+use std::time::Instant;
 
 use super::spectral_pipeline::*;
 
@@ -58,12 +58,15 @@ impl StageStats {
 
         // Update std dev
         if self.total_calls > 1 {
-            let variance: f64 = self.times.iter()
+            let variance: f64 = self
+                .times
+                .iter()
                 .map(|&t| {
                     let diff = t as f64 - self.mean_time_ns;
                     diff * diff
                 })
-                .sum::<f64>() / (self.total_calls - 1) as f64;
+                .sum::<f64>()
+                / (self.total_calls - 1) as f64;
             self.std_dev_ns = variance.sqrt();
         }
     }
@@ -189,7 +192,9 @@ impl SpectralProfiler {
         }
 
         // Get or create stats
-        let stats = self.report.stages
+        let stats = self
+            .report
+            .stages
             .entry(name.to_string())
             .or_insert_with(StageStats::new);
 
@@ -309,8 +314,7 @@ impl SpectralBenchmarkSuite {
         context: &EvaluationContext,
         sample_count: usize,
     ) -> Vec<BenchmarkResult> {
-        let pipeline = SpectralPipeline::new()
-            .add_stage(ThinFilmStage::new(1.45, 300.0, 1.52));
+        let pipeline = SpectralPipeline::new().add_stage(ThinFilmStage::new(1.45, 300.0, 1.52));
 
         self.measure_pipeline("ThinFilm", &pipeline, incident, context, sample_count)
     }
@@ -321,8 +325,7 @@ impl SpectralBenchmarkSuite {
         context: &EvaluationContext,
         sample_count: usize,
     ) -> Vec<BenchmarkResult> {
-        let pipeline = SpectralPipeline::new()
-            .add_stage(DispersionStage::crown_glass());
+        let pipeline = SpectralPipeline::new().add_stage(DispersionStage::crown_glass());
 
         self.measure_pipeline("Dispersion", &pipeline, incident, context, sample_count)
     }
@@ -333,8 +336,7 @@ impl SpectralBenchmarkSuite {
         context: &EvaluationContext,
         sample_count: usize,
     ) -> Vec<BenchmarkResult> {
-        let pipeline = SpectralPipeline::new()
-            .add_stage(MieScatteringStage::fog());
+        let pipeline = SpectralPipeline::new().add_stage(MieScatteringStage::fog());
 
         self.measure_pipeline("Mie", &pipeline, incident, context, sample_count)
     }
@@ -345,8 +347,7 @@ impl SpectralBenchmarkSuite {
         context: &EvaluationContext,
         sample_count: usize,
     ) -> Vec<BenchmarkResult> {
-        let pipeline = SpectralPipeline::new()
-            .add_stage(ThermoOpticStage::glass_coating(100.0));
+        let pipeline = SpectralPipeline::new().add_stage(ThermoOpticStage::glass_coating(100.0));
 
         self.measure_pipeline("ThermoOptic", &pipeline, incident, context, sample_count)
     }
@@ -357,8 +358,7 @@ impl SpectralBenchmarkSuite {
         context: &EvaluationContext,
         sample_count: usize,
     ) -> Vec<BenchmarkResult> {
-        let pipeline = SpectralPipeline::new()
-            .add_stage(MetalReflectanceStage::gold());
+        let pipeline = SpectralPipeline::new().add_stage(MetalReflectanceStage::gold());
 
         self.measure_pipeline("Metal", &pipeline, incident, context, sample_count)
     }
@@ -400,12 +400,14 @@ impl SpectralBenchmarkSuite {
 
         // Calculate statistics
         let mean_ns = times_ns.iter().sum::<u64>() as f64 / times_ns.len() as f64;
-        let variance = times_ns.iter()
+        let variance = times_ns
+            .iter()
             .map(|&t| {
                 let diff = t as f64 - mean_ns;
                 diff * diff
             })
-            .sum::<f64>() / (times_ns.len() - 1) as f64;
+            .sum::<f64>()
+            / (times_ns.len() - 1) as f64;
         let std_dev_ns = variance.sqrt();
 
         vec![BenchmarkResult {
@@ -443,7 +445,8 @@ impl SpectralBenchmarkSuite {
         md.push_str("\n## Summary by Stage (81 samples, default)\n\n");
 
         let default_sample_count = 81;
-        let default_results: Vec<_> = results.iter()
+        let default_results: Vec<_> = results
+            .iter()
             .filter(|r| r.sample_count == default_sample_count)
             .collect();
 
@@ -454,9 +457,7 @@ impl SpectralBenchmarkSuite {
             for result in &default_results {
                 md.push_str(&format!(
                     "| {} | {:.2} | {:.0} |\n",
-                    result.stage_name,
-                    result.mean_time_us,
-                    result.fps_equivalent,
+                    result.stage_name, result.mean_time_us, result.fps_equivalent,
                 ));
             }
         }
@@ -506,10 +507,7 @@ mod tests {
         for result in &results {
             println!(
                 "{} @ {} samples: {:.2} μs ({:.0} FPS)",
-                result.stage_name,
-                result.sample_count,
-                result.mean_time_us,
-                result.fps_equivalent
+                result.stage_name, result.sample_count, result.mean_time_us, result.fps_equivalent
             );
         }
     }
@@ -518,20 +516,21 @@ mod tests {
     fn test_full_benchmark_comprehensive() {
         let results = run_full_benchmark();
 
-        println!("\n{}", SpectralBenchmarkSuite::results_to_markdown(&results));
+        println!(
+            "\n{}",
+            SpectralBenchmarkSuite::results_to_markdown(&results)
+        );
 
         // Verify we have results for all sample counts
-        let sample_counts: std::collections::HashSet<_> = results.iter()
-            .map(|r| r.sample_count)
-            .collect();
+        let sample_counts: std::collections::HashSet<_> =
+            results.iter().map(|r| r.sample_count).collect();
 
         assert!(sample_counts.contains(&81), "Missing default 81 samples");
     }
 
     #[test]
     fn test_profiler_records_stats() {
-        let mut profiler = SpectralProfiler::new()
-            .with_iterations(5, 20);
+        let mut profiler = SpectralProfiler::new().with_iterations(5, 20);
 
         profiler.profile_stage("test_stage", || {
             // Simulate some work

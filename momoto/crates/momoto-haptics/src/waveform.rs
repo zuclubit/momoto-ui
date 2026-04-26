@@ -71,35 +71,47 @@ impl HapticWaveform {
             Box::new([])
         } else {
             match kind {
-                WaveformKind::Sine  => Self::sine(freq_hz, amplitude, n_samples, sample_rate),
+                WaveformKind::Sine => Self::sine(freq_hz, amplitude, n_samples, sample_rate),
                 WaveformKind::Pulse => Self::pulse(amplitude, n_samples),
-                WaveformKind::Ramp  => Self::ramp(freq_hz, amplitude, n_samples, sample_rate),
-                WaveformKind::Buzz  => Self::buzz(freq_hz, amplitude, n_samples, sample_rate),
+                WaveformKind::Ramp => Self::ramp(freq_hz, amplitude, n_samples, sample_rate),
+                WaveformKind::Buzz => Self::buzz(freq_hz, amplitude, n_samples, sample_rate),
             }
         };
 
-        Self { kind, freq_hz, sample_rate, samples }
+        Self {
+            kind,
+            freq_hz,
+            sample_rate,
+            samples,
+        }
     }
 
     /// Duration of this waveform in milliseconds.
     #[must_use]
     pub fn duration_ms(&self) -> f32 {
-        if self.sample_rate == 0 { return 0.0; }
+        if self.sample_rate == 0 {
+            return 0.0;
+        }
         self.samples.len() as f32 / self.sample_rate as f32 * 1000.0
     }
 
     /// Peak amplitude in the waveform (maximum absolute value).
     #[must_use]
     pub fn peak_amplitude(&self) -> f32 {
-        self.samples.iter().map(|&s| s.abs()).fold(0.0_f32, f32::max)
+        self.samples
+            .iter()
+            .map(|&s| s.abs())
+            .fold(0.0_f32, f32::max)
     }
 
     /// RMS amplitude.
     #[must_use]
     pub fn rms_amplitude(&self) -> f32 {
-        if self.samples.is_empty() { return 0.0; }
-        let mean_sq: f32 = self.samples.iter().map(|&s| s * s).sum::<f32>()
-            / self.samples.len() as f32;
+        if self.samples.is_empty() {
+            return 0.0;
+        }
+        let mean_sq: f32 =
+            self.samples.iter().map(|&s| s * s).sum::<f32>() / self.samples.len() as f32;
         mean_sq.sqrt()
     }
 
@@ -115,7 +127,7 @@ impl HapticWaveform {
     fn pulse(amp: f32, n: usize) -> Box<[f32]> {
         // Gaussian centred at n/2, sigma = n/8
         let centre = n as f32 / 2.0;
-        let sigma  = (n as f32 / 8.0).max(1.0);
+        let sigma = (n as f32 / 8.0).max(1.0);
         (0..n)
             .map(|i| {
                 let x = (i as f32 - centre) / sigma;
@@ -185,7 +197,10 @@ mod tests {
     fn ramp_starts_and_ends_near_zero() {
         let w = HapticWaveform::generate(WaveformKind::Ramp, 200.0, 100.0, 1.0, 8000);
         assert!(w.samples[0].abs() < 0.05, "ramp should start near 0");
-        assert!(w.samples[w.samples.len() - 1].abs() < 0.05, "ramp should end near 0");
+        assert!(
+            w.samples[w.samples.len() - 1].abs() < 0.05,
+            "ramp should end near 0"
+        );
     }
 
     #[test]
@@ -219,7 +234,8 @@ mod tests {
         let expected_rms = 1.0_f32 / 2.0_f32.sqrt();
         assert!(
             (w.rms_amplitude() - expected_rms).abs() < 0.02,
-            "rms of unit sine ≈ 0.707, got {}", w.rms_amplitude()
+            "rms of unit sine ≈ 0.707, got {}",
+            w.rms_amplitude()
         );
     }
 }

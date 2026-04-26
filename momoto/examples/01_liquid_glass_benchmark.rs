@@ -40,9 +40,15 @@ fn main() {
 
     println!("Material Properties:");
     println!("  Opacity:            {:.4}", evaluated.opacity);
-    println!("  Scattering:         {:.2} mm", evaluated.scattering_radius_mm);
+    println!(
+        "  Scattering:         {:.2} mm",
+        evaluated.scattering_radius_mm
+    );
     println!("  Fresnel F0:         {:.4}", evaluated.fresnel_f0);
-    println!("  Edge Intensity:     {:.4}", evaluated.fresnel_edge_intensity);
+    println!(
+        "  Edge Intensity:     {:.4}",
+        evaluated.fresnel_edge_intensity
+    );
     println!("  Thickness:          {:.2} mm", evaluated.thickness_mm);
     println!("  Roughness:          {:.2}", evaluated.roughness);
     println!();

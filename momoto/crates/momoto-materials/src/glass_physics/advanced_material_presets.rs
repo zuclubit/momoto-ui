@@ -16,11 +16,17 @@
 #![allow(dead_code, unused_imports, unused_variables)]
 
 use crate::glass_physics::{
-    unified_bsdf::{BSDF, BSDFContext, BSDFResponse, BSDFSample, LayeredBSDF, DielectricBSDF, ConductorBSDF, ThinFilmBSDF},
     anisotropic::AnisotropicBSDF,
-    meta_materials::{StructuralColor, NanostructureType, PhotonicCrystal, LatticeType, MaterialRef, DiffractionGrating},
-    thin_film::{ThinFilm, ThinFilmStack},
     complex_ior::metals,
+    meta_materials::{
+        DiffractionGrating, LatticeType, MaterialRef, NanostructureType, PhotonicCrystal,
+        StructuralColor,
+    },
+    thin_film::{ThinFilm, ThinFilmStack},
+    unified_bsdf::{
+        BSDFContext, BSDFResponse, BSDFSample, ConductorBSDF, DielectricBSDF, LayeredBSDF,
+        ThinFilmBSDF, BSDF,
+    },
 };
 
 // ============================================================================
@@ -82,13 +88,13 @@ pub struct AdvancedMaterialInfo {
 /// while transmitting visible light.
 pub fn low_e_coating() -> LayeredBSDF {
     // Silver-based Low-E with protective dielectric layers
-    let base_glass = DielectricBSDF::new(1.52, 0.0);  // Float glass
+    let base_glass = DielectricBSDF::new(1.52, 0.0); // Float glass
 
     // Simplified silver layer using preset
     let silver = ConductorBSDF::silver();
 
     // Thin film interference from oxide layers (substrate, film, thickness)
-    let oxide_layer = ThinFilmBSDF::new(1.52, 1.8, 80.0);  // Tin oxide, ~80nm
+    let oxide_layer = ThinFilmBSDF::new(1.52, 1.8, 80.0); // Tin oxide, ~80nm
 
     LayeredBSDF::new()
         .push(Box::new(oxide_layer))
@@ -104,8 +110,8 @@ pub fn electrochromic_glass(tint_level: f64) -> DielectricBSDF {
     // Model as variable absorption dielectric
     // Electrochromic effect modeled via roughness (simplified)
     let tint = tint_level.clamp(0.0, 1.0);
-    let effective_ior = 1.52 + tint * 0.05;  // Slight IOR change with tinting
-    let roughness = tint * 0.1;  // Tinting adds slight haze
+    let effective_ior = 1.52 + tint * 0.05; // Slight IOR change with tinting
+    let roughness = tint * 0.1; // Tinting adds slight haze
 
     DielectricBSDF::new(effective_ior, roughness)
 }
@@ -122,7 +128,7 @@ pub fn smart_glass_pdlc(voltage: f64) -> DielectricBSDF {
 
     // Scattering decreases as voltage aligns LC droplets
     let scattering = 1.0 - v;
-    let roughness = scattering * 0.8;  // High roughness when opaque
+    let roughness = scattering * 0.8; // High roughness when opaque
 
     DielectricBSDF::new(1.52, roughness)
 }
@@ -142,10 +148,10 @@ pub fn car_paint_metallic(base_hue: f64, flake_density: f64) -> LayeredBSDF {
 
     // Metallic flakes modeled as anisotropic (random orientations)
     let flake_layer = AnisotropicBSDF::new(
-        0.1 + density * 0.2,  // alpha_x
-        0.1 + density * 0.2,  // alpha_y
-        2.5,                   // metallic IOR (aluminum-like)
-        base_hue,              // rotation based on color
+        0.1 + density * 0.2, // alpha_x
+        0.1 + density * 0.2, // alpha_y
+        2.5,                 // metallic IOR (aluminum-like)
+        base_hue,            // rotation based on color
     );
 
     // Base color coat
@@ -167,9 +173,9 @@ pub fn pearlescent_paint(base_hue: f64) -> LayeredBSDF {
     // Interference layer (mica + metal oxide)
     // ThinFilmBSDF::new(substrate_ior, film_ior, film_thickness)
     let interference = ThinFilmBSDF::new(
-        1.58,                  // Mica substrate
-        2.2,                   // TiO2 coating
-        120.0 + base_hue,      // Film thickness varies with color
+        1.58,             // Mica substrate
+        2.2,              // TiO2 coating
+        120.0 + base_hue, // Film thickness varies with color
     );
 
     // Mica substrate
@@ -197,13 +203,13 @@ pub fn opal() -> StructuralColor {
         NanostructureType::PhotonicCrystal(
             PhotonicCrystal::new(
                 LatticeType::Hexagonal,
-                250.0,  // ~250nm period for visible diffraction
-                0.74,   // Close-packed spheres
+                250.0, // ~250nm period for visible diffraction
+                0.74,  // Close-packed spheres
             )
-            .with_high_material(MaterialRef::Dielectric { ior: 1.45 })  // Silica
-            .with_low_material(MaterialRef::Air)
+            .with_high_material(MaterialRef::Dielectric { ior: 1.45 }) // Silica
+            .with_low_material(MaterialRef::Air),
         ),
-        MaterialRef::Dielectric { ior: 1.45 },  // Silica substrate
+        MaterialRef::Dielectric { ior: 1.45 }, // Silica substrate
     )
 }
 
@@ -227,13 +233,13 @@ pub fn beetle_shell() -> StructuralColor {
     StructuralColor::new(
         NanostructureType::ThinFilmStack {
             layers: vec![
-                (120.0, 1.56),  // Chitin layer
-                (80.0, 1.45),   // Spacing
-                (120.0, 1.56),  // Chitin layer
-                (80.0, 1.45),   // Spacing
+                (120.0, 1.56), // Chitin layer
+                (80.0, 1.45),  // Spacing
+                (120.0, 1.56), // Chitin layer
+                (80.0, 1.45),  // Spacing
             ],
         },
-        MaterialRef::Dielectric { ior: 1.56 },  // Chitin substrate
+        MaterialRef::Dielectric { ior: 1.56 }, // Chitin substrate
     )
 }
 
@@ -254,9 +260,9 @@ pub fn anti_reflective_coating(layers: usize) -> ThinFilmStack {
     // Alternate high/low index materials
     for i in 0..layer_count {
         let (n, d) = if i % 2 == 0 {
-            (1.38, 100.0)  // MgF2 (low index)
+            (1.38, 100.0) // MgF2 (low index)
         } else {
-            (2.3, 80.0)    // TiO2 (high index)
+            (2.3, 80.0) // TiO2 (high index)
         };
         film_layers.push(ThinFilm::new(n, d));
     }
@@ -273,7 +279,7 @@ pub fn dichroic_filter(pass_band: (f64, f64)) -> ThinFilmStack {
     let _bandwidth = pass_band.1 - pass_band.0;
 
     // Simplified bandpass filter using interference
-    let qwot = center / 4.0;  // Quarter-wave optical thickness
+    let qwot = center / 4.0; // Quarter-wave optical thickness
 
     let layers = vec![
         ThinFilm::new(2.3, qwot),       // High index
@@ -290,8 +296,7 @@ pub fn dichroic_filter(pass_band: (f64, f64)) -> ThinFilmStack {
 pub fn holographic() -> DiffractionGrating {
     // DiffractionGrating::new(period, depth)
     // 1000nm period = 1000 lines/mm
-    DiffractionGrating::new(1000.0, 100.0)
-        .with_blaze(0.3)
+    DiffractionGrating::new(1000.0, 100.0).with_blaze(0.3)
 }
 
 // ============================================================================
@@ -332,7 +337,6 @@ pub fn catalog() -> Vec<AdvancedMaterialInfo> {
             has_scattering: true,
             memory_bytes: estimate_pdlc_memory(),
         },
-
         // Automotive
         AdvancedMaterialInfo {
             id: "car_paint_metallic",
@@ -364,7 +368,6 @@ pub fn catalog() -> Vec<AdvancedMaterialInfo> {
             has_scattering: false,
             memory_bytes: estimate_chrome_memory(),
         },
-
         // Natural
         AdvancedMaterialInfo {
             id: "opal",
@@ -396,7 +399,6 @@ pub fn catalog() -> Vec<AdvancedMaterialInfo> {
             has_scattering: false,
             memory_bytes: estimate_beetle_memory(),
         },
-
         // Technical
         AdvancedMaterialInfo {
             id: "anti_reflective_coating",
@@ -438,22 +440,49 @@ pub fn get_preset_info(id: &str) -> Option<AdvancedMaterialInfo> {
 
 /// List presets by category
 pub fn list_by_category(category: AdvancedMaterialCategory) -> Vec<AdvancedMaterialInfo> {
-    catalog().into_iter().filter(|p| p.category == category).collect()
+    catalog()
+        .into_iter()
+        .filter(|p| p.category == category)
+        .collect()
 }
 
 // Memory estimation functions
-fn estimate_low_e_memory() -> usize { 512 }
-fn estimate_electrochromic_memory() -> usize { 256 }
-fn estimate_pdlc_memory() -> usize { 256 }
-fn estimate_metallic_paint_memory() -> usize { 768 }
-fn estimate_pearlescent_memory() -> usize { 640 }
-fn estimate_chrome_memory() -> usize { 128 }
-fn estimate_opal_memory() -> usize { 1024 }
-fn estimate_nacre_memory() -> usize { 512 }
-fn estimate_beetle_memory() -> usize { 768 }
-fn estimate_ar_memory() -> usize { 384 }
-fn estimate_dichroic_memory() -> usize { 512 }
-fn estimate_holographic_memory() -> usize { 256 }
+fn estimate_low_e_memory() -> usize {
+    512
+}
+fn estimate_electrochromic_memory() -> usize {
+    256
+}
+fn estimate_pdlc_memory() -> usize {
+    256
+}
+fn estimate_metallic_paint_memory() -> usize {
+    768
+}
+fn estimate_pearlescent_memory() -> usize {
+    640
+}
+fn estimate_chrome_memory() -> usize {
+    128
+}
+fn estimate_opal_memory() -> usize {
+    1024
+}
+fn estimate_nacre_memory() -> usize {
+    512
+}
+fn estimate_beetle_memory() -> usize {
+    768
+}
+fn estimate_ar_memory() -> usize {
+    384
+}
+fn estimate_dichroic_memory() -> usize {
+    512
+}
+fn estimate_holographic_memory() -> usize {
+    256
+}
 
 /// Estimate total memory for all advanced material presets
 pub fn estimate_advanced_presets_memory() -> usize {
@@ -557,10 +586,22 @@ mod tests {
         assert!(cat.len() >= 12);
 
         // Verify all categories are represented
-        let arch_count = cat.iter().filter(|p| p.category == AdvancedMaterialCategory::Architectural).count();
-        let auto_count = cat.iter().filter(|p| p.category == AdvancedMaterialCategory::Automotive).count();
-        let natural_count = cat.iter().filter(|p| p.category == AdvancedMaterialCategory::Natural).count();
-        let tech_count = cat.iter().filter(|p| p.category == AdvancedMaterialCategory::Technical).count();
+        let arch_count = cat
+            .iter()
+            .filter(|p| p.category == AdvancedMaterialCategory::Architectural)
+            .count();
+        let auto_count = cat
+            .iter()
+            .filter(|p| p.category == AdvancedMaterialCategory::Automotive)
+            .count();
+        let natural_count = cat
+            .iter()
+            .filter(|p| p.category == AdvancedMaterialCategory::Natural)
+            .count();
+        let tech_count = cat
+            .iter()
+            .filter(|p| p.category == AdvancedMaterialCategory::Technical)
+            .count();
 
         assert!(arch_count >= 3);
         assert!(auto_count >= 3);
@@ -579,13 +620,15 @@ mod tests {
     fn test_list_by_category() {
         let automotive = list_by_category(AdvancedMaterialCategory::Automotive);
         assert!(automotive.len() >= 3);
-        assert!(automotive.iter().all(|p| p.category == AdvancedMaterialCategory::Automotive));
+        assert!(automotive
+            .iter()
+            .all(|p| p.category == AdvancedMaterialCategory::Automotive));
     }
 
     #[test]
     fn test_memory_estimation() {
         let total = estimate_advanced_presets_memory();
         assert!(total > 0);
-        assert!(total < 100_000);  // Should be reasonable
+        assert!(total < 100_000); // Should be reasonable
     }
 }

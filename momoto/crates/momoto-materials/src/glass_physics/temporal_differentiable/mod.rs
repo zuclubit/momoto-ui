@@ -32,25 +32,23 @@
 //! - **BPTT**: Backpropagation through time for long sequences
 //! - **GradientStabilization**: Techniques to prevent gradient explosion/vanishing
 
-pub mod evolution_gradients;
 pub mod bptt;
+pub mod evolution_gradients;
 
 // Re-exports
 pub use evolution_gradients::{
-    EvolutionGradient, LinearEvolutionGradient, ExponentialEvolutionGradient,
-    OscillatingEvolutionGradient, EvolutionGradients, EvolutionType,
-    compute_evolution_gradient,
+    compute_evolution_gradient, EvolutionGradient, EvolutionGradients, EvolutionType,
+    ExponentialEvolutionGradient, LinearEvolutionGradient, OscillatingEvolutionGradient,
 };
 
 pub use bptt::{
-    BPTT, BPTTConfig, BPTTState, TemporalGradientAccumulator,
-    GradientStabilizer, StabilizerConfig,
+    BPTTConfig, BPTTState, GradientStabilizer, StabilizerConfig, TemporalGradientAccumulator, BPTT,
 };
 
 /// Prelude for convenient imports.
 pub mod prelude {
-    pub use super::evolution_gradients::{EvolutionGradient, compute_evolution_gradient};
-    pub use super::bptt::{BPTT, BPTTConfig, GradientStabilizer};
+    pub use super::bptt::{BPTTConfig, GradientStabilizer, BPTT};
+    pub use super::evolution_gradients::{compute_evolution_gradient, EvolutionGradient};
 }
 
 // ============================================================================

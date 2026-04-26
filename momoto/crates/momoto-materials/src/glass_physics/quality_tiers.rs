@@ -78,8 +78,8 @@
 //!     Standard
 //! ```
 
-use super::enhanced_presets::QualityTier;
 use super::dispersion::DispersionModel;
+use super::enhanced_presets::QualityTier;
 use super::scattering::ScatteringParams;
 
 // ============================================================================
@@ -830,7 +830,7 @@ impl MaterialComplexity {
             bounce_count: 2,
             needs_spectral: true,
             is_metal: false,
-            has_mie: true, // Phase 3 Mie
+            has_mie: true,       // Phase 3 Mie
             has_thin_film: true, // Phase 3 thin-film
             thin_film_layers: 1,
             // Phase 4
@@ -970,14 +970,25 @@ impl Default for QualityConfig {
 /// # Returns
 ///
 /// The recommended quality tier
-pub fn select_tier(config: &QualityConfig, material_complexity: &MaterialComplexity) -> QualityTier {
+pub fn select_tier(
+    config: &QualityConfig,
+    material_complexity: &MaterialComplexity,
+) -> QualityTier {
     // User preference takes priority (unless animation requires downgrade)
     if let Some(preferred) = config.preferred_tier {
         if !config.animation_active || !config.allow_downgrade {
             return preferred;
         }
         // During animation, may downgrade from preferred
-        if config.animation_active && matches!(preferred, QualityTier::High | QualityTier::UltraHigh | QualityTier::Experimental | QualityTier::Reference) {
+        if config.animation_active
+            && matches!(
+                preferred,
+                QualityTier::High
+                    | QualityTier::UltraHigh
+                    | QualityTier::Experimental
+                    | QualityTier::Reference
+            )
+        {
             return QualityTier::Standard;
         }
         return preferred;
@@ -1235,7 +1246,7 @@ impl TierFeatures {
                 max_gradient_stops: 4,
                 chromatic_effects: false,
                 // Phase 3: Minimal support
-                metal_fresnel: false, // Use Schlick approximation
+                metal_fresnel: false,  // Use Schlick approximation
                 mie_scattering: false, // Use H-G approximation
                 thin_film_interference: false,
                 max_thin_film_layers: 0,
@@ -1259,8 +1270,8 @@ impl TierFeatures {
                 plugin_support: false,
                 research_api: false,
                 material_fingerprinting: true, // Always enabled
-                material_export: true, // Always enabled
-                material_import: true, // Always enabled
+                material_export: true,         // Always enabled
+                material_import: true,         // Always enabled
             },
             QualityTier::Standard => Self {
                 spectral_fresnel: true,
@@ -1271,7 +1282,7 @@ impl TierFeatures {
                 max_gradient_stops: 8,
                 chromatic_effects: true,
                 // Phase 3: Basic support
-                metal_fresnel: true, // Full complex Fresnel for metals
+                metal_fresnel: true,   // Full complex Fresnel for metals
                 mie_scattering: false, // Use H-G approximation
                 thin_film_interference: false,
                 max_thin_film_layers: 0,
@@ -1436,7 +1447,7 @@ impl TierFeatures {
                 scattering_fields: true,
                 oxidation_kinetics: true,
                 // Phase 8: All features enabled (reference-grade)
-                reference_mode: true, // IEEE754 full precision, no LUTs
+                reference_mode: true,      // IEEE754 full precision, no LUTs
                 external_validation: true, // MERL and external datasets
                 plugin_support: true,
                 research_api: true, // ML integration
@@ -1627,8 +1638,7 @@ mod tests {
 
     #[test]
     fn test_tier_selection_high_end() {
-        let config = QualityConfig::new()
-            .with_device(DeviceCapabilities::high_end());
+        let config = QualityConfig::new().with_device(DeviceCapabilities::high_end());
 
         let complexity = MaterialComplexity::high();
         let tier = select_tier(&config, &complexity);
@@ -1637,8 +1647,7 @@ mod tests {
 
     #[test]
     fn test_tier_selection_preferred() {
-        let config = QualityConfig::new()
-            .with_preferred_tier(QualityTier::Reference);
+        let config = QualityConfig::new().with_preferred_tier(QualityTier::Reference);
 
         let tier = select_tier(&config, &MaterialComplexity::simple());
         assert_eq!(tier, QualityTier::Reference);
@@ -1688,9 +1697,6 @@ mod tests {
 
         // Within budget
         metrics.budget_usage = 50.0;
-        assert_eq!(
-            metrics.suggest_adjustment(QualityTier::Standard),
-            None
-        );
+        assert_eq!(metrics.suggest_adjustment(QualityTier::Standard), None);
     }
 }

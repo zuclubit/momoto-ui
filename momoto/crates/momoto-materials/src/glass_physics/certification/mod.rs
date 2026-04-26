@@ -61,7 +61,9 @@ pub use profiles::{
     CertificateSummary, CertificationMetadata, CertifiedTwinProfile, NeuralCorrectionStats,
     NeuralViolation, TwinId,
 };
-pub use requirements::{required_test_count, required_tests, MandatoryTest, TestResult, TestSuiteResult};
+pub use requirements::{
+    required_test_count, required_tests, MandatoryTest, TestResult, TestSuiteResult,
+};
 
 // ============================================================================
 // MEMORY ESTIMATION
@@ -290,7 +292,10 @@ mod tests {
     fn test_can_achieve_level() {
         let metrics = CertificationMetrics::exemplary();
         assert!(can_achieve_level(&metrics, CertificationLevel::Reference));
-        assert!(can_achieve_level(&metrics, CertificationLevel::Experimental));
+        assert!(can_achieve_level(
+            &metrics,
+            CertificationLevel::Experimental
+        ));
     }
 
     #[test]

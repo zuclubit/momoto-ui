@@ -18,11 +18,11 @@
 
 use std::time::Instant;
 
-use super::dispersion::{CauchyDispersion, SellmeierDispersion, Dispersion};
-use super::fresnel::{fresnel_schlick, fresnel_full};
+use super::dispersion::{CauchyDispersion, Dispersion, SellmeierDispersion};
+use super::fresnel::{fresnel_full, fresnel_schlick};
+use super::lut::{BeerLambertLUT, FresnelLUT};
 use super::scattering::{henyey_greenstein, HenyeyGreensteinLUT};
 use super::spectral_fresnel::{fresnel_rgb, fresnel_rgb_fast, SpectralFresnelLUT};
-use super::lut::{FresnelLUT, BeerLambertLUT};
 
 // ============================================================================
 // PHYSICAL ACCURACY VALIDATION
@@ -41,17 +41,50 @@ pub struct ReferenceData {
 pub fn reference_data() -> Vec<ReferenceData> {
     vec![
         // Fused Silica (Malitson 1965)
-        ReferenceData { material: "Fused Silica", wavelength_nm: 486.1, n_measured: 1.4631, tolerance: 0.001 },
-        ReferenceData { material: "Fused Silica", wavelength_nm: 587.6, n_measured: 1.4585, tolerance: 0.001 },
-        ReferenceData { material: "Fused Silica", wavelength_nm: 656.3, n_measured: 1.4564, tolerance: 0.001 },
-
+        ReferenceData {
+            material: "Fused Silica",
+            wavelength_nm: 486.1,
+            n_measured: 1.4631,
+            tolerance: 0.001,
+        },
+        ReferenceData {
+            material: "Fused Silica",
+            wavelength_nm: 587.6,
+            n_measured: 1.4585,
+            tolerance: 0.001,
+        },
+        ReferenceData {
+            material: "Fused Silica",
+            wavelength_nm: 656.3,
+            n_measured: 1.4564,
+            tolerance: 0.001,
+        },
         // BK7 Glass (Schott Catalog)
-        ReferenceData { material: "BK7", wavelength_nm: 486.1, n_measured: 1.5224, tolerance: 0.002 },
-        ReferenceData { material: "BK7", wavelength_nm: 587.6, n_measured: 1.5168, tolerance: 0.002 },
-        ReferenceData { material: "BK7", wavelength_nm: 656.3, n_measured: 1.5143, tolerance: 0.002 },
-
+        ReferenceData {
+            material: "BK7",
+            wavelength_nm: 486.1,
+            n_measured: 1.5224,
+            tolerance: 0.002,
+        },
+        ReferenceData {
+            material: "BK7",
+            wavelength_nm: 587.6,
+            n_measured: 1.5168,
+            tolerance: 0.002,
+        },
+        ReferenceData {
+            material: "BK7",
+            wavelength_nm: 656.3,
+            n_measured: 1.5143,
+            tolerance: 0.002,
+        },
         // Water at 20C
-        ReferenceData { material: "Water", wavelength_nm: 589.3, n_measured: 1.333, tolerance: 0.002 },
+        ReferenceData {
+            material: "Water",
+            wavelength_nm: 589.3,
+            n_measured: 1.333,
+            tolerance: 0.002,
+        },
     ]
 }
 
@@ -61,7 +94,10 @@ pub fn validate_dispersion_accuracy() -> Vec<ValidationResult> {
 
     // Test Sellmeier fused silica
     let silica = SellmeierDispersion::fused_silica();
-    for data in reference_data().iter().filter(|d| d.material == "Fused Silica") {
+    for data in reference_data()
+        .iter()
+        .filter(|d| d.material == "Fused Silica")
+    {
         let calculated = silica.n(data.wavelength_nm);
         let error = (calculated - data.n_measured).abs();
         results.push(ValidationResult {
@@ -122,11 +158,11 @@ pub fn validate_fresnel_accuracy() -> Vec<ValidationResult> {
         // Angle-dependent tolerance: Schlick is less accurate at grazing angles
         // cos_theta < 0.3 => grazing angle region where Schlick deviates more
         let tolerance = if cos_theta < 0.2 {
-            0.10  // 10% at extreme grazing (expected Schlick limitation)
+            0.10 // 10% at extreme grazing (expected Schlick limitation)
         } else if cos_theta < 0.5 {
-            0.05  // 5% at moderate angles
+            0.05 // 5% at moderate angles
         } else {
-            0.02  // 2% at normal-ish angles
+            0.02 // 2% at normal-ish angles
         };
 
         let error = (schlick - full_avg).abs();
@@ -202,7 +238,7 @@ pub fn validate_lut_accuracy() -> Vec<ValidationResult> {
                 expected: direct,
                 actual: lut,
                 error,
-                passed: error < 0.01,  // 1% tolerance
+                passed: error < 0.01, // 1% tolerance
             });
         }
     }
@@ -220,7 +256,7 @@ pub fn validate_lut_accuracy() -> Vec<ValidationResult> {
                 expected: direct,
                 actual: lut,
                 error,
-                passed: error < 0.02,  // 2% relative tolerance
+                passed: error < 0.02, // 2% relative tolerance
             });
         }
     }
@@ -242,7 +278,7 @@ pub fn validate_spectral_ordering() -> Vec<ValidationResult> {
 
     results.push(ValidationResult {
         test: "Spectral ordering: n_red < n_green".to_string(),
-        expected: 1.0,  // Just checking ordering
+        expected: 1.0, // Just checking ordering
         actual: if n_rgb[0] < n_rgb[1] { 1.0 } else { 0.0 },
         error: 0.0,
         passed: n_rgb[0] < n_rgb[1],
@@ -261,7 +297,11 @@ pub fn validate_spectral_ordering() -> Vec<ValidationResult> {
     results.push(ValidationResult {
         test: "Fresnel RGB ordering: r < g < b".to_string(),
         expected: 1.0,
-        actual: if f_rgb[0] < f_rgb[1] && f_rgb[1] < f_rgb[2] { 1.0 } else { 0.0 },
+        actual: if f_rgb[0] < f_rgb[1] && f_rgb[1] < f_rgb[2] {
+            1.0
+        } else {
+            0.0
+        },
         error: 0.0,
         passed: f_rgb[0] < f_rgb[1] && f_rgb[1] < f_rgb[2],
     });
@@ -280,7 +320,7 @@ pub struct BenchmarkResult {
     pub iterations: u64,
     pub total_time_ns: u64,
     pub ns_per_op: f64,
-    pub throughput: f64,  // ops per second
+    pub throughput: f64, // ops per second
 }
 
 /// Run performance benchmarks
@@ -520,10 +560,22 @@ pub struct ValidationResult {
 /// Memory usage report
 pub fn memory_report() -> Vec<(String, usize)> {
     vec![
-        ("Fresnel LUT".to_string(), FresnelLUT::global().memory_size()),
-        ("Beer-Lambert LUT".to_string(), BeerLambertLUT::global().memory_size()),
-        ("H-G LUT".to_string(), HenyeyGreensteinLUT::global().memory_size()),
-        ("Spectral Fresnel LUT".to_string(), SpectralFresnelLUT::global().memory_size()),
+        (
+            "Fresnel LUT".to_string(),
+            FresnelLUT::global().memory_size(),
+        ),
+        (
+            "Beer-Lambert LUT".to_string(),
+            BeerLambertLUT::global().memory_size(),
+        ),
+        (
+            "H-G LUT".to_string(),
+            HenyeyGreensteinLUT::global().memory_size(),
+        ),
+        (
+            "Spectral Fresnel LUT".to_string(),
+            SpectralFresnelLUT::global().memory_size(),
+        ),
     ]
 }
 
@@ -540,7 +592,10 @@ pub fn full_validation_report() -> String {
     for result in validate_dispersion_accuracy() {
         report.push_str(&format!(
             "| {} | {:.4} | {:.4} | {:.4} | {} |\n",
-            result.test, result.expected, result.actual, result.error,
+            result.test,
+            result.expected,
+            result.actual,
+            result.error,
             if result.passed { "PASS" } else { "FAIL" }
         ));
     }
@@ -552,7 +607,10 @@ pub fn full_validation_report() -> String {
     for result in validate_fresnel_accuracy() {
         report.push_str(&format!(
             "| {} | {:.4} | {:.4} | {:.4} | {} |\n",
-            result.test, result.expected, result.actual, result.error,
+            result.test,
+            result.expected,
+            result.actual,
+            result.error,
             if result.passed { "PASS" } else { "FAIL" }
         ));
     }
@@ -564,7 +622,10 @@ pub fn full_validation_report() -> String {
     for result in validate_lut_accuracy() {
         report.push_str(&format!(
             "| {} | {:.4} | {:.4} | {:.4} | {} |\n",
-            result.test, result.expected, result.actual, result.error,
+            result.test,
+            result.expected,
+            result.actual,
+            result.error,
             if result.passed { "PASS" } else { "FAIL" }
         ));
     }
@@ -578,7 +639,10 @@ pub fn full_validation_report() -> String {
         report.push_str(&format!("| {} | {:.1} |\n", name, size as f64 / 1024.0));
         total += size;
     }
-    report.push_str(&format!("| **Total** | **{:.1}** |\n", total as f64 / 1024.0));
+    report.push_str(&format!(
+        "| **Total** | **{:.1}** |\n",
+        total as f64 / 1024.0
+    ));
 
     report
 }
@@ -604,7 +668,11 @@ mod tests {
             }
         }
 
-        assert!(passed >= total - 1, "At least {} tests should pass", total - 1);
+        assert!(
+            passed >= total - 1,
+            "At least {} tests should pass",
+            total - 1
+        );
     }
 
     #[test]
@@ -655,20 +723,28 @@ mod tests {
         }
 
         // Total should be under 1MB
-        assert!(total < 1024 * 1024, "Total memory {} should be < 1MB", total);
+        assert!(
+            total < 1024 * 1024,
+            "Total memory {} should be < 1MB",
+            total
+        );
 
         println!("\nTotal LUT memory: {:.1} KB", total as f64 / 1024.0);
     }
 
     #[test]
-    #[ignore]  // Run with: cargo test --release benchmark_performance -- --ignored --nocapture
+    #[ignore] // Run with: cargo test --release benchmark_performance -- --ignored --nocapture
     fn benchmark_performance() {
         println!("\n=== PBR Phase 1 Performance Benchmarks ===\n");
-        println!("{:<25} {:>12} {:>12} {:>15}", "Operation", "ns/op", "ops/sec", "Speedup");
+        println!(
+            "{:<25} {:>12} {:>12} {:>15}",
+            "Operation", "ns/op", "ops/sec", "Speedup"
+        );
         println!("{:-<65}", "");
 
         let results = run_benchmarks();
-        let baseline_ns = results.iter()
+        let baseline_ns = results
+            .iter()
             .find(|r| r.name == "Fresnel Schlick")
             .map(|r| r.ns_per_op)
             .unwrap_or(1.0);

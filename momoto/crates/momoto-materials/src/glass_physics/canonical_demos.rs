@@ -22,11 +22,9 @@
 //! let glass_vs_gold = demo_dielectric_vs_conductor();
 //! ```
 
-use super::reference_renderer::{
-    fresnel_dielectric_full, fresnel_conductor_full,
-};
+use super::perceptual_loss::{delta_e_2000, rgb_to_lab, Illuminant};
+use super::reference_renderer::{fresnel_conductor_full, fresnel_dielectric_full};
 use super::scattering::henyey_greenstein;
-use super::perceptual_loss::{rgb_to_lab, delta_e_2000, Illuminant};
 use std::f64::consts::PI;
 
 // ============================================================================
@@ -63,7 +61,10 @@ impl DemoSuite {
     pub fn to_markdown(&self) -> String {
         let mut md = String::new();
         md.push_str("# Momoto Materials - Canonical Demos\n\n");
-        md.push_str(&format!("**Status:** {}/{} demos passed\n\n", self.total_passed, self.total_demos));
+        md.push_str(&format!(
+            "**Status:** {}/{} demos passed\n\n",
+            self.total_passed, self.total_demos
+        ));
 
         for demo in &self.demos {
             let status = if demo.validation_passed { "✅" } else { "❌" };
@@ -78,8 +79,12 @@ impl DemoSuite {
             }
 
             if let Some(rgb) = demo.color_rgb {
-                md.push_str(&format!("\n**Color (sRGB):** `rgb({:.0}, {:.0}, {:.0})`\n",
-                    rgb[0] * 255.0, rgb[1] * 255.0, rgb[2] * 255.0));
+                md.push_str(&format!(
+                    "\n**Color (sRGB):** `rgb({:.0}, {:.0}, {:.0})`\n",
+                    rgb[0] * 255.0,
+                    rgb[1] * 255.0,
+                    rgb[2] * 255.0
+                ));
             }
 
             if !demo.notes.is_empty() {
@@ -108,8 +113,8 @@ impl DemoSuite {
 pub fn demo_dielectric_vs_conductor() -> DemoResult {
     // Material parameters (measured values)
     let glass_ior = 1.52; // Crown glass
-    let gold_n = 0.27;    // Gold at 550nm
-    let gold_k = 2.87;    // Gold extinction at 550nm
+    let gold_n = 0.27; // Gold at 550nm
+    let gold_k = 2.87; // Gold extinction at 550nm
 
     // Test angles
     let angles: [f64; 5] = [0.0, 30.0, 45.0, 60.0, 80.0]; // degrees
@@ -134,7 +139,8 @@ pub fn demo_dielectric_vs_conductor() -> DemoResult {
 
     DemoResult {
         name: "Dielectric vs Conductor".to_string(),
-        description: "Compares Fresnel reflectance of glass (dielectric) and gold (conductor)".to_string(),
+        description: "Compares Fresnel reflectance of glass (dielectric) and gold (conductor)"
+            .to_string(),
         outputs,
         color_rgb: Some([0.95, 0.85, 0.55]), // Gold-ish color
         validation_passed,
@@ -193,7 +199,8 @@ pub fn demo_thin_film_soap_bubble() -> DemoResult {
         outputs,
         color_rgb: Some([0.7, 0.5, 0.8]), // Typical soap bubble color
         validation_passed,
-        notes: "Color changes with thickness due to constructive/destructive interference.".to_string(),
+        notes: "Color changes with thickness due to constructive/destructive interference."
+            .to_string(),
     }
 }
 
@@ -265,8 +272,8 @@ pub fn demo_fog_vs_smoke() -> DemoResult {
     // Anisotropy parameters (g)
     // g > 0: forward scattering (fog)
     // g ≈ 0: isotropic scattering (smoke)
-    let fog_g: f64 = 0.85;   // Strong forward scattering
-    let smoke_g: f64 = 0.2;  // Nearly isotropic
+    let fog_g: f64 = 0.85; // Strong forward scattering
+    let smoke_g: f64 = 0.2; // Nearly isotropic
 
     let mut outputs = Vec::new();
 
@@ -291,8 +298,16 @@ pub fn demo_fog_vs_smoke() -> DemoResult {
     let smoke_forward = henyey_greenstein(1.0, smoke_g);
     let smoke_back = henyey_greenstein(-1.0, smoke_g);
 
-    let fog_ratio = if fog_back.abs() > 1e-10 { fog_forward / fog_back } else { 100.0 };
-    let smoke_ratio = if smoke_back.abs() > 1e-10 { smoke_forward / smoke_back } else { 1.0 };
+    let fog_ratio = if fog_back.abs() > 1e-10 {
+        fog_forward / fog_back
+    } else {
+        100.0
+    };
+    let smoke_ratio = if smoke_back.abs() > 1e-10 {
+        smoke_forward / smoke_back
+    } else {
+        1.0
+    };
 
     let validation_passed = fog_ratio > 10.0 && smoke_ratio < 5.0;
 
@@ -336,9 +351,9 @@ pub fn demo_copper_patina() -> DemoResult {
         let oxide_factor = 1.0 - oxidation * 0.7;
 
         // Color shift model
-        let r = base_r * oxide_factor * (1.0 - oxidation * 0.5);  // Red decreases
-        let g = base_r * oxide_factor * (0.3 + oxidation * 0.5);  // Green increases
-        let b = base_r * oxide_factor * (0.1 + oxidation * 0.3);  // Blue slightly increases
+        let r = base_r * oxide_factor * (1.0 - oxidation * 0.5); // Red decreases
+        let g = base_r * oxide_factor * (0.3 + oxidation * 0.5); // Green increases
+        let b = base_r * oxide_factor * (0.1 + oxidation * 0.3); // Blue slightly increases
 
         outputs.push((format!("R @ oxidation={:.2}", oxidation), r));
         outputs.push((format!("G @ oxidation={:.2}", oxidation), g));
@@ -413,7 +428,10 @@ pub fn demo_spectral_vs_rgb() -> DemoResult {
         outputs,
         color_rgb: Some([spectral_r, spectral_g, spectral_b]),
         validation_passed,
-        notes: format!("Spectral rendering reveals chromatic effects. ΔE={:.2}", delta_e),
+        notes: format!(
+            "Spectral rendering reveals chromatic effects. ΔE={:.2}",
+            delta_e
+        ),
     }
 }
 

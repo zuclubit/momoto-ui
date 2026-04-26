@@ -41,29 +41,28 @@
 //! println!("{}", report);
 //! ```
 
+mod bootstrap;
 mod covariance;
 mod fisher;
-mod bootstrap;
 mod report;
 
 pub use covariance::{
-    ParameterCovarianceMatrix, CovarianceEstimator,
-    estimate_covariance, shrinkage_covariance,
+    estimate_covariance, shrinkage_covariance, CovarianceEstimator, ParameterCovarianceMatrix,
 };
 
 pub use fisher::{
-    FisherInformationMatrix, FisherInformationEstimator,
-    cramer_rao_bounds, expected_fisher_diagonal,
+    cramer_rao_bounds, expected_fisher_diagonal, FisherInformationEstimator,
+    FisherInformationMatrix,
 };
 
 pub use bootstrap::{
-    BootstrapConfig, BootstrapResampler, BootstrapResult,
-    ConfidenceInterval, bootstrap_percentile, bootstrap_bca,
+    bootstrap_bca, bootstrap_percentile, BootstrapConfig, BootstrapResampler, BootstrapResult,
+    ConfidenceInterval,
 };
 
 pub use report::{
-    TwinConfidenceReport, ConfidenceWarning, ConfidenceLevel,
-    ParameterUncertainty, format_uncertainty,
+    format_uncertainty, ConfidenceLevel, ConfidenceWarning, ParameterUncertainty,
+    TwinConfidenceReport,
 };
 
 // ============================================================================

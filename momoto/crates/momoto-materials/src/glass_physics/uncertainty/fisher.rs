@@ -370,7 +370,11 @@ impl FisherInformationEstimator {
         for i in 0..n {
             for j in 0..n {
                 let current = self.fisher.get(i, j);
-                self.fisher.set(i, j, current + gradient[i] * gradient[j] / self.noise_variance);
+                self.fisher.set(
+                    i,
+                    j,
+                    current + gradient[i] * gradient[j] / self.noise_variance,
+                );
             }
         }
         self.fisher.n_observations += 1;
@@ -414,10 +418,7 @@ pub fn cramer_rao_bounds(fisher: &FisherInformationMatrix) -> Option<Vec<f64>> {
 /// Compute expected Fisher diagonal elements.
 ///
 /// For linear model: I_ii = Σ (∂f/∂θ_i)² / σ²
-pub fn expected_fisher_diagonal(
-    gradients: &[Vec<f64>],
-    noise_variance: f64,
-) -> Vec<f64> {
+pub fn expected_fisher_diagonal(gradients: &[Vec<f64>], noise_variance: f64) -> Vec<f64> {
     if gradients.is_empty() {
         return Vec::new();
     }
@@ -455,11 +456,7 @@ mod tests {
 
     #[test]
     fn test_fisher_from_gradients() {
-        let gradients = vec![
-            vec![1.0, 0.0],
-            vec![0.0, 1.0],
-            vec![1.0, 1.0],
-        ];
+        let gradients = vec![vec![1.0, 0.0], vec![0.0, 1.0], vec![1.0, 1.0]];
         let fisher = FisherInformationMatrix::from_gradients(&gradients, 1.0);
 
         assert!((fisher.get(0, 0) - 2.0).abs() < 1e-10); // 1² + 0² + 1²
@@ -468,10 +465,7 @@ mod tests {
 
     #[test]
     fn test_fisher_symmetry() {
-        let gradients = vec![
-            vec![1.0, 2.0, 3.0],
-            vec![4.0, 5.0, 6.0],
-        ];
+        let gradients = vec![vec![1.0, 2.0, 3.0], vec![4.0, 5.0, 6.0]];
         let fisher = FisherInformationMatrix::from_gradients(&gradients, 1.0);
 
         assert!((fisher.get(0, 1) - fisher.get(1, 0)).abs() < 1e-10);
@@ -552,10 +546,7 @@ mod tests {
 
     #[test]
     fn test_expected_fisher_diagonal() {
-        let gradients = vec![
-            vec![2.0, 3.0],
-            vec![2.0, 3.0],
-        ];
+        let gradients = vec![vec![2.0, 3.0], vec![2.0, 3.0]];
         let diag = expected_fisher_diagonal(&gradients, 1.0);
 
         assert!((diag[0] - 8.0).abs() < 1e-10); // 2² + 2²

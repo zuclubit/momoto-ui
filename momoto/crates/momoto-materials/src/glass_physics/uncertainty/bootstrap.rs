@@ -261,7 +261,12 @@ impl BootstrapResampler {
             return BootstrapResult {
                 estimate,
                 standard_error: f64::NAN,
-                ci: ConfidenceInterval::new(estimate, estimate, estimate, self.config.confidence_level),
+                ci: ConfidenceInterval::new(
+                    estimate,
+                    estimate,
+                    estimate,
+                    self.config.confidence_level,
+                ),
                 samples: vec![estimate],
                 bias: 0.0,
                 method: "insufficient_data".to_string(),
@@ -316,12 +321,7 @@ impl BootstrapResampler {
 
         // Confidence interval
         let ci = if self.config.use_bca {
-            self.bca_interval(
-                &bootstrap_estimates,
-                original_estimate,
-                data,
-                &statistic,
-            )
+            self.bca_interval(&bootstrap_estimates, original_estimate, data, &statistic)
         } else {
             bootstrap_percentile(&bootstrap_estimates, self.config.confidence_level)
         };
@@ -329,10 +329,20 @@ impl BootstrapResampler {
         BootstrapResult {
             estimate: original_estimate,
             standard_error,
-            ci: ConfidenceInterval::new(ci.0, ci.1, original_estimate, self.config.confidence_level),
+            ci: ConfidenceInterval::new(
+                ci.0,
+                ci.1,
+                original_estimate,
+                self.config.confidence_level,
+            ),
             samples: bootstrap_estimates,
             bias,
-            method: if self.config.use_bca { "BCa" } else { "percentile" }.to_string(),
+            method: if self.config.use_bca {
+                "BCa"
+            } else {
+                "percentile"
+            }
+            .to_string(),
         }
     }
 
@@ -348,7 +358,8 @@ impl BootstrapResampler {
         let alpha = (1.0 - self.config.confidence_level) / 2.0;
 
         // Bias correction factor z0
-        let prop_less = bootstrap_samples.iter().filter(|&&x| x < original).count() as f64 / n as f64;
+        let prop_less =
+            bootstrap_samples.iter().filter(|&&x| x < original).count() as f64 / n as f64;
         let z0 = quantile_normal(prop_less);
 
         // Acceleration factor (from jackknife)
@@ -440,7 +451,11 @@ pub fn bootstrap_bca(
 fn quantile_normal(p: f64) -> f64 {
     // Approximation using rational function
     if p <= 0.0 || p >= 1.0 {
-        return if p <= 0.0 { f64::NEG_INFINITY } else { f64::INFINITY };
+        return if p <= 0.0 {
+            f64::NEG_INFINITY
+        } else {
+            f64::INFINITY
+        };
     }
 
     let a = [
@@ -540,9 +555,8 @@ mod tests {
     #[test]
     fn test_bootstrap_mean() {
         let data: Vec<f64> = (0..50).map(|i| i as f64).collect();
-        let mut resampler = BootstrapResampler::with_config(
-            BootstrapConfig::with_samples(100).with_seed(42)
-        );
+        let mut resampler =
+            BootstrapResampler::with_config(BootstrapConfig::with_samples(100).with_seed(42));
 
         let result = resampler.bootstrap_mean(&data);
 

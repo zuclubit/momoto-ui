@@ -9,19 +9,16 @@
 //! 3. **Neural Cumulative Drift**: Bounded correction accumulation
 //! 4. **Backward Compatibility**: Phase 11 behavior preserved at t=0
 
-use super::temporal::{
-    TemporalContext, TemporalBSDF, DriftTracker, DriftConfig,
-    TemporalDielectric, TemporalThinFilm, TemporalConductor,
-};
-use super::spectral_coherence::{
-    SpectralPacket, SpectralInterpolator, FlickerValidator, FlickerConfig,
-    CoherentSampler,
-};
-use super::neural_temporal_correction::{
-    TemporalNeuralCorrection, TemporalCorrectionInput,
-};
 use super::neural_correction::CorrectionOutput;
-use super::unified_bsdf::{BSDF, BSDFContext, DielectricBSDF};
+use super::neural_temporal_correction::{TemporalCorrectionInput, TemporalNeuralCorrection};
+use super::spectral_coherence::{
+    CoherentSampler, FlickerConfig, FlickerValidator, SpectralInterpolator, SpectralPacket,
+};
+use super::temporal::{
+    DriftConfig, DriftTracker, TemporalBSDF, TemporalConductor, TemporalContext,
+    TemporalDielectric, TemporalThinFilm,
+};
+use super::unified_bsdf::{BSDFContext, DielectricBSDF, BSDF};
 
 // ============================================================================
 // VALIDATION CONFIGURATION
@@ -50,10 +47,10 @@ impl Default for Phase12ValidationConfig {
     fn default() -> Self {
         Self {
             drift_frames: 1000,
-            max_energy_drift: 0.01,       // 1%
-            max_spectral_flicker: 0.5,    // ΔE2000
-            max_neural_drift: 0.05,       // 5%
-            delta_time: 1.0 / 60.0,       // 60 fps
+            max_energy_drift: 0.01,    // 1%
+            max_spectral_flicker: 0.5, // ΔE2000
+            max_neural_drift: 0.05,    // 5%
+            delta_time: 1.0 / 60.0,    // 60 fps
             spectral_samples: 31,
             verbose: false,
         }
@@ -177,7 +174,11 @@ impl Phase12ValidationReport {
 
     /// Format as summary string.
     pub fn summary(&self) -> String {
-        let status = if self.overall_passed { "PASSED" } else { "FAILED" };
+        let status = if self.overall_passed {
+            "PASSED"
+        } else {
+            "FAILED"
+        };
         format!(
             "Phase 12 Validation: {} ({}/{} tests, {:.1}%)\nMemory: {} bytes",
             status,
@@ -498,7 +499,11 @@ impl Phase12ValidationSuite {
                     (i as f64 * 0.1).sin().abs(),
                     (i % 10) as f64 * 0.1,
                     1.0 + (i % 20) as f64 * 0.1,
-                    0.0, 0.0, 0.0, 0.0, 0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
                 ),
                 0.016,
                 CorrectionOutput::zero(),
@@ -532,7 +537,7 @@ impl Phase12ValidationSuite {
         // Create temporal dielectric with static evolution (no change over time)
         let temporal = TemporalDielectric::new(super::temporal::DielectricEvolution {
             roughness_base: 0.1,
-            roughness_target: 0.1,  // Same as base = static
+            roughness_target: 0.1, // Same as base = static
             roughness_tau: 10.0,
             ior_base: 1.5,
             ior_temp_coeff: 0.0,

@@ -2,7 +2,7 @@
 //!
 //! High-level material abstractions for the stable API.
 
-use super::bsdf::{BSDF, BSDFResponse, DielectricBSDF, ConductorBSDF, ThinFilmBSDF};
+use super::bsdf::{BSDFResponse, ConductorBSDF, DielectricBSDF, ThinFilmBSDF, BSDF};
 use super::context::EvaluationContext;
 
 /// High-level material wrapper.
@@ -24,7 +24,10 @@ impl Default for Material {
     fn default() -> Self {
         Self {
             name: "Default".to_string(),
-            layers: vec![Layer::Dielectric { ior: 1.5, roughness: 0.0 }],
+            layers: vec![Layer::Dielectric {
+                ior: 1.5,
+                roughness: 0.0,
+            }],
             base_color: [1.0, 1.0, 1.0],
             opacity: 1.0,
         }
@@ -45,25 +48,37 @@ impl Material {
         match preset {
             MaterialPreset::Glass => Self {
                 name: "Glass".to_string(),
-                layers: vec![Layer::Dielectric { ior: 1.5, roughness: 0.0 }],
+                layers: vec![Layer::Dielectric {
+                    ior: 1.5,
+                    roughness: 0.0,
+                }],
                 base_color: [1.0, 1.0, 1.0],
                 opacity: 1.0,
             },
             MaterialPreset::FrostedGlass => Self {
                 name: "Frosted Glass".to_string(),
-                layers: vec![Layer::Dielectric { ior: 1.5, roughness: 0.3 }],
+                layers: vec![Layer::Dielectric {
+                    ior: 1.5,
+                    roughness: 0.3,
+                }],
                 base_color: [1.0, 1.0, 1.0],
                 opacity: 1.0,
             },
             MaterialPreset::Water => Self {
                 name: "Water".to_string(),
-                layers: vec![Layer::Dielectric { ior: 1.33, roughness: 0.0 }],
+                layers: vec![Layer::Dielectric {
+                    ior: 1.33,
+                    roughness: 0.0,
+                }],
                 base_color: [0.9, 0.95, 1.0],
                 opacity: 1.0,
             },
             MaterialPreset::Diamond => Self {
                 name: "Diamond".to_string(),
-                layers: vec![Layer::Dielectric { ior: 2.42, roughness: 0.0 }],
+                layers: vec![Layer::Dielectric {
+                    ior: 2.42,
+                    roughness: 0.0,
+                }],
                 base_color: [1.0, 1.0, 1.0],
                 opacity: 1.0,
             },
@@ -332,7 +347,10 @@ impl MaterialBuilder {
         Material {
             name: self.name.unwrap_or_else(|| "Custom".to_string()),
             layers: if self.layers.is_empty() {
-                vec![Layer::Dielectric { ior: 1.5, roughness: 0.0 }]
+                vec![Layer::Dielectric {
+                    ior: 1.5,
+                    roughness: 0.0,
+                }]
             } else {
                 self.layers
             },
@@ -398,14 +416,18 @@ mod tests {
     fn test_preset_water() {
         let mat = Material::from_preset(MaterialPreset::Water);
         assert_eq!(mat.name, "Water");
-        assert!(matches!(mat.layers[0], Layer::Dielectric { ior, .. } if (ior - 1.33).abs() < 0.01));
+        assert!(
+            matches!(mat.layers[0], Layer::Dielectric { ior, .. } if (ior - 1.33).abs() < 0.01)
+        );
     }
 
     #[test]
     fn test_preset_diamond() {
         let mat = Material::from_preset(MaterialPreset::Diamond);
         assert_eq!(mat.name, "Diamond");
-        assert!(matches!(mat.layers[0], Layer::Dielectric { ior, .. } if (ior - 2.42).abs() < 0.01));
+        assert!(
+            matches!(mat.layers[0], Layer::Dielectric { ior, .. } if (ior - 2.42).abs() < 0.01)
+        );
     }
 
     #[test]
@@ -460,28 +482,24 @@ mod tests {
 
     #[test]
     fn test_material_with_layer() {
-        let mat = Material::new("Custom")
-            .with_layer(Layer::Lambertian { albedo: 0.8 });
+        let mat = Material::new("Custom").with_layer(Layer::Lambertian { albedo: 0.8 });
 
         assert_eq!(mat.layers.len(), 2); // Default + added
     }
 
     #[test]
     fn test_material_with_opacity() {
-        let mat = Material::new("Transparent")
-            .with_opacity(0.5);
+        let mat = Material::new("Transparent").with_opacity(0.5);
 
         assert!((mat.opacity - 0.5).abs() < 0.01);
     }
 
     #[test]
     fn test_material_opacity_clamping() {
-        let mat = Material::new("Over")
-            .with_opacity(1.5);
+        let mat = Material::new("Over").with_opacity(1.5);
         assert!((mat.opacity - 1.0).abs() < 0.01);
 
-        let mat2 = Material::new("Under")
-            .with_opacity(-0.5);
+        let mat2 = Material::new("Under").with_opacity(-0.5);
         assert!(mat2.opacity >= 0.0);
     }
 }

@@ -141,8 +141,12 @@ mod tests {
     struct ConstMetric(f32);
 
     impl FlatPerceptualMetric for ConstMetric {
-        fn measure_flat(&self, _samples: &[f32]) -> f32 { self.0 }
-        fn name(&self) -> &'static str { "const" }
+        fn measure_flat(&self, _samples: &[f32]) -> f32 {
+            self.0
+        }
+        fn name(&self) -> &'static str {
+            "const"
+        }
     }
 
     impl FlatBatchMetric for ConstMetric {}
@@ -174,8 +178,12 @@ mod tests {
 
     impl PerceptualMetric<[f32]> for SumMetric {
         type Output = f32;
-        fn measure(&self, signal: &[f32]) -> f32 { signal.iter().sum() }
-        fn name(&self) -> &'static str { "sum" }
+        fn measure(&self, signal: &[f32]) -> f32 {
+            signal.iter().sum()
+        }
+        fn name(&self) -> &'static str {
+            "sum"
+        }
     }
 
     #[test]

@@ -163,7 +163,9 @@ impl SpectralCache {
         let evict_count = (self.max_entries / 10).max(1);
 
         // Find entries to evict
-        let mut entries_vec: Vec<_> = self.entries.iter()
+        let mut entries_vec: Vec<_> = self
+            .entries
+            .iter()
             .map(|(k, v)| (k.clone(), v.last_access))
             .collect();
         entries_vec.sort_by_key(|(_, ts)| *ts);
@@ -355,8 +357,8 @@ impl CachedSpectralEvaluator {
 
         self.cache.get_or_compute(key, || {
             let d65 = SpectralSignal::d65_illuminant();
-            let pipeline = SpectralPipeline::new()
-                .add_stage(ThinFilmStage::new(n, thickness_nm, substrate_n));
+            let pipeline =
+                SpectralPipeline::new().add_stage(ThinFilmStage::new(n, thickness_nm, substrate_n));
             let context = EvaluationContext::default().with_angle_deg(angle_deg);
             let output = pipeline.evaluate(&d65, &context);
 
@@ -367,14 +369,8 @@ impl CachedSpectralEvaluator {
     }
 
     /// Evaluate metal with caching
-    pub fn eval_metal(
-        &mut self,
-        metal_type: &str,
-        angle_deg: f64,
-    ) -> ([f64; 3], f64) {
-        let hash = PipelineHasher::new()
-            .add_metal(metal_type)
-            .finish();
+    pub fn eval_metal(&mut self, metal_type: &str, angle_deg: f64) -> ([f64; 3], f64) {
+        let hash = PipelineHasher::new().add_metal(metal_type).finish();
         let key = SpectralCacheKey::with_angle(hash, angle_deg);
 
         self.cache.get_or_compute(key, || {
@@ -494,7 +490,11 @@ mod tests {
         // Recently accessed entries (0-4) should still exist
         for i in 0..5 {
             let key = SpectralCacheKey::with_angle(i as u64, 0.0);
-            assert!(cache.get(&key).is_some(), "Entry {} should still be cached", i);
+            assert!(
+                cache.get(&key).is_some(),
+                "Entry {} should still be cached",
+                i
+            );
         }
     }
 
@@ -533,7 +533,11 @@ mod tests {
         assert!(evaluator.stats().hit_rate > 0.4, "Expected >40% hit rate");
 
         // Second pass should be much faster (at least 10×)
-        assert!(speedup > 10.0, "Expected >10× speedup for cached access, got {:.1}×", speedup);
+        assert!(
+            speedup > 10.0,
+            "Expected >10× speedup for cached access, got {:.1}×",
+            speedup
+        );
     }
 
     #[test]
@@ -547,7 +551,7 @@ mod tests {
             .finish();
 
         let hash3 = PipelineHasher::new()
-            .add_thin_film(1.45, 301.0, 1.52)  // Different thickness
+            .add_thin_film(1.45, 301.0, 1.52) // Different thickness
             .finish();
 
         // Same parameters should produce same hash

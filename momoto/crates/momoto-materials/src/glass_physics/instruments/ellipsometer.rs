@@ -117,7 +117,11 @@ impl VirtualEllipsometer {
     /// # Arguments
     /// * `optical_constants_fn` - Function (wavelength) -> (n, k)
     /// * `wavelength_nm` - Measurement wavelength
-    pub fn measure_single<F>(&mut self, optical_constants_fn: F, wavelength_nm: f64) -> EllipsometryPoint
+    pub fn measure_single<F>(
+        &mut self,
+        optical_constants_fn: F,
+        wavelength_nm: f64,
+    ) -> EllipsometryPoint
     where
         F: Fn(f64) -> (f64, f64), // wavelength -> (n, k)
     {
@@ -128,8 +132,10 @@ impl VirtualEllipsometer {
 
         // Apply noise
         let (noisy_psi, psi_std) = self.config.noise_model.apply(psi, &mut || self.rng.next());
-        let (noisy_delta, delta_std) =
-            self.config.noise_model.apply(delta, &mut || self.rng.next());
+        let (noisy_delta, delta_std) = self
+            .config
+            .noise_model
+            .apply(delta, &mut || self.rng.next());
 
         // Constrain to valid ranges
         let clamped_psi = noisy_psi.clamp(0.0, 90.0);
@@ -269,8 +275,10 @@ impl VirtualEllipsometer {
 
             // Apply noise
             let (noisy_psi, psi_std) = self.config.noise_model.apply(psi, &mut || self.rng.next());
-            let (noisy_delta, delta_std) =
-                self.config.noise_model.apply(delta, &mut || self.rng.next());
+            let (noisy_delta, delta_std) = self
+                .config
+                .noise_model
+                .apply(delta, &mut || self.rng.next());
 
             let quality = if self.config.is_calibrated() {
                 MeasurementQuality::Calibrated
@@ -482,8 +490,7 @@ impl EllipsometryResult {
                 let t = (wavelength_nm - self.points[i].wavelength_nm)
                     / (self.points[i + 1].wavelength_nm - self.points[i].wavelength_nm);
 
-                let psi =
-                    self.points[i].psi.value * (1.0 - t) + self.points[i + 1].psi.value * t;
+                let psi = self.points[i].psi.value * (1.0 - t) + self.points[i + 1].psi.value * t;
                 let delta =
                     self.points[i].delta.value * (1.0 - t) + self.points[i + 1].delta.value * t;
 
@@ -517,7 +524,10 @@ impl EllipsometryResult {
             "Angle of Incidence: {:.1}°\n",
             self.angle_of_incidence_deg
         ));
-        report.push_str(&format!("Ellipsometer Type: {:?}\n", self.ellipsometer_type));
+        report.push_str(&format!(
+            "Ellipsometer Type: {:?}\n",
+            self.ellipsometer_type
+        ));
         report.push_str(&format!("Number of Points: {}\n", self.points.len()));
 
         if !self.points.is_empty() {

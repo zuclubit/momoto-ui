@@ -18,13 +18,13 @@
 
 #![allow(dead_code, unused_variables)]
 
-use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
 use momoto_core::color::Color;
-use momoto_core::luminance::{relative_luminance_srgb, relative_luminance_apca};
-use momoto_core::space::oklch::OKLCH;
-use momoto_metrics::{WCAGMetric, APCAMetric};
+use momoto_core::luminance::{relative_luminance_apca, relative_luminance_srgb};
 use momoto_core::perception::ContrastMetric;
+use momoto_core::space::oklch::OKLCH;
+use momoto_metrics::{APCAMetric, WCAGMetric};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 // ============================================================================
 // Utilities (foundation — used by all other types)
@@ -49,7 +49,8 @@ pub fn current_timestamp() -> u64 {
 pub fn generate_certificate_id() -> String {
     let ts = current_timestamp();
     // LCG: multiplier and increment from Knuth / Numerical Recipes
-    let random = (ts.wrapping_mul(6_364_136_223_846_793_005)
+    let random = (ts
+        .wrapping_mul(6_364_136_223_846_793_005)
         .wrapping_add(1_442_695_040_888_963_407)
         >> 32) as u32;
     format!("cert-{:016x}-{:08x}", ts, random)
@@ -513,10 +514,7 @@ impl ConformanceEngine {
                     name: "Color Roundtrip".to_string(),
                     test_type: TestType::ColorRoundtrip,
                     passed,
-                    details: format!(
-                        "ΔL={:.5} ΔC={:.5} ΔH={:.3}°",
-                        dl, dc, dh
-                    ),
+                    details: format!("ΔL={:.5} ΔC={:.5} ΔH={:.3}°", dl, dc, dh),
                     score,
                 });
             }
@@ -665,8 +663,8 @@ impl ConformanceEngine {
                     });
 
                     // Easing required
-                    let easing_ok = !self.spec.temporal_rules.require_easing
-                        || !ad.easing.is_empty();
+                    let easing_ok =
+                        !self.spec.temporal_rules.require_easing || !ad.easing.is_empty();
                     all_tests.push(ConformanceTest {
                         name: "Easing Declared".to_string(),
                         test_type: TestType::TemporalSafety,
@@ -693,21 +691,20 @@ impl ConformanceEngine {
                         name: "IOR Range".to_string(),
                         test_type: TestType::MaterialPhysics,
                         passed: ior_ok,
-                        details: format!(
-                            "IOR {:.3} in [{:.2}, {:.2}]",
-                            md.ior, ior_min, ior_max
-                        ),
+                        details: format!("IOR {:.3} in [{:.2}, {:.2}]", md.ior, ior_min, ior_max),
                         score: if ior_ok { 1.0 } else { 0.0 },
                     });
 
-                    let roughness_ok = md.roughness <= self.spec.material.max_roughness
-                        && md.roughness >= 0.0;
+                    let roughness_ok =
+                        md.roughness <= self.spec.material.max_roughness && md.roughness >= 0.0;
                     all_tests.push(ConformanceTest {
                         name: "Roughness Range".to_string(),
                         test_type: TestType::MaterialPhysics,
                         passed: roughness_ok,
-                        details: format!("roughness {:.3} in [0, {:.2}]",
-                            md.roughness, self.spec.material.max_roughness),
+                        details: format!(
+                            "roughness {:.3} in [0, {:.2}]",
+                            md.roughness, self.spec.material.max_roughness
+                        ),
                         score: if roughness_ok { 1.0 } else { 0.0 },
                     });
                 }
@@ -898,7 +895,10 @@ impl CertificationProfile {
 
     /// Returns `true` when `self` has every capability that `other` has.
     pub fn is_superset_of(&self, other: &CertificationProfile) -> bool {
-        other.capabilities.iter().all(|cap| self.capabilities.contains(cap))
+        other
+            .capabilities
+            .iter()
+            .all(|cap| self.capabilities.contains(cap))
     }
 }
 
@@ -918,7 +918,9 @@ pub fn highest_passing_profile(passed_capabilities: &[Capability]) -> Certificat
     ];
 
     for profile in &profiles {
-        let all_covered = profile.capabilities.iter()
+        let all_covered = profile
+            .capabilities
+            .iter()
             .all(|cap| passed_capabilities.contains(cap));
         if all_covered {
             return profile.clone();
@@ -1285,7 +1287,10 @@ impl SignedArtifact {
     pub fn verify(&self) -> ArtifactVerification {
         // Build a canonical string from whichever payload is present
         let payload_str = if let Some(dt) = &self.design_tokens {
-            format!("dt|{}|{}|{}", dt.token_count, dt.schema_version, dt.tokens_json)
+            format!(
+                "dt|{}|{}|{}",
+                dt.token_count, dt.schema_version, dt.tokens_json
+            )
         } else if let Some(cs) = &self.color_system {
             format!(
                 "cs|{}|{}|{}",
@@ -1371,7 +1376,10 @@ impl ArtifactBuilder {
 
         // Compute payload string (mirrors `SignedArtifact::verify`)
         let payload_str = if let Some(dt) = &self.design_tokens {
-            format!("dt|{}|{}|{}", dt.token_count, dt.schema_version, dt.tokens_json)
+            format!(
+                "dt|{}|{}|{}",
+                dt.token_count, dt.schema_version, dt.tokens_json
+            )
         } else if let Some(cs) = &self.color_system {
             format!(
                 "cs|{}|{}|{}",
@@ -1519,11 +1527,7 @@ impl ReproducibleRunner {
         let result = engine.full_audit(target);
 
         // Build deterministic hash of inputs
-        let input_str = format!(
-            "{:?}|{}",
-            target.target_type,
-            target.id,
-        );
+        let input_str = format!("{:?}|{}", target.target_type, target.id,);
         let inputs_hash = compute_hash(&input_str);
 
         // Build deterministic hash of outputs
@@ -1606,9 +1610,10 @@ impl AuditLogger {
         if let Ok(mut records) = self.records.lock() {
             if let Some(record) = records.get_mut(record_id) {
                 record.completed_at = Some(now);
-                let success = !record.events.iter().any(|e| {
-                    e.event_type == AuditEventType::CertificationFailed
-                });
+                let success = !record
+                    .events
+                    .iter()
+                    .any(|e| e.event_type == AuditEventType::CertificationFailed);
                 let duration_ms = (now.saturating_sub(record.started_at)) * 1000;
                 return AuditResult {
                     record: record.clone(),
@@ -1636,22 +1641,23 @@ impl AuditLogger {
     pub fn export(&self, record_id: &str, format: &str) -> AuditExport {
         let now = current_timestamp();
         let records = self.records.lock().ok();
-        let record = records
-            .as_ref()
-            .and_then(|m| m.get(record_id))
-            .cloned();
+        let record = records.as_ref().and_then(|m| m.get(record_id)).cloned();
 
         let content = match record {
             None => format!("Record '{}' not found", record_id),
             Some(r) => match format {
                 "json" => {
                     // Minimal JSON serialisation without external deps
-                    let events_json: Vec<String> = r.events.iter().map(|e| {
-                        format!(
-                            r#"{{"type":"{:?}","ts":{},"entity":"{}","details":"{}"}}"#,
-                            e.event_type, e.timestamp, e.entity_id, e.details
-                        )
-                    }).collect();
+                    let events_json: Vec<String> = r
+                        .events
+                        .iter()
+                        .map(|e| {
+                            format!(
+                                r#"{{"type":"{:?}","ts":{},"entity":"{}","details":"{}"}}"#,
+                                e.event_type, e.timestamp, e.entity_id, e.details
+                            )
+                        })
+                        .collect();
                     format!(
                         r#"{{"id":"{}","started_at":{},"events":[{}]}}"#,
                         r.id,
@@ -1768,47 +1774,65 @@ impl CertificationAuthority {
     pub fn certify(&self, target: CertificationTarget) -> CertificationResult {
         let record_id = self.audit_logger.start_record(&target.id);
 
-        self.audit_logger.log_event(&record_id, AuditEvent {
-            event_type: AuditEventType::CertificationStarted,
-            timestamp: current_timestamp(),
-            entity_id: target.id.clone(),
-            details: format!("Target type: {:?}", target.target_type),
-        });
+        self.audit_logger.log_event(
+            &record_id,
+            AuditEvent {
+                event_type: AuditEventType::CertificationStarted,
+                timestamp: current_timestamp(),
+                entity_id: target.id.clone(),
+                details: format!("Target type: {:?}", target.target_type),
+            },
+        );
 
         let engine = ConformanceEngine::new(self.spec.clone());
         let conformance = engine.full_audit(&target);
 
         let profile = self.issue_profile(&target, &conformance);
 
-        self.audit_logger.log_event(&record_id, AuditEvent {
-            event_type: AuditEventType::ProfileEvaluated,
-            timestamp: current_timestamp(),
-            entity_id: target.id.clone(),
-            details: format!(
-                "Profile: {} | Score: {:.1}%",
-                profile.name, conformance.compliance_percentage
-            ),
-        });
+        self.audit_logger.log_event(
+            &record_id,
+            AuditEvent {
+                event_type: AuditEventType::ProfileEvaluated,
+                timestamp: current_timestamp(),
+                entity_id: target.id.clone(),
+                details: format!(
+                    "Profile: {} | Score: {:.1}%",
+                    profile.name, conformance.compliance_percentage
+                ),
+            },
+        );
 
         let (certificate, success, errors) = if conformance.overall_pass {
-            let cert = Certificate::new(&target.id, profile.clone(), conformance.compliance_percentage / 100.0);
-            self.audit_logger.log_event(&record_id, AuditEvent {
-                event_type: AuditEventType::CertificationCompleted,
-                timestamp: current_timestamp(),
-                entity_id: target.id.clone(),
-                details: format!("Certificate issued: {}", cert.content.id),
-            });
+            let cert = Certificate::new(
+                &target.id,
+                profile.clone(),
+                conformance.compliance_percentage / 100.0,
+            );
+            self.audit_logger.log_event(
+                &record_id,
+                AuditEvent {
+                    event_type: AuditEventType::CertificationCompleted,
+                    timestamp: current_timestamp(),
+                    entity_id: target.id.clone(),
+                    details: format!("Certificate issued: {}", cert.content.id),
+                },
+            );
             (Some(cert), true, vec![])
         } else {
-            let errs: Vec<String> = conformance.failures.iter()
+            let errs: Vec<String> = conformance
+                .failures
+                .iter()
                 .map(|f| format!("Failed: {}", f))
                 .collect();
-            self.audit_logger.log_event(&record_id, AuditEvent {
-                event_type: AuditEventType::CertificationFailed,
-                timestamp: current_timestamp(),
-                entity_id: target.id.clone(),
-                details: format!("Failures: {}", conformance.failures.join(", ")),
-            });
+            self.audit_logger.log_event(
+                &record_id,
+                AuditEvent {
+                    event_type: AuditEventType::CertificationFailed,
+                    timestamp: current_timestamp(),
+                    entity_id: target.id.clone(),
+                    details: format!("Failures: {}", conformance.failures.join(", ")),
+                },
+            );
             (None, false, errs)
         };
 
@@ -1871,7 +1895,9 @@ impl CertificationAuthority {
         // OKLCH is always present in v7
         caps.push(Capability::OklchColorSpace);
 
-        let passed_types: Vec<&TestType> = conformance.tests.iter()
+        let passed_types: Vec<&TestType> = conformance
+            .tests
+            .iter()
             .filter(|t| t.passed)
             .map(|t| &t.test_type)
             .collect();
@@ -1954,7 +1980,10 @@ mod tests {
         let result = engine.test_color("#ff6600");
         assert!(!result.tests.is_empty());
         // At minimum the roundtrip test should pass for a valid sRGB hex
-        let roundtrip = result.tests.iter().find(|t| t.test_type == TestType::ColorRoundtrip);
+        let roundtrip = result
+            .tests
+            .iter()
+            .find(|t| t.test_type == TestType::ColorRoundtrip);
         assert!(roundtrip.is_some());
     }
 
@@ -1963,7 +1992,10 @@ mod tests {
         let engine = ConformanceEngine::new(PerceptualSpecification::v7());
         let result = engine.test_pair("#000000", "#ffffff");
         assert!(result.overall_pass);
-        let wcag_test = result.tests.iter().find(|t| t.test_type == TestType::WcagCompliance);
+        let wcag_test = result
+            .tests
+            .iter()
+            .find(|t| t.test_type == TestType::WcagCompliance);
         assert!(wcag_test.is_some());
         assert!(wcag_test.unwrap().passed);
     }
@@ -2043,12 +2075,15 @@ mod tests {
     fn test_audit_logger() {
         let logger = AuditLogger::new();
         let record_id = logger.start_record("entity-1");
-        logger.log_event(&record_id, AuditEvent {
-            event_type: AuditEventType::CertificationStarted,
-            timestamp: current_timestamp(),
-            entity_id: "entity-1".to_string(),
-            details: "Test event".to_string(),
-        });
+        logger.log_event(
+            &record_id,
+            AuditEvent {
+                event_type: AuditEventType::CertificationStarted,
+                timestamp: current_timestamp(),
+                entity_id: "entity-1".to_string(),
+                details: "Test event".to_string(),
+            },
+        );
         let result = logger.complete_record(&record_id);
         assert!(result.success);
         assert_eq!(result.record.events.len(), 1);

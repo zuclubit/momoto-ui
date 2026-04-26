@@ -10,7 +10,7 @@
 //! 4. **Energy Conservation**: All BSDFs maintain R + T + A = 1
 
 use super::gpu_backend::estimate_gpu_backend_memory;
-use super::pbr_api::v1::{API_VERSION, is_compatible};
+use super::pbr_api::v1::{is_compatible, API_VERSION};
 
 // ============================================================================
 // VALIDATION RESULTS
@@ -147,7 +147,10 @@ pub fn validate_api_stability() -> ApiStabilityResults {
     types_checked += 1;
 
     // Check Layer
-    let _ = super::pbr_api::v1::Layer::Dielectric { ior: 1.5, roughness: 0.0 };
+    let _ = super::pbr_api::v1::Layer::Dielectric {
+        ior: 1.5,
+        roughness: 0.0,
+    };
     types_checked += 1;
 
     // Check MaterialBuilder
@@ -206,7 +209,7 @@ pub fn validate_memory() -> MemoryResults {
 
 /// Validate energy conservation.
 pub fn validate_energy_conservation() -> EnergyResults {
-    use super::unified_bsdf::{BSDF, BSDFContext, DielectricBSDF, ConductorBSDF};
+    use super::unified_bsdf::{BSDFContext, ConductorBSDF, DielectricBSDF, BSDF};
 
     let mut bsdfs_tested = 0;
     let mut max_violation: f64 = 0.0;
@@ -323,11 +326,31 @@ pub fn generate_report(report: &Phase11ValidationReport) -> String {
 - All conserve: {}
 - Max violation: {:.6}
 "#,
-        if report.gpu_parity.passed { "PASS" } else { "FAIL" },
-        if report.api_stability.all_present { "PASS" } else { "FAIL" },
-        if report.memory.within_budget { "PASS" } else { "FAIL" },
-        if report.energy.all_conserve { "PASS" } else { "FAIL" },
-        if report.overall_passed { "PASS" } else { "FAIL" },
+        if report.gpu_parity.passed {
+            "PASS"
+        } else {
+            "FAIL"
+        },
+        if report.api_stability.all_present {
+            "PASS"
+        } else {
+            "FAIL"
+        },
+        if report.memory.within_budget {
+            "PASS"
+        } else {
+            "FAIL"
+        },
+        if report.energy.all_conserve {
+            "PASS"
+        } else {
+            "FAIL"
+        },
+        if report.overall_passed {
+            "PASS"
+        } else {
+            "FAIL"
+        },
         report.gpu_parity.materials_tested,
         report.gpu_parity.max_delta_e,
         report.gpu_parity.avg_delta_e,

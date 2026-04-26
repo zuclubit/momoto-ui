@@ -184,9 +184,17 @@ impl FallbackStats {
              - Unknown: {}",
             total,
             gpu,
-            if total > 0 { (gpu as f64 / total as f64) * 100.0 } else { 0.0 },
+            if total > 0 {
+                (gpu as f64 / total as f64) * 100.0
+            } else {
+                0.0
+            },
             fallbacks,
-            if total > 0 { (fallbacks as f64 / total as f64) * 100.0 } else { 0.0 },
+            if total > 0 {
+                (fallbacks as f64 / total as f64) * 100.0
+            } else {
+                0.0
+            },
             self.feature_disabled.load(Ordering::Relaxed),
             self.no_adapter.load(Ordering::Relaxed),
             self.device_failed.load(Ordering::Relaxed),

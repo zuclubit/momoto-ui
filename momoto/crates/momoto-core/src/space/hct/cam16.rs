@@ -18,16 +18,16 @@ use std::f64::consts::PI;
 
 /// XYZ D65 → CAM16 cone-like RGB (Li et al. 2017 Table A-1)
 pub const M16: [[f64; 3]; 3] = [
-    [ 0.401288,  0.650173, -0.051461],
-    [-0.250268,  1.204414,  0.045854],
-    [-0.002079,  0.048952,  0.953127],
+    [0.401288, 0.650173, -0.051461],
+    [-0.250268, 1.204414, 0.045854],
+    [-0.002079, 0.048952, 0.953127],
 ];
 
 /// CAM16 cone-like RGB → XYZ D65 (inverse of M16)
 pub const M16_INV: [[f64; 3]; 3] = [
-    [ 1.8620678, -1.0112547,  0.1491866],
-    [ 0.3875265,  0.6214474, -0.0089739],
-    [-0.0158415, -0.0344318,  1.0502234],
+    [1.8620678, -1.0112547, 0.1491866],
+    [0.3875265, 0.6214474, -0.0089739],
+    [-0.0158415, -0.0344318, 1.0502234],
 ];
 
 // =============================================================================
@@ -77,9 +77,21 @@ impl ViewingConditions {
 
         // Surround-dependent parameters
         let (c, f, nc) = if surround > 1.0 {
-            let c = if surround < 3.0 { 0.59 + 0.1 * (surround - 1.0) } else { 0.69 };
-            let f = if surround < 3.0 { 0.8 + surround / 10.0 } else { 1.0 };
-            let nc = if surround < 3.0 { 0.9 + 0.1 * (surround - 1.0) } else { 1.0 };
+            let c = if surround < 3.0 {
+                0.59 + 0.1 * (surround - 1.0)
+            } else {
+                0.69
+            };
+            let f = if surround < 3.0 {
+                0.8 + surround / 10.0
+            } else {
+                1.0
+            };
+            let nc = if surround < 3.0 {
+                0.9 + 0.1 * (surround - 1.0)
+            } else {
+                1.0
+            };
             (c, f, nc)
         } else {
             (0.69 * surround, 0.8 * surround, 0.9 * surround)
@@ -124,7 +136,17 @@ impl ViewingConditions {
         ];
         let aw = (2.0 * rgb_aw[0] + rgb_aw[1] + 0.05 * rgb_aw[2] - 0.305) * nbb;
 
-        Self { n, nbb, ncb, z, fl, c, nc, aw, rgb_d }
+        Self {
+            n,
+            nbb,
+            ncb,
+            z,
+            fl,
+            c,
+            nc,
+            aw,
+            rgb_d,
+        }
     }
 
     /// Default viewing conditions matching Google material-color-utilities.
@@ -133,7 +155,7 @@ impl ViewingConditions {
     pub fn s_rgb() -> Self {
         // yFromLstar(50) = ((50+16)/116)^3 * 100 ≈ 18.418
         let y_bg = y_from_lstar(50.0) * 100.0; // ≈ 18.418
-        let la = (200.0 / PI) * y_bg / 100.0;  // ≈ 11.726
+        let la = (200.0 / PI) * y_bg / 100.0; // ≈ 11.726
         Self::new(la, y_bg, 100.0, 2.0, false) // surround=2 → average
     }
 }
@@ -258,8 +280,7 @@ impl CAM16 {
         let (a, b) = if t.abs() < 1e-10 {
             (0.0, 0.0)
         } else {
-            let gamma = 23.0 * p2_adj * t
-                / (23.0 * p1 + 11.0 * t * h_cos + 108.0 * t * h_sin);
+            let gamma = 23.0 * p2_adj * t / (23.0 * p1 + 11.0 * t * h_cos + 108.0 * t * h_sin);
             (gamma * h_cos, gamma * h_sin)
         };
 
@@ -293,7 +314,11 @@ impl CAM16 {
 
 /// CIE L* (lightness) from Y (normalized to D65 white Y = 1.0).
 pub fn lstar_from_y(y: f64) -> f64 {
-    let fy = if y > 0.008856 { y.powf(1.0 / 3.0) } else { 7.787 * y + 16.0 / 116.0 };
+    let fy = if y > 0.008856 {
+        y.powf(1.0 / 3.0)
+    } else {
+        7.787 * y + 16.0 / 116.0
+    };
     116.0 * fy - 16.0
 }
 
@@ -358,9 +383,14 @@ mod tests {
         let cam = CAM16::from_xyz(white_xyz, &vc);
         assert!(
             (cam.j - 100.0).abs() < 2.0,
-            "White J should be ~100, got {:.2}", cam.j
+            "White J should be ~100, got {:.2}",
+            cam.j
         );
-        assert!(cam.c < 5.0, "White chroma should be near 0, got {:.2}", cam.c);
+        assert!(
+            cam.c < 5.0,
+            "White chroma should be near 0, got {:.2}",
+            cam.c
+        );
     }
 
     /// Black should give J ≈ 0
@@ -376,17 +406,18 @@ mod tests {
     fn test_red_hue_range() {
         let vc = s_rgb_vc();
         // Linear sRGB red → XYZ
-        let red_xyz = [
-            0.4124564 * 100.0,
-            0.2126729 * 100.0,
-            0.0193339 * 100.0,
-        ];
+        let red_xyz = [0.4124564 * 100.0, 0.2126729 * 100.0, 0.0193339 * 100.0];
         let cam = CAM16::from_xyz(red_xyz, &vc);
-        assert!(cam.c > 20.0, "Red should have significant chroma, got {:.2}", cam.c);
+        assert!(
+            cam.c > 20.0,
+            "Red should have significant chroma, got {:.2}",
+            cam.c
+        );
         // CAM16 hue for red is typically around 20-50°
         assert!(
             cam.h < 90.0 || cam.h > 300.0,
-            "Red hue should be in red sector, got {:.1}°", cam.h
+            "Red hue should be in red sector, got {:.1}°",
+            cam.h
         );
     }
 
@@ -405,7 +436,9 @@ mod tests {
             assert!(
                 rel_err < 0.05,
                 "Roundtrip error at XYZ[{}]: orig={:.3}, got={:.3}",
-                i, original[i], recovered[i]
+                i,
+                original[i],
+                recovered[i]
             );
         }
     }
@@ -418,7 +451,9 @@ mod tests {
             let lstar2 = lstar_from_y(y);
             assert!(
                 (lstar - lstar2).abs() < 0.01,
-                "L*↔Y roundtrip failed at L*={}: got {:.4}", lstar, lstar2
+                "L*↔Y roundtrip failed at L*={}: got {:.4}",
+                lstar,
+                lstar2
             );
         }
     }

@@ -2,9 +2,9 @@
 // momoto-events::broadcaster — EventBroadcaster pub/sub bus
 // =============================================================================
 
-use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
 use crate::event::{Event, EventCategory};
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 /// Trait for event handlers. Implement this to receive events.
 pub trait EventHandler: Send + Sync + 'static {

@@ -67,8 +67,8 @@ pub use traceability::{
     TraceabilityOperation,
 };
 pub use units::{
-    celsius_to_kelvin, convert_unit, deg_to_rad, fraction_to_percent, kelvin_to_celsius,
-    nm_to_um, percent_to_fraction, rad_to_deg, um_to_nm, units_compatible, Unit, UnitValue,
+    celsius_to_kelvin, convert_unit, deg_to_rad, fraction_to_percent, kelvin_to_celsius, nm_to_um,
+    percent_to_fraction, rad_to_deg, um_to_nm, units_compatible, Unit, UnitValue,
 };
 
 // ============================================================================
@@ -248,7 +248,11 @@ mod tests {
     #[test]
     fn test_module_validation() {
         let validation = validate_module();
-        assert!(validation.valid, "Validation failed: {:?}", validation.issues);
+        assert!(
+            validation.valid,
+            "Validation failed: {:?}",
+            validation.issues
+        );
     }
 
     #[test]
@@ -276,7 +280,10 @@ mod tests {
         assert_eq!(linear.method, PropagationMethod::Linear);
 
         let mc = UncertaintyPropagator::monte_carlo(5000);
-        assert!(matches!(mc.method, PropagationMethod::MonteCarlo { n_samples: 5000 }));
+        assert!(matches!(
+            mc.method,
+            PropagationMethod::MonteCarlo { n_samples: 5000 }
+        ));
     }
 
     #[test]

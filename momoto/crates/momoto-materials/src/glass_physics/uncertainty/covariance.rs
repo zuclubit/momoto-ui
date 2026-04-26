@@ -353,7 +353,10 @@ impl CovarianceEstimator {
 // ============================================================================
 
 /// Estimate covariance from samples with optional shrinkage.
-pub fn estimate_covariance(samples: &[Vec<f64>], shrinkage: Option<f64>) -> ParameterCovarianceMatrix {
+pub fn estimate_covariance(
+    samples: &[Vec<f64>],
+    shrinkage: Option<f64>,
+) -> ParameterCovarianceMatrix {
     let mut cov = ParameterCovarianceMatrix::from_samples(samples);
 
     if let Some(alpha) = shrinkage {
@@ -366,7 +369,10 @@ pub fn estimate_covariance(samples: &[Vec<f64>], shrinkage: Option<f64>) -> Para
 /// Apply Ledoit-Wolf shrinkage to covariance matrix.
 ///
 /// Shrinks towards scaled identity matrix.
-pub fn shrinkage_covariance(cov: &ParameterCovarianceMatrix, alpha: f64) -> ParameterCovarianceMatrix {
+pub fn shrinkage_covariance(
+    cov: &ParameterCovarianceMatrix,
+    alpha: f64,
+) -> ParameterCovarianceMatrix {
     let alpha = alpha.clamp(0.0, 1.0);
     let n = cov.n;
 
@@ -421,11 +427,7 @@ mod tests {
     #[test]
     fn test_covariance_from_samples() {
         // Samples with known covariance
-        let samples = vec![
-            vec![1.0, 2.0],
-            vec![3.0, 4.0],
-            vec![5.0, 6.0],
-        ];
+        let samples = vec![vec![1.0, 2.0], vec![3.0, 4.0], vec![5.0, 6.0]];
         let cov = ParameterCovarianceMatrix::from_samples(&samples);
 
         // Variance should be positive
@@ -440,10 +442,7 @@ mod tests {
     #[test]
     fn test_covariance_correlation() {
         // Anti-correlated samples
-        let samples = vec![
-            vec![0.0, 1.0],
-            vec![1.0, 0.0],
-        ];
+        let samples = vec![vec![0.0, 1.0], vec![1.0, 0.0]];
         let cov = ParameterCovarianceMatrix::from_samples(&samples);
         let r = cov.correlation(0, 1);
         assert!(r < 0.0); // Negative correlation
@@ -451,10 +450,8 @@ mod tests {
 
     #[test]
     fn test_covariance_symmetry() {
-        let cov = ParameterCovarianceMatrix::from_samples(&[
-            vec![1.0, 2.0, 3.0],
-            vec![4.0, 5.0, 6.0],
-        ]);
+        let cov =
+            ParameterCovarianceMatrix::from_samples(&[vec![1.0, 2.0, 3.0], vec![4.0, 5.0, 6.0]]);
 
         assert!((cov.get(1, 0) - cov.get(0, 1)).abs() < 1e-10);
         assert!((cov.get(2, 0) - cov.get(0, 2)).abs() < 1e-10);
@@ -469,7 +466,9 @@ mod tests {
 
         let pairs = cov.find_correlated_pairs(0.9);
         // Parameters 0 and 1 should be highly correlated
-        assert!(pairs.iter().any(|(i, j, _)| (*i == 1 && *j == 0) || (*i == 0 && *j == 1)));
+        assert!(pairs
+            .iter()
+            .any(|(i, j, _)| (*i == 1 && *j == 0) || (*i == 0 && *j == 1)));
     }
 
     #[test]

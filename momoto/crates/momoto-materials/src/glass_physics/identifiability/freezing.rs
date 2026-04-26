@@ -2,8 +2,8 @@
 //!
 //! Suggest which parameters to fix for stable optimization.
 
-use super::jacobian::IdentifiabilityResult;
 use super::correlation::CorrelationAnalysis;
+use super::jacobian::IdentifiabilityResult;
 
 // ============================================================================
 // FREEZING REASON
@@ -32,13 +32,17 @@ impl FreezingReason {
     /// Get reason description.
     pub fn description(&self) -> &'static str {
         match self {
-            FreezingReason::NonIdentifiable => "Parameter cannot be uniquely determined from available data",
+            FreezingReason::NonIdentifiable => {
+                "Parameter cannot be uniquely determined from available data"
+            }
             FreezingReason::HighCorrelation => "Parameter is highly correlated with another",
             FreezingReason::AtBoundary => "Parameter is at or near its constraint boundary",
             FreezingReason::LowSensitivity => "Parameter has minimal effect on observations",
             FreezingReason::ImprovesConditioning => "Freezing improves optimization stability",
             FreezingReason::UserSpecified => "User explicitly requested this parameter be frozen",
-            FreezingReason::ReliablePrior => "Default value is well-established from prior knowledge",
+            FreezingReason::ReliablePrior => {
+                "Default value is well-established from prior knowledge"
+            }
         }
     }
 
@@ -85,8 +89,12 @@ impl FreezingStrategy {
     /// Get description.
     pub fn description(&self) -> &'static str {
         match self {
-            FreezingStrategy::NonIdentifiableOnly => "Only freeze parameters that cannot be identified",
-            FreezingStrategy::TargetConditionNumber => "Freeze until condition number is acceptable",
+            FreezingStrategy::NonIdentifiableOnly => {
+                "Only freeze parameters that cannot be identified"
+            }
+            FreezingStrategy::TargetConditionNumber => {
+                "Freeze until condition number is acceptable"
+            }
             FreezingStrategy::ConservativePhysics => "Preserve physically important parameters",
             FreezingStrategy::Aggressive => "Freeze anything with significant uncertainty",
             FreezingStrategy::MinimalFreezing => "Keep as many parameters free as possible",
@@ -249,7 +257,10 @@ impl FreezingReport {
         }
 
         let should = self.should_freeze();
-        let should_only: Vec<_> = should.into_iter().filter(|r| r.reason.severity() < 5).collect();
+        let should_only: Vec<_> = should
+            .into_iter()
+            .filter(|r| r.reason.severity() < 5)
+            .collect();
         if !should_only.is_empty() {
             s.push_str("[SHOULD FREEZE]\n");
             for rec in should_only {
@@ -364,7 +375,10 @@ impl ParameterFreezingRecommender {
         // Check condition number
         if result.condition_number > self.target_condition {
             // Add conditioning recommendations based on strategy
-            if matches!(self.strategy, FreezingStrategy::TargetConditionNumber | FreezingStrategy::Aggressive) {
+            if matches!(
+                self.strategy,
+                FreezingStrategy::TargetConditionNumber | FreezingStrategy::Aggressive
+            ) {
                 // Find parameters with smallest singular values (candidates for freezing)
                 for (i, &sv) in result.singular_values.iter().enumerate().skip(result.rank) {
                     if i < self.param_names.len() && !result.non_identifiable.contains(&i) {
@@ -488,7 +502,9 @@ mod tests {
 
     #[test]
     fn test_freezing_reason_severity() {
-        assert!(FreezingReason::NonIdentifiable.severity() > FreezingReason::LowSensitivity.severity());
+        assert!(
+            FreezingReason::NonIdentifiable.severity() > FreezingReason::LowSensitivity.severity()
+        );
         assert!(FreezingReason::HighCorrelation.severity() > FreezingReason::AtBoundary.severity());
     }
 

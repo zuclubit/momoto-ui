@@ -30,8 +30,8 @@
 //! - d'Eon & Irving (2011): "A Quantized-Diffusion Model for Translucent Materials"
 //! - Pharr et al. (2016): "Physically Based Rendering", Chapter 11
 
-use std::sync::OnceLock;
 use super::scattering::{double_henyey_greenstein, ScatteringParams};
+use std::sync::OnceLock;
 
 // ============================================================================
 // DOUBLE HENYEY-GREENSTEIN LUT
@@ -80,8 +80,10 @@ impl DoubleHGLUT {
     fn build() -> Self {
         let mut table = Box::new([[[[0.0f32; 128]; 8]; 16]; 16]);
 
-        let g_f_step = (Self::G_FORWARD_MAX - Self::G_FORWARD_MIN) / (Self::G_FORWARD_COUNT - 1) as f64;
-        let g_b_step = (Self::G_BACKWARD_MAX - Self::G_BACKWARD_MIN) / (Self::G_BACKWARD_COUNT - 1) as f64;
+        let g_f_step =
+            (Self::G_FORWARD_MAX - Self::G_FORWARD_MIN) / (Self::G_FORWARD_COUNT - 1) as f64;
+        let g_b_step =
+            (Self::G_BACKWARD_MAX - Self::G_BACKWARD_MIN) / (Self::G_BACKWARD_COUNT - 1) as f64;
         let w_step = (Self::WEIGHT_MAX - Self::WEIGHT_MIN) / (Self::WEIGHT_COUNT - 1) as f64;
         let angle_step = (Self::ANGLE_MAX - Self::ANGLE_MIN) / (Self::ANGLE_COUNT - 1) as f64;
 
@@ -138,8 +140,10 @@ impl DoubleHGLUT {
         let cos_t = cos_theta.clamp(Self::ANGLE_MIN, Self::ANGLE_MAX);
 
         // Calculate indices and interpolation factors
-        let g_f_step = (Self::G_FORWARD_MAX - Self::G_FORWARD_MIN) / (Self::G_FORWARD_COUNT - 1) as f64;
-        let g_b_step = (Self::G_BACKWARD_MAX - Self::G_BACKWARD_MIN) / (Self::G_BACKWARD_COUNT - 1) as f64;
+        let g_f_step =
+            (Self::G_FORWARD_MAX - Self::G_FORWARD_MIN) / (Self::G_FORWARD_COUNT - 1) as f64;
+        let g_b_step =
+            (Self::G_BACKWARD_MAX - Self::G_BACKWARD_MIN) / (Self::G_BACKWARD_COUNT - 1) as f64;
         let w_step = (Self::WEIGHT_MAX - Self::WEIGHT_MIN) / (Self::WEIGHT_COUNT - 1) as f64;
         let angle_step = (Self::ANGLE_MAX - Self::ANGLE_MIN) / (Self::ANGLE_COUNT - 1) as f64;
 
@@ -167,8 +171,14 @@ impl DoubleHGLUT {
     #[inline]
     fn interpolate_4d(
         &self,
-        i_gf: usize, i_gb: usize, i_w: usize, i_angle: usize,
-        t_gf: f64, t_gb: f64, t_w: f64, t_angle: f64,
+        i_gf: usize,
+        i_gb: usize,
+        i_w: usize,
+        i_angle: usize,
+        t_gf: f64,
+        t_gb: f64,
+        t_w: f64,
+        t_angle: f64,
     ) -> f64 {
         // 4D interpolation using nested linear interpolations
         let v0000 = self.table[i_gf][i_gb][i_w][i_angle] as f64;
@@ -215,7 +225,11 @@ impl DoubleHGLUT {
 
     /// Get memory size of LUT in bytes
     pub fn memory_size(&self) -> usize {
-        Self::G_FORWARD_COUNT * Self::G_BACKWARD_COUNT * Self::WEIGHT_COUNT * Self::ANGLE_COUNT * std::mem::size_of::<f32>()
+        Self::G_FORWARD_COUNT
+            * Self::G_BACKWARD_COUNT
+            * Self::WEIGHT_COUNT
+            * Self::ANGLE_COUNT
+            * std::mem::size_of::<f32>()
     }
 }
 
@@ -245,7 +259,7 @@ pub struct CompactDHGLUT {
     /// Table[preset_index][angle_index] = phase function value
     presets: Box<[[f32; 256]; 8]>,
     /// Preset configurations
-    configs: [(f64, f64, f64); 8],  // (g_f, g_b, w)
+    configs: [(f64, f64, f64); 8], // (g_f, g_b, w)
 }
 
 /// DHG preset identifiers
@@ -307,14 +321,14 @@ impl CompactDHGLUT {
 
     /// Preset configurations: (g_forward, g_backward, weight)
     const PRESET_CONFIGS: [(f64, f64, f64); 8] = [
-        (0.7, -0.2, 0.8),   // Milk
-        (0.5, -0.3, 0.7),   // Opal
-        (0.8, -0.3, 0.7),   // Skin
-        (0.6, -0.4, 0.6),   // Marble
+        (0.7, -0.2, 0.8),    // Milk
+        (0.5, -0.3, 0.7),    // Opal
+        (0.8, -0.3, 0.7),    // Skin
+        (0.6, -0.4, 0.6),    // Marble
         (0.85, -0.15, 0.85), // Wax
-        (0.9, -0.1, 0.95),  // Fog
-        (0.85, -0.2, 0.9),  // Cloud
-        (0.6, -0.2, 0.75),  // Ice
+        (0.9, -0.1, 0.95),   // Fog
+        (0.85, -0.2, 0.9),   // Cloud
+        (0.6, -0.2, 0.75),   // Ice
     ];
 
     /// Build compact LUT
@@ -378,8 +392,7 @@ impl CompactDHGLUT {
 
     /// Get memory size in bytes
     pub fn memory_size(&self) -> usize {
-        8 * Self::ANGLE_COUNT * std::mem::size_of::<f32>() +
-        8 * 3 * std::mem::size_of::<f64>()
+        8 * Self::ANGLE_COUNT * std::mem::size_of::<f32>() + 8 * 3 * std::mem::size_of::<f64>()
     }
 }
 
@@ -446,9 +459,9 @@ mod tests {
 
         // Test various configurations
         let test_cases = [
-            (0.7, -0.2, 0.8),  // Milk-like
-            (0.5, -0.3, 0.7),  // Opal-like
-            (0.8, -0.3, 0.7),  // Skin-like
+            (0.7, -0.2, 0.8), // Milk-like
+            (0.5, -0.3, 0.7), // Opal-like
+            (0.8, -0.3, 0.7), // Skin-like
         ];
 
         for (g_f, g_b, w) in test_cases {
@@ -460,7 +473,11 @@ mod tests {
                 assert!(
                     error < 0.05,
                     "DHG LUT error {}% at g_f={}, g_b={}, w={}, cos={}",
-                    error * 100.0, g_f, g_b, w, cos_theta
+                    error * 100.0,
+                    g_f,
+                    g_b,
+                    w,
+                    cos_theta
                 );
             }
         }
@@ -481,7 +498,9 @@ mod tests {
                 assert!(
                     error < 0.02,
                     "Compact DHG LUT error {}% for {:?} at cos={}",
-                    error * 100.0, preset, cos_theta
+                    error * 100.0,
+                    preset,
+                    cos_theta
                 );
             }
         }
@@ -515,7 +534,10 @@ mod tests {
             assert!(
                 error < 0.05,
                 "Preset {:?} mismatch: preset={}, params={}, error={}%",
-                preset, from_preset, from_params, error * 100.0
+                preset,
+                from_preset,
+                from_params,
+                error * 100.0
             );
         }
     }
@@ -562,7 +584,8 @@ mod tests {
             assert!(
                 (integral - 1.0).abs() < 0.03,
                 "DHG {:?} should integrate to 1, got {}",
-                preset, integral
+                preset,
+                integral
             );
         }
     }

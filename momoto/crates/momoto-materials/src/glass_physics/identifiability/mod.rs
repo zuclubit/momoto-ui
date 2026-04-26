@@ -40,23 +40,23 @@
 //! }
 //! ```
 
-mod jacobian;
 mod correlation;
 mod freezing;
+mod jacobian;
 
 pub use jacobian::{
-    JacobianRankAnalyzer, IdentifiabilityResult, RankDeficiency,
-    compute_effective_rank, compute_condition_number,
+    compute_condition_number, compute_effective_rank, IdentifiabilityResult, JacobianRankAnalyzer,
+    RankDeficiency,
 };
 
 pub use correlation::{
-    ParameterCorrelationMatrix, CorrelationCluster, CorrelationAnalysis,
-    find_correlation_clusters, compute_vif,
+    compute_vif, find_correlation_clusters, CorrelationAnalysis, CorrelationCluster,
+    ParameterCorrelationMatrix,
 };
 
 pub use freezing::{
-    FreezingRecommendation, FreezingReason, ParameterFreezingRecommender,
-    FreezingStrategy, FreezingReport,
+    FreezingReason, FreezingRecommendation, FreezingReport, FreezingStrategy,
+    ParameterFreezingRecommender,
 };
 
 // ============================================================================

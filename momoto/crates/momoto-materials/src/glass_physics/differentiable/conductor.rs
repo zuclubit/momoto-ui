@@ -2,13 +2,11 @@
 //!
 //! Conductor (metal) material with analytical gradient computation.
 
+use super::super::unified_bsdf::{BSDFContext, BSDFResponse, BSDFSample, EnergyValidation, BSDF};
+use super::gradients::{fresnel_conductor_gradient, ggx_distribution_gradient, smith_g_gradient};
 use super::traits::{
-    DifferentiableBSDF, DifferentiableResponse, ParameterGradients, ParameterBounds,
+    DifferentiableBSDF, DifferentiableResponse, ParameterBounds, ParameterGradients,
 };
-use super::gradients::{
-    fresnel_conductor_gradient, ggx_distribution_gradient, smith_g_gradient,
-};
-use super::super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse, BSDFSample, EnergyValidation};
 
 // ============================================================================
 // DIFFERENTIABLE CONDUCTOR
@@ -201,8 +199,8 @@ impl DifferentiableBSDF for DifferentiableConductor {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::super::unified_bsdf::Vector3;
+    use super::*;
 
     fn create_ctx(cos_theta: f64) -> BSDFContext {
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();

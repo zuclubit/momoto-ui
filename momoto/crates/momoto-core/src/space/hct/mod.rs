@@ -17,7 +17,7 @@
 pub mod cam16;
 
 use crate::color::Color;
-use cam16::{CAM16, ViewingConditions, lstar_from_y, y_from_lstar, mat3_mul_vec3};
+use cam16::{lstar_from_y, mat3_mul_vec3, y_from_lstar, ViewingConditions, CAM16};
 
 // =============================================================================
 // sRGB ↔ XYZ matrices (D65 reference white)
@@ -32,9 +32,9 @@ const M_SRGB_TO_XYZ: [[f64; 3]; 3] = [
 
 /// XYZ D65 → linear sRGB (inverse of above)
 const M_XYZ_TO_SRGB: [[f64; 3]; 3] = [
-    [ 3.2404542, -1.5371385, -0.4985314],
-    [-0.9692660,  1.8760108,  0.0415560],
-    [ 0.0556434, -0.2040259,  1.0572252],
+    [3.2404542, -1.5371385, -0.4985314],
+    [-0.9692660, 1.8760108, 0.0415560],
+    [0.0556434, -0.2040259, 1.0572252],
 ];
 
 // =============================================================================
@@ -212,9 +212,12 @@ fn is_xyz_in_srgb_gamut(xyz: [f64; 3]) -> bool {
     let xyz_norm = [xyz[0] / 100.0, xyz[1] / 100.0, xyz[2] / 100.0];
     let rgb = mat3_mul_vec3(&M_XYZ_TO_SRGB, xyz_norm);
     const EPS: f64 = 0.0001;
-    rgb[0] >= -EPS && rgb[0] <= 1.0 + EPS
-        && rgb[1] >= -EPS && rgb[1] <= 1.0 + EPS
-        && rgb[2] >= -EPS && rgb[2] <= 1.0 + EPS
+    rgb[0] >= -EPS
+        && rgb[0] <= 1.0 + EPS
+        && rgb[1] >= -EPS
+        && rgb[1] <= 1.0 + EPS
+        && rgb[2] >= -EPS
+        && rgb[2] <= 1.0 + EPS
 }
 
 // =============================================================================
@@ -225,7 +228,11 @@ fn is_xyz_in_srgb_gamut(xyz: [f64; 3]) -> bool {
 fn linear_srgb_to_xyz(linear: [f64; 3]) -> [f64; 3] {
     // Scale by 100 so white Y = 100
     let xyz_norm = mat3_mul_vec3(&M_SRGB_TO_XYZ, linear);
-    [xyz_norm[0] * 100.0, xyz_norm[1] * 100.0, xyz_norm[2] * 100.0]
+    [
+        xyz_norm[0] * 100.0,
+        xyz_norm[1] * 100.0,
+        xyz_norm[2] * 100.0,
+    ]
 }
 
 /// XYZ D65 (in [0, 100]) → sRGB Color.
@@ -258,8 +265,16 @@ mod tests {
     fn test_black_tone() {
         let black = Color::from_srgb8(0, 0, 0);
         let hct = HCT::from_color(&black);
-        assert!(hct.tone < 1.0, "Black tone should be ~0, got {:.2}", hct.tone);
-        assert!(hct.chroma < 2.0, "Black chroma should be ~0, got {:.2}", hct.chroma);
+        assert!(
+            hct.tone < 1.0,
+            "Black tone should be ~0, got {:.2}",
+            hct.tone
+        );
+        assert!(
+            hct.chroma < 2.0,
+            "Black chroma should be ~0, got {:.2}",
+            hct.chroma
+        );
     }
 
     /// Pure white → Tone ≈ 100, chroma ≈ 0
@@ -267,8 +282,16 @@ mod tests {
     fn test_white_tone() {
         let white = Color::from_srgb8(255, 255, 255);
         let hct = HCT::from_color(&white);
-        assert!((hct.tone - 100.0).abs() < 1.0, "White tone should be ~100, got {:.2}", hct.tone);
-        assert!(hct.chroma < 5.0, "White chroma should be ~0, got {:.2}", hct.chroma);
+        assert!(
+            (hct.tone - 100.0).abs() < 1.0,
+            "White tone should be ~100, got {:.2}",
+            hct.tone
+        );
+        assert!(
+            hct.chroma < 5.0,
+            "White chroma should be ~0, got {:.2}",
+            hct.chroma
+        );
     }
 
     /// Mid-gray → Tone ≈ 53.4, chroma ≈ 0
@@ -278,9 +301,14 @@ mod tests {
         let hct = HCT::from_color(&gray);
         assert!(
             (hct.tone - 53.4).abs() < 3.0,
-            "Mid-gray tone should be ~53, got {:.2}", hct.tone
+            "Mid-gray tone should be ~53, got {:.2}",
+            hct.tone
         );
-        assert!(hct.chroma < 5.0, "Gray chroma should be ~0, got {:.2}", hct.chroma);
+        assert!(
+            hct.chroma < 5.0,
+            "Gray chroma should be ~0, got {:.2}",
+            hct.chroma
+        );
     }
 
     /// Roundtrip: Color → HCT → Color preserves tone within 1 unit (ΔL* < 1)
@@ -303,7 +331,8 @@ mod tests {
             assert!(
                 tone_delta < 2.0,
                 "Tone not preserved: original={:.2}, recovered={:.2}",
-                hct.tone, hct2.tone
+                hct.tone,
+                hct2.tone
             );
         }
     }
@@ -325,9 +354,24 @@ mod tests {
         let r = ((argb >> 16) & 0xFF) as i32;
         let g = ((argb >> 8) & 0xFF) as i32;
         let b = (argb & 0xFF) as i32;
-        assert!((or_ - r).abs() <= 15, "Red channel delta too large: {} vs {}", or_, r);
-        assert!((og - g).abs() <= 15, "Green channel delta too large: {} vs {}", og, g);
-        assert!((ob - b).abs() <= 15, "Blue channel delta too large: {} vs {}", ob, b);
+        assert!(
+            (or_ - r).abs() <= 15,
+            "Red channel delta too large: {} vs {}",
+            or_,
+            r
+        );
+        assert!(
+            (og - g).abs() <= 15,
+            "Green channel delta too large: {} vs {}",
+            og,
+            g
+        );
+        assert!(
+            (ob - b).abs() <= 15,
+            "Blue channel delta too large: {} vs {}",
+            ob,
+            b
+        );
     }
 
     /// Hue of red should be distinct from hue of blue
@@ -337,7 +381,11 @@ mod tests {
         let blue = HCT::from_color(&Color::from_srgb8(0, 0, 255));
         let hue_diff = (red.hue - blue.hue).abs();
         let hue_diff = hue_diff.min(360.0 - hue_diff);
-        assert!(hue_diff > 45.0, "Red and blue should be >45° apart, got {:.1}°", hue_diff);
+        assert!(
+            hue_diff > 45.0,
+            "Red and blue should be >45° apart, got {:.1}°",
+            hue_diff
+        );
     }
 
     /// Achromatic HCT → to_color → round trip tone
@@ -348,7 +396,8 @@ mod tests {
         let hct2 = HCT::from_color(&color);
         assert!(
             (hct2.tone - 60.0).abs() < 2.0,
-            "Achromatic tone not preserved: {:.2}", hct2.tone
+            "Achromatic tone not preserved: {:.2}",
+            hct2.tone
         );
     }
 

@@ -221,7 +221,12 @@ impl TransferMatrixFilm {
     }
 
     /// Calculate reflection and transmission coefficients
-    fn calculate_rt(&self, wavelength_nm: f64, angle_deg: f64, pol: Polarization) -> (Complex, Complex) {
+    fn calculate_rt(
+        &self,
+        wavelength_nm: f64,
+        angle_deg: f64,
+        pol: Polarization,
+    ) -> (Complex, Complex) {
         let angle_rad = angle_deg * PI / 180.0;
         let cos_i = angle_rad.cos();
         let sin_i = angle_rad.sin();
@@ -307,9 +312,9 @@ impl TransferMatrixFilm {
     /// Calculate RGB reflectance
     pub fn reflectance_rgb(&self, angle_deg: f64, pol: Polarization) -> [f64; 3] {
         [
-            self.reflectance(650.0, angle_deg, pol),  // Red
-            self.reflectance(550.0, angle_deg, pol),  // Green
-            self.reflectance(450.0, angle_deg, pol),  // Blue
+            self.reflectance(650.0, angle_deg, pol), // Red
+            self.reflectance(550.0, angle_deg, pol), // Green
+            self.reflectance(450.0, angle_deg, pol), // Blue
         ]
     }
 
@@ -356,7 +361,12 @@ pub mod advanced_presets {
     /// Create a Bragg mirror (high reflector)
     ///
     /// Alternating high/low index layers
-    pub fn bragg_mirror(n_high: f64, n_low: f64, design_lambda: f64, pairs: usize) -> TransferMatrixFilm {
+    pub fn bragg_mirror(
+        n_high: f64,
+        n_low: f64,
+        design_lambda: f64,
+        pairs: usize,
+    ) -> TransferMatrixFilm {
         let mut film = TransferMatrixFilm::new(1.0, 1.52);
 
         let d_high = quarter_wave(n_high, design_lambda);
@@ -379,8 +389,8 @@ pub mod advanced_presets {
         let mut film = TransferMatrixFilm::new(1.0, 1.52);
 
         // MgF2 (low) + ZrO2 (high) design
-        let n_low = 1.38;   // MgF2
-        let n_high = 2.05;  // ZrO2
+        let n_low = 1.38; // MgF2
+        let n_high = 2.05; // ZrO2
 
         // Optimized thicknesses for broadband
         let d_low = 0.28 * design_lambda / n_low;
@@ -397,8 +407,8 @@ pub mod advanced_presets {
         let mut film = TransferMatrixFilm::new(1.0, 1.52);
 
         // High contrast materials
-        let n_high = 2.35;  // TiO2
-        let n_low = 1.46;   // SiO2
+        let n_high = 2.35; // TiO2
+        let n_low = 1.46; // SiO2
 
         // More pairs = narrower bandwidth
         let pairs = (20.0 / bandwidth_nm * 10.0) as usize;
@@ -431,7 +441,7 @@ pub mod advanced_presets {
     ///
     /// Natural photonic crystal with structural blue color
     pub fn morpho_butterfly() -> TransferMatrixFilm {
-        let mut film = TransferMatrixFilm::new(1.0, 1.56);  // Air to chitin
+        let mut film = TransferMatrixFilm::new(1.0, 1.56); // Air to chitin
 
         // Alternating chitin (n=1.56) and air (n=1.0) layers
         // Irregular spacing creates broadband blue reflection
@@ -496,8 +506,8 @@ pub mod advanced_presets {
         let mut film = TransferMatrixFilm::new(1.0, 1.55);
 
         // Polycarbonate with metallic layer
-        film.add_layer(1.55, 1200.0);  // Polycarbonate cover
-        film.add_absorbing_layer(0.15, 3.5, 50.0);  // Aluminum reflection layer
+        film.add_layer(1.55, 1200.0); // Polycarbonate cover
+        film.add_absorbing_layer(0.15, 3.5, 50.0); // Aluminum reflection layer
 
         film
     }
@@ -662,7 +672,11 @@ mod tests {
         let mirror = advanced_presets::bragg_mirror(2.35, 1.46, 550.0, 10);
         let r = mirror.reflectance(550.0, 0.0, Polarization::Average);
 
-        assert!(r > 0.9, "Bragg mirror should have high reflection at design λ: {}", r);
+        assert!(
+            r > 0.9,
+            "Bragg mirror should have high reflection at design λ: {}",
+            r
+        );
     }
 
     #[test]
@@ -689,8 +703,14 @@ mod tests {
         let r_red_at_red = red_reflect.reflectance(650.0, 0.0, Polarization::Average);
         let r_red_at_blue = red_reflect.reflectance(450.0, 0.0, Polarization::Average);
 
-        assert!(r_blue_at_blue > r_blue_at_red, "Blue dichroic should reflect blue");
-        assert!(r_red_at_red > r_red_at_blue, "Red dichroic should reflect red");
+        assert!(
+            r_blue_at_blue > r_blue_at_red,
+            "Blue dichroic should reflect blue"
+        );
+        assert!(
+            r_red_at_red > r_red_at_blue,
+            "Red dichroic should reflect red"
+        );
     }
 
     #[test]
@@ -722,7 +742,10 @@ mod tests {
             assert!(
                 (sum - 1.0).abs() < 0.05,
                 "R + T should ≈ 1 for lossless film at λ={}: R={}, T={}, sum={}",
-                lambda, r, t, sum
+                lambda,
+                r,
+                t,
+                sum
             );
         }
     }
@@ -738,7 +761,12 @@ mod tests {
             // with complex IOR in transfer matrix calculation
             if name.contains("Optical Disc") {
                 // Just check it computes (absorbing layers are experimental)
-                assert!(r.is_finite(), "{} reflectance should be finite: {}", name, r);
+                assert!(
+                    r.is_finite(),
+                    "{} reflectance should be finite: {}",
+                    name,
+                    r
+                );
             } else {
                 assert!(
                     r >= 0.0 && r <= 1.0,

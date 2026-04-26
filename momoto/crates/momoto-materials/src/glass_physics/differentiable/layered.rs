@@ -2,10 +2,10 @@
 //!
 //! Composition of multiple BSDF layers with chain rule gradient propagation.
 
+use super::super::unified_bsdf::{BSDFContext, BSDFResponse, BSDFSample, EnergyValidation, BSDF};
 use super::traits::{
-    DifferentiableBSDF, DifferentiableResponse, ParameterGradients, ParameterBounds,
+    DifferentiableBSDF, DifferentiableResponse, ParameterBounds, ParameterGradients,
 };
-use super::super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse, BSDFSample, EnergyValidation};
 
 // ============================================================================
 // LAYER CONFIGURATION
@@ -221,7 +221,11 @@ impl BSDF for DifferentiableLayered {
             ctx.wi * -1.0
         };
 
-        let pdf = if is_reflection { response.reflectance } else { response.transmittance };
+        let pdf = if is_reflection {
+            response.reflectance
+        } else {
+            response.transmittance
+        };
         let value = if is_reflection {
             BSDFResponse::pure_reflection(response.reflectance)
         } else {
@@ -295,10 +299,10 @@ impl DifferentiableBSDF for DifferentiableLayered {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::super::super::unified_bsdf::Vector3;
     use super::super::dielectric::DifferentiableDielectric;
     use super::super::thin_film::DifferentiableThinFilm;
-    use super::super::super::unified_bsdf::Vector3;
+    use super::*;
 
     fn create_ctx(cos_theta: f64) -> BSDFContext {
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
@@ -344,7 +348,14 @@ mod tests {
 
         let mut layered = DifferentiableLayered::new();
         layered.add_layer(&coating, &ctx, LayerConfig::default());
-        layered.add_layer(&substrate, &ctx, LayerConfig { weight: 1.0, is_substrate: true });
+        layered.add_layer(
+            &substrate,
+            &ctx,
+            LayerConfig {
+                weight: 1.0,
+                is_substrate: true,
+            },
+        );
 
         assert_eq!(layered.layer_count(), 2);
 
@@ -355,7 +366,9 @@ mod tests {
         assert!(result.response.transmittance >= 0.0);
 
         // Energy conservation
-        let total = result.response.reflectance + result.response.transmittance + result.response.absorption;
+        let total = result.response.reflectance
+            + result.response.transmittance
+            + result.response.absorption;
         assert!((total - 1.0).abs() < 0.1); // Allow some tolerance for multi-layer
     }
 
@@ -368,7 +381,9 @@ mod tests {
         layered.add_layer(&glass, &ctx, LayerConfig::default());
 
         let result = layered.compute();
-        let total = result.response.reflectance + result.response.transmittance + result.response.absorption;
+        let total = result.response.reflectance
+            + result.response.transmittance
+            + result.response.absorption;
 
         assert!((total - 1.0).abs() < 1e-6);
     }
@@ -410,7 +425,14 @@ mod tests {
 
         let mut layered = DifferentiableLayered::new();
         layered.add_layer(&coating, &ctx, LayerConfig::default());
-        layered.add_layer(&substrate, &ctx, LayerConfig { weight: 1.0, is_substrate: true });
+        layered.add_layer(
+            &substrate,
+            &ctx,
+            LayerConfig {
+                weight: 1.0,
+                is_substrate: true,
+            },
+        );
 
         let combined = layered.compute().response.reflectance;
 

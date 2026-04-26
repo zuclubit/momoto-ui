@@ -30,11 +30,13 @@
 
 use std::f64::consts::PI;
 
+use super::combined_effects::{BlendMode, RoughnessModel};
 use super::enhanced_presets::QualityTier;
 use super::fresnel::fresnel_schlick;
-use super::thin_film_dynamic::{DynamicFilmLayer, DynamicThinFilmStack, HeightMap, Vec2, SubstrateProperties};
-use super::metal_oxidation_dynamic::{DynamicOxidizedMetal, AlloyComposition, Element};
-use super::combined_effects::{BlendMode, RoughnessModel};
+use super::metal_oxidation_dynamic::{AlloyComposition, DynamicOxidizedMetal, Element};
+use super::thin_film_dynamic::{
+    DynamicFilmLayer, DynamicThinFilmStack, HeightMap, SubstrateProperties, Vec2,
+};
 
 // ============================================================================
 // DISPERSION MODELS
@@ -78,7 +80,7 @@ impl DispersionModel {
     pub fn water() -> Self {
         Self::Cauchy {
             a: 1.3199,
-            b: 6878.0,  // nm²
+            b: 6878.0, // nm²
             c: 0.0,
         }
     }
@@ -98,26 +100,22 @@ impl DispersionModel {
         let lambda_nm = wavelength_nm;
 
         match self {
-            Self::Cauchy { a, b, c } => {
-                a + b / (lambda_nm * lambda_nm) + c / (lambda_nm.powi(4))
-            }
+            Self::Cauchy { a, b, c } => a + b / (lambda_nm * lambda_nm) + c / (lambda_nm.powi(4)),
             Self::Sellmeier { b1, c1, b2, c2 } => {
                 let l2 = lambda * lambda;
                 let n2 = 1.0 + (b1 * l2) / (l2 - c1) + (b2 * l2) / (l2 - c2);
                 n2.sqrt()
             }
-            Self::Conrady { a, b, c } => {
-                a + b / lambda_nm + c / lambda_nm.powf(3.5)
-            }
+            Self::Conrady { a, b, c } => a + b / lambda_nm + c / lambda_nm.powf(3.5),
             Self::Constant { n } => *n,
         }
     }
 
     /// Calculate Abbe number (V_d)
     pub fn abbe_number(&self) -> f64 {
-        let n_d = self.evaluate(587.6);  // Yellow (helium d-line)
-        let n_f = self.evaluate(486.1);  // Blue (hydrogen F-line)
-        let n_c = self.evaluate(656.3);  // Red (hydrogen C-line)
+        let n_d = self.evaluate(587.6); // Yellow (helium d-line)
+        let n_f = self.evaluate(486.1); // Blue (hydrogen F-line)
+        let n_c = self.evaluate(656.3); // Red (hydrogen C-line)
 
         if (n_f - n_c).abs() < 1e-10 {
             0.0
@@ -151,17 +149,26 @@ pub enum SizeDistribution {
 impl SizeDistribution {
     /// Milk particles
     pub fn milk() -> Self {
-        Self::LogNormal { r_mode: 0.5, sigma_g: 1.5 }
+        Self::LogNormal {
+            r_mode: 0.5,
+            sigma_g: 1.5,
+        }
     }
 
     /// Fog droplets
     pub fn fog() -> Self {
-        Self::LogNormal { r_mode: 5.0, sigma_g: 1.3 }
+        Self::LogNormal {
+            r_mode: 5.0,
+            sigma_g: 1.3,
+        }
     }
 
     /// Dust particles
     pub fn dust() -> Self {
-        Self::LogNormal { r_mode: 1.0, sigma_g: 2.0 }
+        Self::LogNormal {
+            r_mode: 1.0,
+            sigma_g: 2.0,
+        }
     }
 
     /// Calculate effective g parameter for Henyey-Greenstein
@@ -186,9 +193,7 @@ impl SizeDistribution {
                 // Polydisperse enhances extinction
                 1.0 + 0.2 * (sigma_g - 1.0)
             }
-            Self::Gamma { v_eff, .. } => {
-                1.0 + 0.3 * v_eff
-            }
+            Self::Gamma { v_eff, .. } => 1.0 + 0.3 * v_eff,
             Self::Monodisperse { .. } => 1.0,
         }
     }
@@ -238,9 +243,7 @@ impl TemperatureGradientConfig {
         let t = match self.gradient_type {
             GradientType::Linear => r,
             GradientType::Radial => r,
-            GradientType::Gaussian { sigma } => {
-                1.0 - (-r * r / (2.0 * sigma * sigma)).exp()
-            }
+            GradientType::Gaussian { sigma } => 1.0 - (-r * r / (2.0 * sigma * sigma)).exp(),
         };
 
         self.center_temp_k + t * (self.edge_temp_k - self.center_temp_k)
@@ -335,12 +338,8 @@ impl PhysicalState {
 #[derive(Debug, Clone)]
 pub enum AdvancedEffectLayer {
     // === Phase 6 layers (inherited) ===
-
     /// Base Fresnel reflection
-    Fresnel {
-        ior: f64,
-        spectral: bool,
-    },
+    Fresnel { ior: f64, spectral: bool },
 
     /// Thin-film interference (static)
     ThinFilm {
@@ -350,28 +349,16 @@ pub enum AdvancedEffectLayer {
     },
 
     /// Metal with complex IOR
-    Metal {
-        n: f64,
-        k: f64,
-    },
+    Metal { n: f64, k: f64 },
 
     /// Mie scattering (monodisperse)
-    Mie {
-        g: f64,
-        extinction: f64,
-    },
+    Mie { g: f64, extinction: f64 },
 
     /// Surface roughness
-    Roughness {
-        value: f64,
-        model: RoughnessModel,
-    },
+    Roughness { value: f64, model: RoughnessModel },
 
     /// Absorption (Beer-Lambert)
-    Absorption {
-        coefficient: f64,
-        thickness: f64,
-    },
+    Absorption { coefficient: f64, thickness: f64 },
 
     /// Static oxidation layer
     Oxidation {
@@ -381,16 +368,11 @@ pub enum AdvancedEffectLayer {
     },
 
     // === Phase 7 NEW layers ===
-
     /// Dynamic thin-film stack with temperature/stress response
-    DynamicThinFilm {
-        stack: DynamicThinFilmStack,
-    },
+    DynamicThinFilm { stack: DynamicThinFilmStack },
 
     /// Dynamic metal oxidation with time evolution
-    DynamicOxidation {
-        metal: DynamicOxidizedMetal,
-    },
+    DynamicOxidation { metal: DynamicOxidizedMetal },
 
     /// Polydisperse Mie scattering
     MiePolydisperse {
@@ -400,9 +382,7 @@ pub enum AdvancedEffectLayer {
     },
 
     /// Spectral dispersion (wavelength-dependent IOR)
-    SpectralDispersion {
-        dispersion: DispersionModel,
-    },
+    SpectralDispersion { dispersion: DispersionModel },
 
     /// Mechanical deformation via height map
     MechanicalDeformation {
@@ -413,7 +393,7 @@ pub enum AdvancedEffectLayer {
     /// Temperature gradient effects
     TemperatureGradient {
         config: TemperatureGradientConfig,
-        dn_dt: f64,  // Thermo-optic coefficient
+        dn_dt: f64, // Thermo-optic coefficient
     },
 }
 
@@ -510,7 +490,8 @@ impl AdvancedCombinedMaterial {
         let fresnel_weight = fresnel_schlick(1.0, self.base_ior, cos_theta);
         let mut total = 0.0;
         for layer in &self.layers {
-            let layer_value = self.evaluate_layer(layer, wavelength_nm, cos_theta, Vec2::new(0.5, 0.5));
+            let layer_value =
+                self.evaluate_layer(layer, wavelength_nm, cos_theta, Vec2::new(0.5, 0.5));
             total += layer_value * fresnel_weight;
         }
         total.min(1.0)
@@ -539,20 +520,32 @@ impl AdvancedCombinedMaterial {
     }
 
     /// Evaluate single layer
-    fn evaluate_layer(&self, layer: &AdvancedEffectLayer, wavelength_nm: f64, cos_theta: f64, pos: Vec2) -> f64 {
+    fn evaluate_layer(
+        &self,
+        layer: &AdvancedEffectLayer,
+        wavelength_nm: f64,
+        cos_theta: f64,
+        pos: Vec2,
+    ) -> f64 {
         match layer {
             // Phase 6 layers
             AdvancedEffectLayer::Fresnel { ior, spectral: _ } => {
                 fresnel_schlick(1.0, *ior, cos_theta)
             }
 
-            AdvancedEffectLayer::ThinFilm { n_film, thickness_nm, n_substrate } => {
-                thin_film_reflectance(wavelength_nm, *n_film, *thickness_nm, *n_substrate, cos_theta)
-            }
+            AdvancedEffectLayer::ThinFilm {
+                n_film,
+                thickness_nm,
+                n_substrate,
+            } => thin_film_reflectance(
+                wavelength_nm,
+                *n_film,
+                *thickness_nm,
+                *n_substrate,
+                cos_theta,
+            ),
 
-            AdvancedEffectLayer::Metal { n, k } => {
-                metal_fresnel(*n, *k, cos_theta)
-            }
+            AdvancedEffectLayer::Metal { n, k } => metal_fresnel(*n, *k, cos_theta),
 
             AdvancedEffectLayer::Mie { g, extinction } => {
                 henyey_greenstein_phase(cos_theta, *g) * (1.0 - (-*extinction).exp())
@@ -562,24 +555,29 @@ impl AdvancedCombinedMaterial {
                 roughness_factor(cos_theta, *value, *model)
             }
 
-            AdvancedEffectLayer::Absorption { coefficient, thickness } => {
-                (-*coefficient * *thickness).exp()
-            }
+            AdvancedEffectLayer::Absorption {
+                coefficient,
+                thickness,
+            } => (-*coefficient * *thickness).exp(),
 
-            AdvancedEffectLayer::Oxidation { oxide_n, oxide_k, thickness_nm } => {
-                oxide_reflectance(*oxide_n, *oxide_k, *thickness_nm, wavelength_nm)
-            }
+            AdvancedEffectLayer::Oxidation {
+                oxide_n,
+                oxide_k,
+                thickness_nm,
+            } => oxide_reflectance(*oxide_n, *oxide_k, *thickness_nm, wavelength_nm),
 
             // Phase 7 layers
             AdvancedEffectLayer::DynamicThinFilm { stack } => {
                 stack.reflectance_at(pos, wavelength_nm, self.angle_from_cos(cos_theta))
             }
 
-            AdvancedEffectLayer::DynamicOxidation { metal } => {
-                metal.reflectance(wavelength_nm)
-            }
+            AdvancedEffectLayer::DynamicOxidation { metal } => metal.reflectance(wavelength_nm),
 
-            AdvancedEffectLayer::MiePolydisperse { distribution, g_mean, extinction } => {
+            AdvancedEffectLayer::MiePolydisperse {
+                distribution,
+                g_mean,
+                extinction,
+            } => {
                 let effective_g = distribution.effective_g(*g_mean);
                 let effective_ext = extinction * distribution.extinction_factor();
                 henyey_greenstein_phase(cos_theta, effective_g) * (1.0 - (-effective_ext).exp())
@@ -590,7 +588,10 @@ impl AdvancedCombinedMaterial {
                 fresnel_schlick(1.0, n, cos_theta)
             }
 
-            AdvancedEffectLayer::MechanicalDeformation { height_map, amplitude } => {
+            AdvancedEffectLayer::MechanicalDeformation {
+                height_map,
+                amplitude,
+            } => {
                 let h = height_map.sample(pos);
                 let normal = height_map.normal(pos);
                 // Adjust effective angle based on surface normal
@@ -688,7 +689,10 @@ impl AdvancedCombinedMaterial {
 impl Default for AdvancedCombinedMaterial {
     fn default() -> Self {
         Self {
-            layers: vec![AdvancedEffectLayer::Fresnel { ior: 1.5, spectral: false }],
+            layers: vec![AdvancedEffectLayer::Fresnel {
+                ior: 1.5,
+                spectral: false,
+            }],
             blend_mode: BlendMode::PhysicallyBased,
             quality_tier: QualityTier::High,
             physical_state: PhysicalState::default(),
@@ -728,13 +732,20 @@ impl AdvancedCombinedMaterialBuilder {
     /// Add Fresnel layer
     pub fn add_fresnel(mut self, ior: f64) -> Self {
         self.base_ior = ior;
-        self.layers.push(AdvancedEffectLayer::Fresnel { ior, spectral: false });
+        self.layers.push(AdvancedEffectLayer::Fresnel {
+            ior,
+            spectral: false,
+        });
         self
     }
 
     /// Add thin-film layer
     pub fn add_thin_film(mut self, n_film: f64, thickness_nm: f64, n_substrate: f64) -> Self {
-        self.layers.push(AdvancedEffectLayer::ThinFilm { n_film, thickness_nm, n_substrate });
+        self.layers.push(AdvancedEffectLayer::ThinFilm {
+            n_film,
+            thickness_nm,
+            n_substrate,
+        });
         self
     }
 
@@ -752,70 +763,110 @@ impl AdvancedCombinedMaterialBuilder {
 
     /// Add roughness layer
     pub fn add_roughness(mut self, value: f64) -> Self {
-        self.layers.push(AdvancedEffectLayer::Roughness { value, model: RoughnessModel::GGX });
+        self.layers.push(AdvancedEffectLayer::Roughness {
+            value,
+            model: RoughnessModel::GGX,
+        });
         self
     }
 
     /// Add absorption layer
     pub fn add_absorption(mut self, coefficient: f64, thickness: f64) -> Self {
-        self.layers.push(AdvancedEffectLayer::Absorption { coefficient, thickness });
+        self.layers.push(AdvancedEffectLayer::Absorption {
+            coefficient,
+            thickness,
+        });
         self
     }
 
     /// Add oxidation layer
     pub fn add_oxidation(mut self, oxide_n: f64, oxide_k: f64, thickness_nm: f64) -> Self {
-        self.layers.push(AdvancedEffectLayer::Oxidation { oxide_n, oxide_k, thickness_nm });
+        self.layers.push(AdvancedEffectLayer::Oxidation {
+            oxide_n,
+            oxide_k,
+            thickness_nm,
+        });
         self
     }
 
     // Phase 7 layer methods
 
     /// Add dynamic thin-film stack
-    pub fn add_dynamic_thin_film(mut self, n_film: f64, thickness_nm: f64, n_substrate: f64) -> Self {
-        let substrate = SubstrateProperties { n: n_substrate, k: 0.0, alpha: 5e-6 };
+    pub fn add_dynamic_thin_film(
+        mut self,
+        n_film: f64,
+        thickness_nm: f64,
+        n_substrate: f64,
+    ) -> Self {
+        let substrate = SubstrateProperties {
+            n: n_substrate,
+            k: 0.0,
+            alpha: 5e-6,
+        };
         let mut stack = DynamicThinFilmStack::new(1.0, substrate);
         stack.add_layer(DynamicFilmLayer::new(n_film, thickness_nm));
-        self.layers.push(AdvancedEffectLayer::DynamicThinFilm { stack });
+        self.layers
+            .push(AdvancedEffectLayer::DynamicThinFilm { stack });
         self.base_ior = n_film;
         self
     }
 
     /// Add dynamic thin-film stack with custom stack
     pub fn add_dynamic_thin_film_stack(mut self, stack: DynamicThinFilmStack) -> Self {
-        self.layers.push(AdvancedEffectLayer::DynamicThinFilm { stack });
+        self.layers
+            .push(AdvancedEffectLayer::DynamicThinFilm { stack });
         self
     }
 
     /// Add dynamic oxidation layer
     pub fn add_dynamic_oxidation(mut self, element: Element) -> Self {
         let metal = DynamicOxidizedMetal::pure(element);
-        self.layers.push(AdvancedEffectLayer::DynamicOxidation { metal });
+        self.layers
+            .push(AdvancedEffectLayer::DynamicOxidation { metal });
         self
     }
 
     /// Add dynamic oxidation with alloy
     pub fn add_dynamic_oxidation_alloy(mut self, composition: AlloyComposition) -> Self {
         let metal = DynamicOxidizedMetal::new(composition);
-        self.layers.push(AdvancedEffectLayer::DynamicOxidation { metal });
+        self.layers
+            .push(AdvancedEffectLayer::DynamicOxidation { metal });
         self
     }
 
     /// Add polydisperse Mie scattering
     pub fn add_mie_polydisperse(mut self, g_mean: f64, extinction: f64, sigma: f64) -> Self {
-        let distribution = SizeDistribution::LogNormal { r_mode: 1.0, sigma_g: 1.0 + sigma };
-        self.layers.push(AdvancedEffectLayer::MiePolydisperse { distribution, g_mean, extinction });
+        let distribution = SizeDistribution::LogNormal {
+            r_mode: 1.0,
+            sigma_g: 1.0 + sigma,
+        };
+        self.layers.push(AdvancedEffectLayer::MiePolydisperse {
+            distribution,
+            g_mean,
+            extinction,
+        });
         self
     }
 
     /// Add polydisperse Mie with custom distribution
-    pub fn add_mie_polydisperse_custom(mut self, distribution: SizeDistribution, g_mean: f64, extinction: f64) -> Self {
-        self.layers.push(AdvancedEffectLayer::MiePolydisperse { distribution, g_mean, extinction });
+    pub fn add_mie_polydisperse_custom(
+        mut self,
+        distribution: SizeDistribution,
+        g_mean: f64,
+        extinction: f64,
+    ) -> Self {
+        self.layers.push(AdvancedEffectLayer::MiePolydisperse {
+            distribution,
+            g_mean,
+            extinction,
+        });
         self
     }
 
     /// Add spectral dispersion
     pub fn add_spectral_dispersion(mut self, dispersion: DispersionModel) -> Self {
-        self.layers.push(AdvancedEffectLayer::SpectralDispersion { dispersion });
+        self.layers
+            .push(AdvancedEffectLayer::SpectralDispersion { dispersion });
         self
     }
 
@@ -825,24 +876,35 @@ impl AdvancedCombinedMaterialBuilder {
         let b = (n_d - 1.0) / v_d * 1e6; // Convert to nm²
         let dispersion = DispersionModel::Cauchy { a: n_d, b, c: 0.0 };
         self.base_ior = n_d;
-        self.layers.push(AdvancedEffectLayer::SpectralDispersion { dispersion });
+        self.layers
+            .push(AdvancedEffectLayer::SpectralDispersion { dispersion });
         self
     }
 
     /// Add mechanical deformation
     pub fn add_mechanical_deformation(mut self, height_map: HeightMap, amplitude: f64) -> Self {
-        self.layers.push(AdvancedEffectLayer::MechanicalDeformation { height_map, amplitude });
+        self.layers
+            .push(AdvancedEffectLayer::MechanicalDeformation {
+                height_map,
+                amplitude,
+            });
         self
     }
 
     /// Add temperature gradient
-    pub fn add_temperature_gradient(mut self, center_temp: f64, edge_temp: f64, dn_dt: f64) -> Self {
+    pub fn add_temperature_gradient(
+        mut self,
+        center_temp: f64,
+        edge_temp: f64,
+        dn_dt: f64,
+    ) -> Self {
         let config = TemperatureGradientConfig {
             center_temp_k: center_temp,
             edge_temp_k: edge_temp,
             gradient_type: GradientType::Radial,
         };
-        self.layers.push(AdvancedEffectLayer::TemperatureGradient { config, dn_dt });
+        self.layers
+            .push(AdvancedEffectLayer::TemperatureGradient { config, dn_dt });
         self
     }
 
@@ -912,7 +974,13 @@ impl Default for AdvancedCombinedMaterialBuilder {
 // ============================================================================
 
 /// Thin-film interference reflectance
-fn thin_film_reflectance(wavelength_nm: f64, n_film: f64, thickness_nm: f64, n_substrate: f64, cos_theta: f64) -> f64 {
+fn thin_film_reflectance(
+    wavelength_nm: f64,
+    n_film: f64,
+    thickness_nm: f64,
+    n_substrate: f64,
+    cos_theta: f64,
+) -> f64 {
     let delta = 4.0 * PI * n_film * thickness_nm * cos_theta / wavelength_nm;
     let r1 = (1.0 - n_film) / (1.0 + n_film);
     let r2 = (n_film - n_substrate) / (n_film + n_substrate);
@@ -954,9 +1022,7 @@ fn roughness_factor(cos_theta: f64, roughness: f64, model: RoughnessModel) -> f6
                 1.0
             }
         }
-        RoughnessModel::BlinnPhong => {
-            cos_theta.powf(1.0 / roughness.max(0.01))
-        }
+        RoughnessModel::BlinnPhong => cos_theta.powf(1.0 / roughness.max(0.01)),
     }
 }
 
@@ -1016,7 +1082,10 @@ mod tests {
     #[test]
     fn test_size_distribution_effective_g() {
         let mono = SizeDistribution::Monodisperse { radius: 1.0 };
-        let poly = SizeDistribution::LogNormal { r_mode: 1.0, sigma_g: 1.5 };
+        let poly = SizeDistribution::LogNormal {
+            r_mode: 1.0,
+            sigma_g: 1.5,
+        };
 
         let g_mono = mono.effective_g(0.8);
         let g_poly = poly.effective_g(0.8);
@@ -1109,9 +1178,7 @@ mod tests {
 
     #[test]
     fn test_evaluate_rgb() {
-        let material = AdvancedCombinedMaterial::builder()
-            .add_fresnel(1.5)
-            .build();
+        let material = AdvancedCombinedMaterial::builder().add_fresnel(1.5).build();
 
         let rgb = material.evaluate_rgb(0.7);
 
@@ -1122,9 +1189,7 @@ mod tests {
 
     #[test]
     fn test_evaluate_spectral() {
-        let material = AdvancedCombinedMaterial::builder()
-            .add_fresnel(1.5)
-            .build();
+        let material = AdvancedCombinedMaterial::builder().add_fresnel(1.5).build();
 
         let spectrum = material.evaluate_spectral(0.7);
         assert_eq!(spectrum.len(), 31);
@@ -1132,9 +1197,7 @@ mod tests {
 
     #[test]
     fn test_css_output() {
-        let material = AdvancedCombinedMaterial::builder()
-            .add_fresnel(1.5)
-            .build();
+        let material = AdvancedCombinedMaterial::builder().add_fresnel(1.5).build();
 
         let css = material.to_css(30.0);
         assert!(css.contains("radial-gradient"));

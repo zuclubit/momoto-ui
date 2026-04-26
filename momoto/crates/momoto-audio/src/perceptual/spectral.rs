@@ -18,17 +18,21 @@
 /// - `sample_rate`: audio sample rate in Hz (for bin→Hz conversion)
 #[must_use]
 pub fn spectral_centroid(power_spectrum: &[f32], sample_rate: u32) -> f32 {
-    if power_spectrum.is_empty() { return 0.0; }
+    if power_spectrum.is_empty() {
+        return 0.0;
+    }
     let nyquist = sample_rate as f32 / 2.0;
     let n_bins = power_spectrum.len();
     let mut weighted_sum = 0.0_f64;
-    let mut total_power   = 0.0_f64;
+    let mut total_power = 0.0_f64;
     for (k, &p) in power_spectrum.iter().enumerate() {
         let freq = (k as f64 / (n_bins - 1) as f64) * nyquist as f64;
         weighted_sum += freq * p as f64;
-        total_power  += p as f64;
+        total_power += p as f64;
     }
-    if total_power < 1e-30 { return 0.0; }
+    if total_power < 1e-30 {
+        return 0.0;
+    }
     (weighted_sum / total_power) as f32
 }
 
@@ -41,14 +45,18 @@ pub fn spectral_centroid(power_spectrum: &[f32], sample_rate: u32) -> f32 {
 /// Returns a value in `[0, 1]`. Returns `0.0` if total power is zero.
 #[must_use]
 pub fn spectral_brightness(power_spectrum: &[f32], sample_rate: u32, threshold_hz: f32) -> f32 {
-    if power_spectrum.is_empty() { return 0.0; }
+    if power_spectrum.is_empty() {
+        return 0.0;
+    }
     let nyquist = sample_rate as f32 / 2.0;
     let n_bins = power_spectrum.len();
     let threshold_bin = ((threshold_hz / nyquist) * (n_bins - 1) as f32).round() as usize;
     let threshold_bin = threshold_bin.min(n_bins);
 
     let total: f32 = power_spectrum.iter().sum();
-    if total < 1e-30 { return 0.0; }
+    if total < 1e-30 {
+        return 0.0;
+    }
     let above: f32 = power_spectrum[threshold_bin..].iter().sum();
     (above / total).clamp(0.0, 1.0)
 }
@@ -68,9 +76,20 @@ pub fn spectral_brightness(power_spectrum: &[f32], sample_rate: u32, threshold_h
 /// Returns `0.0` if `previous` and `current` have different lengths or are empty.
 #[must_use]
 pub fn spectral_flux(previous: &[f32], current: &[f32]) -> f32 {
-    if previous.len() != current.len() || previous.is_empty() { return 0.0; }
-    let sum_sq: f32 = previous.iter().zip(current.iter())
-        .map(|(&p, &c)| { let d = c - p; if d > 0.0 { d * d } else { 0.0 } })
+    if previous.len() != current.len() || previous.is_empty() {
+        return 0.0;
+    }
+    let sum_sq: f32 = previous
+        .iter()
+        .zip(current.iter())
+        .map(|(&p, &c)| {
+            let d = c - p;
+            if d > 0.0 {
+                d * d
+            } else {
+                0.0
+            }
+        })
         .sum();
     sum_sq / previous.len() as f32
 }
@@ -93,7 +112,9 @@ pub fn spectral_rolloff(power_spectrum: &[f32], sample_rate: u32, roll_percent: 
         return 0.0;
     }
     let total: f32 = power_spectrum.iter().sum();
-    if total < 1e-30 { return 0.0; }
+    if total < 1e-30 {
+        return 0.0;
+    }
     let target = total * roll_percent;
     let mut cumsum = 0.0_f32;
     let nyquist = sample_rate as f32 / 2.0;
@@ -119,12 +140,17 @@ pub fn spectral_rolloff(power_spectrum: &[f32], sample_rate: u32, roll_percent: 
 /// Returns `0.0` for silence or very tonal signals.
 #[must_use]
 pub fn spectral_flatness(power_spectrum: &[f32]) -> f32 {
-    if power_spectrum.is_empty() { return 0.0; }
+    if power_spectrum.is_empty() {
+        return 0.0;
+    }
     let n = power_spectrum.len() as f64;
     let arithmetic_mean: f64 = power_spectrum.iter().map(|&p| p as f64).sum::<f64>() / n;
-    if arithmetic_mean < 1e-30 { return 0.0; }
+    if arithmetic_mean < 1e-30 {
+        return 0.0;
+    }
 
-    let log_sum: f64 = power_spectrum.iter()
+    let log_sum: f64 = power_spectrum
+        .iter()
         .map(|&p| if p > 0.0 { (p as f64).ln() } else { -1000.0 })
         .sum::<f64>();
     let geometric_mean = (log_sum / n).exp();
@@ -144,7 +170,10 @@ mod tests {
         // Flat spectrum → centroid at Nyquist/2
         let ps = flat_spectrum(513); // 1024-point FFT
         let c = spectral_centroid(&ps, 48000);
-        assert!((c - 12000.0).abs() < 200.0, "flat spectrum centroid ≈ 12 kHz, got {c}");
+        assert!(
+            (c - 12000.0).abs() < 200.0,
+            "flat spectrum centroid ≈ 12 kHz, got {c}"
+        );
     }
 
     #[test]
@@ -157,7 +186,10 @@ mod tests {
     fn brightness_all_above_threshold() {
         let ps = flat_spectrum(513);
         let b = spectral_brightness(&ps, 48000, 0.0); // threshold at 0 Hz
-        assert!((b - 1.0).abs() < 1e-4, "all energy above 0 Hz → brightness = 1");
+        assert!(
+            (b - 1.0).abs() < 1e-4,
+            "all energy above 0 Hz → brightness = 1"
+        );
     }
 
     #[test]
@@ -193,7 +225,10 @@ mod tests {
     fn rolloff_at_100_percent_is_nyquist() {
         let ps = flat_spectrum(513);
         let r = spectral_rolloff(&ps, 48000, 1.0);
-        assert!((r - 24000.0).abs() < 100.0, "100% rolloff ≈ Nyquist, got {r}");
+        assert!(
+            (r - 24000.0).abs() < 100.0,
+            "100% rolloff ≈ Nyquist, got {r}"
+        );
     }
 
     #[test]
@@ -207,7 +242,10 @@ mod tests {
         // Uniform spectrum → flatness = 1 (approx, due to f32 precision)
         let ps = flat_spectrum(64);
         let f = spectral_flatness(&ps);
-        assert!((f - 1.0).abs() < 0.01, "uniform spectrum flatness ≈ 1, got {f}");
+        assert!(
+            (f - 1.0).abs() < 0.01,
+            "uniform spectrum flatness ≈ 1, got {f}"
+        );
     }
 
     #[test]

@@ -175,7 +175,8 @@ impl EvaluationContext {
             n.y * t.z - n.z * t.y,
             n.z * t.x - n.x * t.z,
             n.x * t.y - n.y * t.x,
-        ).normalize();
+        )
+        .normalize();
 
         BSDFContext {
             wi: self.wi.into(),

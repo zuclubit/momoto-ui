@@ -82,7 +82,8 @@ impl LossWeights {
 
     /// Normalize weights to sum to 1.
     pub fn normalize(&self) -> Self {
-        let sum = self.physical + self.perceptual + self.temporal + self.energy + self.regularization;
+        let sum =
+            self.physical + self.perceptual + self.temporal + self.energy + self.regularization;
         if sum < 1e-10 {
             return Self::default();
         }
@@ -342,7 +343,12 @@ impl LossAggregator {
     }
 
     /// Add physical loss from spectral observation.
-    pub fn add_spectral_loss(&mut self, predicted_r: f64, predicted_t: Option<f64>, observed: &SpectralObservation) {
+    pub fn add_spectral_loss(
+        &mut self,
+        predicted_r: f64,
+        predicted_t: Option<f64>,
+        observed: &SpectralObservation,
+    ) {
         let error_r = predicted_r - observed.reflectance;
         let mut mse = error_r * error_r;
 
@@ -520,8 +526,16 @@ mod tests {
 
         let loss = AggregatedLoss::new(components, LossWeights::default());
         // Quality score should be positive and reasonable
-        assert!(loss.quality_score > 0.0, "quality_score = {}", loss.quality_score);
-        assert!(loss.quality_score <= 100.0, "quality_score = {}", loss.quality_score);
+        assert!(
+            loss.quality_score > 0.0,
+            "quality_score = {}",
+            loss.quality_score
+        );
+        assert!(
+            loss.quality_score <= 100.0,
+            "quality_score = {}",
+            loss.quality_score
+        );
         assert!(loss.perceptual_reference());
     }
 

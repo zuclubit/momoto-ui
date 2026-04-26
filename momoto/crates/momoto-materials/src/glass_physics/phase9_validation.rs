@@ -11,18 +11,17 @@
 //! 5. **Perceptual Loop**: Verify convergence behavior
 //! 6. **Memory Analysis**: Check memory budget compliance
 
-
-use super::unified_bsdf::{
-    BSDF, BSDFContext, DielectricBSDF, ConductorBSDF,
-    ThinFilmBSDF, LambertianBSDF, validate_energy_conservation,
-};
-use super::anisotropic_brdf::{AnisotropicGGX, AnisotropicConductor, FiberBSDF};
-use super::subsurface_scattering::{SubsurfaceBSDF, DiffusionBSSRDF, sss_presets};
-use super::perceptual_loop::{
-    PerceptualRenderingLoop, PerceptualTarget, MaterialParams, ConvergenceStatus,
-};
-use super::fresnel::fresnel_schlick;
+use super::anisotropic_brdf::{AnisotropicConductor, AnisotropicGGX, FiberBSDF};
 use super::complex_ior::{fresnel_conductor_unpolarized, ComplexIOR};
+use super::fresnel::fresnel_schlick;
+use super::perceptual_loop::{
+    ConvergenceStatus, MaterialParams, PerceptualRenderingLoop, PerceptualTarget,
+};
+use super::subsurface_scattering::{sss_presets, DiffusionBSSRDF, SubsurfaceBSDF};
+use super::unified_bsdf::{
+    validate_energy_conservation, BSDFContext, ConductorBSDF, DielectricBSDF, LambertianBSDF,
+    ThinFilmBSDF, BSDF,
+};
 
 // ============================================================================
 // VALIDATION RESULTS
@@ -228,7 +227,10 @@ pub fn validate_unified_vs_legacy() -> BSDFComparisonResults {
 
     // Thin-film should differ from bare Fresnel
     if thin_film_rmse > 0.001 && thin_film_rmse < 0.5 {
-        details.push(format!("Thin-film differs from bare: {:.6} - PASS", thin_film_rmse));
+        details.push(format!(
+            "Thin-film differs from bare: {:.6} - PASS",
+            thin_film_rmse
+        ));
     } else {
         details.push(format!("Thin-film RMSE: {:.6} - CHECK", thin_film_rmse));
     }
@@ -257,9 +259,15 @@ pub fn validate_anisotropic() -> AnisotropicValidation {
 
         let passed = (iso_r - aniso_r).abs() < 0.01;
         if passed {
-            details.push(format!("Isotropy recovery: {} vs {} - PASS", iso_r, aniso_r));
+            details.push(format!(
+                "Isotropy recovery: {} vs {} - PASS",
+                iso_r, aniso_r
+            ));
         } else {
-            details.push(format!("Isotropy recovery: {} vs {} - FAIL", iso_r, aniso_r));
+            details.push(format!(
+                "Isotropy recovery: {} vs {} - FAIL",
+                iso_r, aniso_r
+            ));
         }
         passed
     };
@@ -337,8 +345,10 @@ pub fn validate_sss() -> SSSValidation {
 
         let valid = rd_0 > rd_1 && rd_1 > rd_5 && rd_5 >= 0.0;
         if valid {
-            details.push(format!("Diffusion profile: Rd(0)={:.4} > Rd(1)={:.4} > Rd(5)={:.4} - PASS",
-                rd_0, rd_1, rd_5));
+            details.push(format!(
+                "Diffusion profile: Rd(0)={:.4} > Rd(1)={:.4} > Rd(5)={:.4} - PASS",
+                rd_0, rd_1, rd_5
+            ));
         } else {
             details.push("Diffusion profile: Non-monotonic - FAIL".to_string());
         }
@@ -385,7 +395,11 @@ pub fn validate_sss() -> SSSValidation {
             let validation = validate_energy_conservation(&mat);
             if !validation.conserved {
                 all_conserved = false;
-                details.push(format!("{}: Energy error {:.2e}", mat.name(), validation.error));
+                details.push(format!(
+                    "{}: Energy error {:.2e}",
+                    mat.name(),
+                    validation.error
+                ));
             }
         }
 
@@ -437,11 +451,15 @@ pub fn validate_perceptual_loop() -> ConvergenceResults {
 
         if result.status == ConvergenceStatus::Converged {
             tests_converged += 1;
-            details.push(format!("R={}: Converged in {} iters, ΔE={:.2}",
-                target_r, result.iterations, result.final_delta_e));
+            details.push(format!(
+                "R={}: Converged in {} iters, ΔE={:.2}",
+                target_r, result.iterations, result.final_delta_e
+            ));
         } else {
-            details.push(format!("R={}: {:?} at {} iters, ΔE={:.2}",
-                target_r, result.status, result.iterations, result.final_delta_e));
+            details.push(format!(
+                "R={}: {:?} at {} iters, ΔE={:.2}",
+                target_r, result.status, result.iterations, result.final_delta_e
+            ));
         }
     }
 
@@ -462,16 +480,34 @@ pub fn validate_energy_conservation_all() -> EnergyConservationReport {
     let materials: Vec<(&str, Box<dyn BSDF>)> = vec![
         ("DielectricBSDF::glass", Box::new(DielectricBSDF::glass())),
         ("DielectricBSDF::water", Box::new(DielectricBSDF::water())),
-        ("DielectricBSDF::diamond", Box::new(DielectricBSDF::diamond())),
-        ("DielectricBSDF::frosted_glass", Box::new(DielectricBSDF::frosted_glass())),
+        (
+            "DielectricBSDF::diamond",
+            Box::new(DielectricBSDF::diamond()),
+        ),
+        (
+            "DielectricBSDF::frosted_glass",
+            Box::new(DielectricBSDF::frosted_glass()),
+        ),
         ("ConductorBSDF::gold", Box::new(ConductorBSDF::gold())),
         ("ConductorBSDF::silver", Box::new(ConductorBSDF::silver())),
         ("ConductorBSDF::copper", Box::new(ConductorBSDF::copper())),
-        ("ThinFilmBSDF::soap_bubble", Box::new(ThinFilmBSDF::soap_bubble(350.0))),
-        ("ThinFilmBSDF::ar_coating", Box::new(ThinFilmBSDF::ar_coating())),
+        (
+            "ThinFilmBSDF::soap_bubble",
+            Box::new(ThinFilmBSDF::soap_bubble(350.0)),
+        ),
+        (
+            "ThinFilmBSDF::ar_coating",
+            Box::new(ThinFilmBSDF::ar_coating()),
+        ),
         ("LambertianBSDF::white", Box::new(LambertianBSDF::white())),
-        ("AnisotropicGGX", Box::new(AnisotropicGGX::new(0.1, 0.3, 1.5))),
-        ("AnisotropicConductor::brushed_steel", Box::new(AnisotropicConductor::brushed_steel())),
+        (
+            "AnisotropicGGX",
+            Box::new(AnisotropicGGX::new(0.1, 0.3, 1.5)),
+        ),
+        (
+            "AnisotropicConductor::brushed_steel",
+            Box::new(AnisotropicConductor::brushed_steel()),
+        ),
         ("FiberBSDF::silk", Box::new(FiberBSDF::silk())),
         ("SubsurfaceBSDF::skin", Box::new(SubsurfaceBSDF::skin())),
         ("SubsurfaceBSDF::marble", Box::new(SubsurfaceBSDF::marble())),
@@ -505,10 +541,10 @@ pub fn validate_energy_conservation_all() -> EnergyConservationReport {
 
 /// Analyze memory usage
 pub fn analyze_memory() -> Phase9MemoryAnalysis {
-    use super::unified_bsdf::total_unified_bsdf_memory;
     use super::anisotropic_brdf::total_anisotropic_memory;
-    use super::subsurface_scattering::total_sss_memory;
     use super::perceptual_loop::total_perceptual_loop_memory;
+    use super::subsurface_scattering::total_sss_memory;
+    use super::unified_bsdf::total_unified_bsdf_memory;
 
     let unified = total_unified_bsdf_memory() as f64 / 1024.0;
     let aniso = total_anisotropic_memory() as f64 / 1024.0;
@@ -561,55 +597,148 @@ pub fn generate_report() -> String {
 
     let mut md = String::new();
     md.push_str("# Phase 9 Validation Report\n\n");
-    md.push_str(&format!("**Overall Status:** {}\n\n",
-        if report.overall_passed { "PASS" } else { "FAIL" }));
+    md.push_str(&format!(
+        "**Overall Status:** {}\n\n",
+        if report.overall_passed {
+            "PASS"
+        } else {
+            "FAIL"
+        }
+    ));
 
     md.push_str("## 1. Unified vs Legacy Comparison\n\n");
-    md.push_str(&format!("- Dielectric RMSE: {:.6}\n", report.unified_vs_legacy.dielectric_rmse));
-    md.push_str(&format!("- Conductor RMSE: {:.6}\n", report.unified_vs_legacy.conductor_rmse));
-    md.push_str(&format!("- Thin-film RMSE: {:.6}\n", report.unified_vs_legacy.thin_film_rmse));
+    md.push_str(&format!(
+        "- Dielectric RMSE: {:.6}\n",
+        report.unified_vs_legacy.dielectric_rmse
+    ));
+    md.push_str(&format!(
+        "- Conductor RMSE: {:.6}\n",
+        report.unified_vs_legacy.conductor_rmse
+    ));
+    md.push_str(&format!(
+        "- Thin-film RMSE: {:.6}\n",
+        report.unified_vs_legacy.thin_film_rmse
+    ));
     for detail in &report.unified_vs_legacy.details {
         md.push_str(&format!("  - {}\n", detail));
     }
 
     md.push_str("\n## 2. Anisotropic Validation\n\n");
-    md.push_str(&format!("- Isotropy Recovery: {}\n",
-        if report.anisotropic_tests.isotropy_recovery { "PASS" } else { "FAIL" }));
-    md.push_str(&format!("- Energy Conservation: {}\n",
-        if report.anisotropic_tests.energy_conserved { "PASS" } else { "FAIL" }));
-    md.push_str(&format!("- VNDF Sampling: {}\n",
-        if report.anisotropic_tests.sampling_valid { "PASS" } else { "FAIL" }));
+    md.push_str(&format!(
+        "- Isotropy Recovery: {}\n",
+        if report.anisotropic_tests.isotropy_recovery {
+            "PASS"
+        } else {
+            "FAIL"
+        }
+    ));
+    md.push_str(&format!(
+        "- Energy Conservation: {}\n",
+        if report.anisotropic_tests.energy_conserved {
+            "PASS"
+        } else {
+            "FAIL"
+        }
+    ));
+    md.push_str(&format!(
+        "- VNDF Sampling: {}\n",
+        if report.anisotropic_tests.sampling_valid {
+            "PASS"
+        } else {
+            "FAIL"
+        }
+    ));
 
     md.push_str("\n## 3. SSS Validation\n\n");
-    md.push_str(&format!("- Diffusion Profile: {}\n",
-        if report.sss_accuracy.profile_valid { "PASS" } else { "FAIL" }));
-    md.push_str(&format!("- Presets Valid: {}\n",
-        if report.sss_accuracy.presets_valid { "PASS" } else { "FAIL" }));
-    md.push_str(&format!("- Energy Conservation: {}\n",
-        if report.sss_accuracy.energy_conserved { "PASS" } else { "FAIL" }));
+    md.push_str(&format!(
+        "- Diffusion Profile: {}\n",
+        if report.sss_accuracy.profile_valid {
+            "PASS"
+        } else {
+            "FAIL"
+        }
+    ));
+    md.push_str(&format!(
+        "- Presets Valid: {}\n",
+        if report.sss_accuracy.presets_valid {
+            "PASS"
+        } else {
+            "FAIL"
+        }
+    ));
+    md.push_str(&format!(
+        "- Energy Conservation: {}\n",
+        if report.sss_accuracy.energy_conserved {
+            "PASS"
+        } else {
+            "FAIL"
+        }
+    ));
 
     md.push_str("\n## 4. Perceptual Loop Convergence\n\n");
-    md.push_str(&format!("- Tests Run: {}\n", report.perceptual_loop_convergence.tests_run));
-    md.push_str(&format!("- Tests Converged: {}\n", report.perceptual_loop_convergence.tests_converged));
-    md.push_str(&format!("- Avg Iterations: {:.1}\n", report.perceptual_loop_convergence.avg_iterations));
-    md.push_str(&format!("- Avg Final ΔE: {:.2}\n", report.perceptual_loop_convergence.avg_final_delta_e));
+    md.push_str(&format!(
+        "- Tests Run: {}\n",
+        report.perceptual_loop_convergence.tests_run
+    ));
+    md.push_str(&format!(
+        "- Tests Converged: {}\n",
+        report.perceptual_loop_convergence.tests_converged
+    ));
+    md.push_str(&format!(
+        "- Avg Iterations: {:.1}\n",
+        report.perceptual_loop_convergence.avg_iterations
+    ));
+    md.push_str(&format!(
+        "- Avg Final ΔE: {:.2}\n",
+        report.perceptual_loop_convergence.avg_final_delta_e
+    ));
 
     md.push_str("\n## 5. Energy Conservation\n\n");
-    md.push_str(&format!("- Materials Tested: {}\n", report.energy_conservation.materials_tested));
-    md.push_str(&format!("- Passed: {}\n", report.energy_conservation.passed));
-    md.push_str(&format!("- Max Error: {:.2e}\n", report.energy_conservation.max_error));
-    md.push_str(&format!("- Worst Material: {}\n", report.energy_conservation.worst_material));
+    md.push_str(&format!(
+        "- Materials Tested: {}\n",
+        report.energy_conservation.materials_tested
+    ));
+    md.push_str(&format!(
+        "- Passed: {}\n",
+        report.energy_conservation.passed
+    ));
+    md.push_str(&format!(
+        "- Max Error: {:.2e}\n",
+        report.energy_conservation.max_error
+    ));
+    md.push_str(&format!(
+        "- Worst Material: {}\n",
+        report.energy_conservation.worst_material
+    ));
 
     md.push_str("\n## 6. Memory Analysis\n\n");
     md.push_str(&format!("| Module | Memory (KB) |\n"));
     md.push_str(&format!("|--------|------------|\n"));
-    md.push_str(&format!("| unified_bsdf | {:.2} |\n", report.memory_analysis.unified_bsdf_kb));
-    md.push_str(&format!("| anisotropic | {:.2} |\n", report.memory_analysis.anisotropic_kb));
+    md.push_str(&format!(
+        "| unified_bsdf | {:.2} |\n",
+        report.memory_analysis.unified_bsdf_kb
+    ));
+    md.push_str(&format!(
+        "| anisotropic | {:.2} |\n",
+        report.memory_analysis.anisotropic_kb
+    ));
     md.push_str(&format!("| sss | {:.2} |\n", report.memory_analysis.sss_kb));
-    md.push_str(&format!("| perceptual_loop | {:.2} |\n", report.memory_analysis.perceptual_loop_kb));
-    md.push_str(&format!("| **Total Phase 9** | **{:.2}** |\n", report.memory_analysis.total_phase9_kb));
-    md.push_str(&format!("\nWithin Budget: {}\n",
-        if report.memory_analysis.within_budget { "YES" } else { "NO" }));
+    md.push_str(&format!(
+        "| perceptual_loop | {:.2} |\n",
+        report.memory_analysis.perceptual_loop_kb
+    ));
+    md.push_str(&format!(
+        "| **Total Phase 9** | **{:.2}** |\n",
+        report.memory_analysis.total_phase9_kb
+    ));
+    md.push_str(&format!(
+        "\nWithin Budget: {}\n",
+        if report.memory_analysis.within_budget {
+            "YES"
+        } else {
+            "NO"
+        }
+    ));
 
     md.push_str("\n---\n\n");
     md.push_str("*Generated by Momoto Materials Phase 9 Validation Suite*\n");
@@ -623,17 +752,23 @@ pub fn generate_report() -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::unified_bsdf::Vector3;
+    use super::*;
 
     #[test]
     fn test_unified_vs_legacy() {
         let results = validate_unified_vs_legacy();
 
-        assert!(results.dielectric_rmse < 0.01,
-            "Dielectric RMSE too high: {}", results.dielectric_rmse);
-        assert!(results.conductor_rmse < 0.05,
-            "Conductor RMSE too high: {}", results.conductor_rmse);
+        assert!(
+            results.dielectric_rmse < 0.01,
+            "Dielectric RMSE too high: {}",
+            results.dielectric_rmse
+        );
+        assert!(
+            results.conductor_rmse < 0.05,
+            "Conductor RMSE too high: {}",
+            results.conductor_rmse
+        );
     }
 
     #[test]
@@ -660,25 +795,37 @@ mod tests {
 
         assert!(results.tests_run > 0, "No tests run");
         // At least some should converge
-        assert!(results.tests_converged > 0 || results.avg_final_delta_e < 20.0,
-            "Poor convergence");
+        assert!(
+            results.tests_converged > 0 || results.avg_final_delta_e < 20.0,
+            "Poor convergence"
+        );
     }
 
     #[test]
     fn test_energy_conservation_comprehensive() {
         let results = validate_energy_conservation_all();
 
-        assert!(results.all_passed, "Energy conservation failed for: {}",
-            results.worst_material);
-        assert!(results.max_error < 1e-5, "Max error too high: {}", results.max_error);
+        assert!(
+            results.all_passed,
+            "Energy conservation failed for: {}",
+            results.worst_material
+        );
+        assert!(
+            results.max_error < 1e-5,
+            "Max error too high: {}",
+            results.max_error
+        );
     }
 
     #[test]
     fn test_memory_budget() {
         let analysis = analyze_memory();
 
-        assert!(analysis.within_budget,
-            "Memory over budget: {:.2}KB", analysis.total_phase9_kb);
+        assert!(
+            analysis.within_budget,
+            "Memory over budget: {:.2}KB",
+            analysis.total_phase9_kb
+        );
     }
 
     #[test]
@@ -704,8 +851,8 @@ mod tests {
         let bsdf = DielectricBSDF::new(1.5, 0.1);
 
         // Test at various angles using new_simple which takes cos_theta
-        let ctx_30 = BSDFContext::new_simple(0.866);  // 30 degrees
-        let ctx_60 = BSDFContext::new_simple(0.5);    // 60 degrees
+        let ctx_30 = BSDFContext::new_simple(0.866); // 30 degrees
+        let ctx_60 = BSDFContext::new_simple(0.5); // 60 degrees
 
         let r_30 = bsdf.evaluate(&ctx_30);
         let r_60 = bsdf.evaluate(&ctx_60);
@@ -714,8 +861,12 @@ mod tests {
         assert!(r_30.reflectance >= 0.0 && r_30.reflectance <= 1.0);
         assert!(r_60.reflectance >= 0.0 && r_60.reflectance <= 1.0);
         // Fresnel: reflectance should increase at grazing angles
-        assert!(r_60.reflectance >= r_30.reflectance,
-            "Fresnel should increase at grazing: {} vs {}", r_30.reflectance, r_60.reflectance);
+        assert!(
+            r_60.reflectance >= r_30.reflectance,
+            "Fresnel should increase at grazing: {} vs {}",
+            r_30.reflectance,
+            r_60.reflectance
+        );
     }
 
     #[test]
@@ -723,15 +874,21 @@ mod tests {
         let bsdf = ConductorBSDF::new(0.18, 3.42, 0.1);
 
         // Test at various angles
-        let ctx_0 = BSDFContext::new_simple(1.0);     // Normal incidence
-        let ctx_60 = BSDFContext::new_simple(0.5);    // 60 degrees
+        let ctx_0 = BSDFContext::new_simple(1.0); // Normal incidence
+        let ctx_60 = BSDFContext::new_simple(0.5); // 60 degrees
 
         let r_0 = bsdf.evaluate(&ctx_0);
         let r_60 = bsdf.evaluate(&ctx_60);
 
         // Conductor should have high reflectance even at normal
-        assert!(r_0.reflectance > 0.5, "Conductor should be highly reflective");
-        assert!(r_60.reflectance >= r_0.reflectance * 0.9, "Conductor stays reflective at angle");
+        assert!(
+            r_0.reflectance > 0.5,
+            "Conductor should be highly reflective"
+        );
+        assert!(
+            r_60.reflectance >= r_0.reflectance * 0.9,
+            "Conductor stays reflective at angle"
+        );
     }
 
     #[test]
@@ -740,11 +897,14 @@ mod tests {
 
         // Test with extreme anisotropy at normal incidence
         let extreme = AnisotropicGGX::new(0.01, 0.5, 1.5);
-        let ctx = BSDFContext::new_simple(1.0);  // Normal incidence
+        let ctx = BSDFContext::new_simple(1.0); // Normal incidence
 
         let result = extreme.evaluate(&ctx);
-        assert!(result.reflectance >= 0.0 && result.reflectance <= 1.0,
-            "Edge case produced invalid reflectance: {}", result.reflectance);
+        assert!(
+            result.reflectance >= 0.0 && result.reflectance <= 1.0,
+            "Edge case produced invalid reflectance: {}",
+            result.reflectance
+        );
     }
 
     #[test]
@@ -785,7 +945,7 @@ mod tests {
     #[test]
     fn test_thin_film_soap_bubble() {
         // Soap bubble: thin film on air (IOR ~1.0 substrate)
-        let bubble = ThinFilmBSDF::new(1.0, 1.33, 300.0);  // substrate_ior, film_ior, thickness
+        let bubble = ThinFilmBSDF::new(1.0, 1.33, 300.0); // substrate_ior, film_ior, thickness
 
         let ctx_550 = BSDFContext::new_simple(1.0).with_wavelength(550.0);
         let ctx_650 = BSDFContext::new_simple(1.0).with_wavelength(650.0);
@@ -794,7 +954,11 @@ mod tests {
         let r_650 = bubble.evaluate(&ctx_650);
 
         // Thin film should show wavelength-dependent behavior
-        assert!((r_550.reflectance - r_650.reflectance).abs() > 0.001,
-            "Thin film should be wavelength dependent: {} vs {}", r_550.reflectance, r_650.reflectance);
+        assert!(
+            (r_550.reflectance - r_650.reflectance).abs() > 0.001,
+            "Thin film should be wavelength dependent: {} vs {}",
+            r_550.reflectance,
+            r_650.reflectance
+        );
     }
 }

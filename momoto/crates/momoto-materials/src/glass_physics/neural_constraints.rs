@@ -114,7 +114,7 @@ impl Default for ConstraintConfig {
         Self {
             energy_tolerance: 1e-6,
             reciprocity_tolerance: 0.01,
-            max_spectral_gradient: 0.001,  // 0.1% per nm
+            max_spectral_gradient: 0.001, // 0.1% per nm
             hard_clamp: true,
             energy_weight: 10.0,
             reciprocity_weight: 1.0,
@@ -230,7 +230,7 @@ impl ConstraintValidator {
     /// Penalizes rapid changes in correction values across wavelengths.
     pub fn spectral_smoothness_penalty(
         &self,
-        corrections: &[(f64, CorrectionOutput)],  // (wavelength, correction)
+        corrections: &[(f64, CorrectionOutput)], // (wavelength, correction)
     ) -> f64 {
         if corrections.len() < 2 {
             return 0.0;
@@ -408,7 +408,7 @@ mod tests {
 
         // Physical response that will violate energy with correction
         let physical = BSDFResponse::new(0.9, 0.05, 0.05);
-        let correction = CorrectionOutput::new(0.1, 0.1);  // Would make R=1.0, T=0.15
+        let correction = CorrectionOutput::new(0.1, 0.1); // Would make R=1.0, T=0.15
 
         let (corrected, penalties) = validator.validate_and_clamp(&physical, &correction);
 
@@ -423,7 +423,7 @@ mod tests {
         let validator = ConstraintValidator::new();
 
         let physical = BSDFResponse::new(0.1, 0.1, 0.8);
-        let correction = CorrectionOutput::new(-0.2, -0.2);  // Would make R=-0.1, T=-0.1
+        let correction = CorrectionOutput::new(-0.2, -0.2); // Would make R=-0.1, T=-0.1
 
         let (corrected, penalties) = validator.validate_and_clamp(&physical, &correction);
 
@@ -438,7 +438,7 @@ mod tests {
         let validator = ConstraintValidator::new();
 
         let physical = BSDFResponse::new(0.5, 0.3, 0.2);
-        let correction = CorrectionOutput::new(0.05, -0.05);  // Small valid correction
+        let correction = CorrectionOutput::new(0.05, -0.05); // Small valid correction
 
         let (corrected, penalties) = validator.validate_and_clamp(&physical, &correction);
 
@@ -456,12 +456,10 @@ mod tests {
         let network = NeuralCorrectionMLP::with_default_config();
 
         // Create forward and backward inputs (swapped angles)
-        let input_forward = CorrectionInput::new(
-            550.0, 0.866, 0.5, 0.1, 1.5, 0.0, 0.0, 0.0, 0.0, 0.0,
-        );
-        let input_backward = CorrectionInput::new(
-            550.0, 0.5, 0.866, 0.1, 1.5, 0.0, 0.0, 0.0, 0.0, 0.0,
-        );
+        let input_forward =
+            CorrectionInput::new(550.0, 0.866, 0.5, 0.1, 1.5, 0.0, 0.0, 0.0, 0.0, 0.0);
+        let input_backward =
+            CorrectionInput::new(550.0, 0.5, 0.866, 0.1, 1.5, 0.0, 0.0, 0.0, 0.0, 0.0);
 
         let violation = validator.check_reciprocity(&network, &input_forward, &input_backward);
 
@@ -488,7 +486,7 @@ mod tests {
         // Create a discontinuous sequence
         let corrections_sharp: Vec<(f64, CorrectionOutput)> = vec![
             (400.0, CorrectionOutput::new(0.0, 0.0)),
-            (401.0, CorrectionOutput::new(0.1, 0.0)),  // Huge jump in 1nm
+            (401.0, CorrectionOutput::new(0.1, 0.0)), // Huge jump in 1nm
         ];
 
         let penalty_sharp = validator.spectral_smoothness_penalty(&corrections_sharp);

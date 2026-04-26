@@ -35,4 +35,6 @@ pub struct ConfidenceScorerConfig;
 
 pub mod thresholds {}
 
-pub fn estimate_phase13_neural_memory() -> usize { 0 }
+pub fn estimate_phase13_neural_memory() -> usize {
+    0
+}

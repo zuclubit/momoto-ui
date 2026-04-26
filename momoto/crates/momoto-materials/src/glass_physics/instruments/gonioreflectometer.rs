@@ -9,7 +9,8 @@ use crate::glass_physics::metrology::{
 };
 
 use super::common::{
-    DetectorGeometry, EnvironmentConditions, InstrumentConfig, LightSource, NoiseModel, Resolution, SimpleRng,
+    DetectorGeometry, EnvironmentConditions, InstrumentConfig, LightSource, NoiseModel, Resolution,
+    SimpleRng,
 };
 
 // ============================================================================
@@ -119,7 +120,12 @@ impl VirtualGonioreflectometer {
     }
 
     /// Measure specular reflectance at a single angle.
-    pub fn measure_specular<F>(&mut self, brdf_fn: F, incident_deg: f64, wavelength_nm: f64) -> Measurement<f64>
+    pub fn measure_specular<F>(
+        &mut self,
+        brdf_fn: F,
+        incident_deg: f64,
+        wavelength_nm: f64,
+    ) -> Measurement<f64>
     where
         F: Fn(f64, f64, f64) -> f64, // (theta_i, theta_o, wavelength) -> BRDF
     {
@@ -133,7 +139,10 @@ impl VirtualGonioreflectometer {
         let biased = self.config.bias.apply_angular(true_value, incident_deg);
 
         // Apply noise
-        let (noisy, noise_std) = self.config.noise_model.apply(biased, &mut || self.rng.next());
+        let (noisy, noise_std) = self
+            .config
+            .noise_model
+            .apply(biased, &mut || self.rng.next());
 
         // Clamp to valid range
         let clamped = noisy.clamp(
@@ -193,7 +202,10 @@ impl VirtualGonioreflectometer {
 
             // Apply instrument effects
             let biased = self.config.bias.apply_angular(true_value, theta_o);
-            let (noisy, noise_std) = self.config.noise_model.apply(biased, &mut || self.rng.next());
+            let (noisy, noise_std) = self
+                .config
+                .noise_model
+                .apply(biased, &mut || self.rng.next());
             let clamped = noisy.clamp(
                 self.config.resolution.detection_limit,
                 self.config.resolution.saturation_limit,
@@ -243,11 +255,7 @@ impl VirtualGonioreflectometer {
     }
 
     /// Measure full BRDF hemisphere.
-    pub fn measure_hemisphere<F>(
-        &mut self,
-        brdf_fn: F,
-        wavelength_nm: f64,
-    ) -> Vec<GoniometerResult>
+    pub fn measure_hemisphere<F>(&mut self, brdf_fn: F, wavelength_nm: f64) -> Vec<GoniometerResult>
     where
         F: Fn(f64, f64, f64) -> f64,
     {
@@ -376,9 +384,7 @@ impl GoniometerResult {
     /// Generate measurement report.
     pub fn report(&self) -> String {
         let mut report = String::new();
-        report.push_str(&format!(
-            "Gonioreflectometer Measurement Report\n"
-        ));
+        report.push_str(&format!("Gonioreflectometer Measurement Report\n"));
         report.push_str(&format!(
             "Incident Angle: {:.1}°\n",
             self.incident_angle_deg
@@ -394,10 +400,7 @@ impl GoniometerResult {
             self.reflected_angles_deg.len()
         ));
         report.push_str(&format!("Mean BRDF: {:.6} sr⁻¹\n", self.mean_brdf()));
-        report.push_str(&format!(
-            "Max Uncertainty: {:.6}\n",
-            self.max_uncertainty()
-        ));
+        report.push_str(&format!("Max Uncertainty: {:.6}\n", self.max_uncertainty()));
 
         if let Some((angle, value)) = self.specular_peak() {
             report.push_str(&format!(
@@ -585,8 +588,7 @@ mod tests {
             "CAL-2024-001",
         );
 
-        let config = InstrumentConfig::new("Calibrated Gonio", "1.0")
-            .with_calibration(calibration);
+        let config = InstrumentConfig::new("Calibrated Gonio", "1.0").with_calibration(calibration);
 
         let mut gonio = VirtualGonioreflectometer::new(config);
         let brdf = lambertian_brdf(0.5);

@@ -67,7 +67,9 @@ impl NoiseModel {
             NoiseModel::Combined { gaussian, shot } => {
                 (gaussian.powi(2) + (signal * shot).abs()).sqrt()
             }
-            NoiseModel::SignalDependent { floor, coefficient } => floor + coefficient * signal.abs(),
+            NoiseModel::SignalDependent { floor, coefficient } => {
+                floor + coefficient * signal.abs()
+            }
             NoiseModel::None => 0.0,
         }
     }
@@ -707,7 +709,9 @@ mod tests {
 
     #[test]
     fn test_detector_geometry() {
-        let point = DetectorGeometry::Point { solid_angle_sr: 0.01 };
+        let point = DetectorGeometry::Point {
+            solid_angle_sr: 0.01,
+        };
         assert!((point.solid_angle_sr() - 0.01).abs() < 1e-10);
 
         let hemi = DetectorGeometry::Hemispherical;

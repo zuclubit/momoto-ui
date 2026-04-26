@@ -94,7 +94,9 @@ impl EnergyBudget {
     /// Fraction of capacity consumed (0.0 = empty, 1.0 = full).
     #[must_use]
     pub fn load_fraction(&self) -> f32 {
-        if self.capacity_j < f32::EPSILON { return 1.0; }
+        if self.capacity_j < f32::EPSILON {
+            return 1.0;
+        }
         (self.consumed_j / self.capacity_j).clamp(0.0, 1.0)
     }
 
@@ -104,7 +106,11 @@ impl EnergyBudget {
     /// Returns `Err(EnergyBudgetError)` if the event would exceed the budget.
     pub fn try_consume(&mut self, energy_j: f32) -> Result<(), EnergyBudgetError> {
         // Flush NaN/Inf energy requests — treat as zero (no-op).
-        let energy_j = if energy_j.is_finite() && energy_j >= 0.0 { energy_j } else { 0.0 };
+        let energy_j = if energy_j.is_finite() && energy_j >= 0.0 {
+            energy_j
+        } else {
+            0.0
+        };
         let available = self.available_j();
         if energy_j > available {
             return Err(EnergyBudgetError {
@@ -126,7 +132,11 @@ impl EnergyBudget {
     /// Advance time by `delta_secs` seconds, recovering energy via recharge.
     pub fn tick(&mut self, delta_secs: f32) {
         // Flush NaN/Inf time delta — no recharge for invalid inputs.
-        let delta = if delta_secs.is_finite() { delta_secs.max(0.0) } else { 0.0 };
+        let delta = if delta_secs.is_finite() {
+            delta_secs.max(0.0)
+        } else {
+            0.0
+        };
         let recovered = self.recharge_rate_j_per_s * delta;
         self.consumed_j = (self.consumed_j - recovered).max(0.0);
     }
@@ -178,7 +188,7 @@ mod tests {
     fn tick_recharges_over_time() {
         let mut b = EnergyBudget::with_recharge(0.050, 0.010); // 10 mJ/s
         b.consume_unchecked(0.020); // consume 20 mJ
-        b.tick(1.0);               // 1 second → recover 10 mJ
+        b.tick(1.0); // 1 second → recover 10 mJ
         assert!((b.available_j() - 0.040).abs() < 1e-5);
     }
 
@@ -214,7 +224,10 @@ mod tests {
         let mut b = EnergyBudget::new(0.050);
         let before = b.available_j();
         let _ = b.try_consume(f32::NAN);
-        assert!((b.available_j() - before).abs() < 1e-9, "NaN request must not change budget");
+        assert!(
+            (b.available_j() - before).abs() < 1e-9,
+            "NaN request must not change budget"
+        );
     }
 
     #[test]
@@ -223,7 +236,10 @@ mod tests {
         b.consume_unchecked(0.020);
         let before = b.available_j();
         b.tick(f32::NAN);
-        assert!((b.available_j() - before).abs() < 1e-9, "NaN tick must not change budget");
+        assert!(
+            (b.available_j() - before).abs() < 1e-9,
+            "NaN tick must not change budget"
+        );
     }
 
     #[test]
@@ -232,6 +248,9 @@ mod tests {
         let before = b.available_j();
         let _ = b.try_consume(f32::INFINITY);
         // INFINITY → flushed to 0.0 → no-op
-        assert!((b.available_j() - before).abs() < 1e-9, "Inf request must not change budget");
+        assert!(
+            (b.available_j() - before).abs() < 1e-9,
+            "Inf request must not change budget"
+        );
     }
 }

@@ -5,24 +5,17 @@
 // Exposes missing items from momoto-core and momoto-metrics.
 // =============================================================================
 
-use wasm_bindgen::prelude::*;
 use momoto_core::{
     color::Color as CoreColor,
+    evaluated::LinearRgba as CoreLinearRgba,
+    luminance::{self as lum, RelativeLuminance as CoreRelativeLuminance},
     space::oklch::{OKLab as CoreOKLab, OKLCH as CoreOKLCH},
-    luminance::{
-        self as lum,
-        RelativeLuminance as CoreRelativeLuminance,
-    },
-    evaluated::{
-        LinearRgba as CoreLinearRgba,
-    },
 };
 use momoto_metrics::wcag::{
-    WCAGMetric as CoreWCAGMetric,
-    WCAGLevel as CoreWCAGLevel,
-    TextSize as CoreTextSize,
+    TextSize as CoreTextSize, WCAGLevel as CoreWCAGLevel, WCAGMetric as CoreWCAGMetric,
     WCAG_REQUIREMENTS,
 };
+use wasm_bindgen::prelude::*;
 
 // =============================================================================
 // OKLab (Cartesian Perceptual Space)
@@ -38,13 +31,17 @@ impl OKLab {
     /// Create from Lightness, a (green-red), b (blue-yellow).
     #[wasm_bindgen(constructor)]
     pub fn new(l: f64, a: f64, b: f64) -> Self {
-        Self { inner: CoreOKLab::new(l, a, b) }
+        Self {
+            inner: CoreOKLab::new(l, a, b),
+        }
     }
 
     /// Convert from Color.
     #[wasm_bindgen(js_name = "fromColor")]
     pub fn from_color(color: &super::Color) -> Self {
-        Self { inner: CoreOKLab::from_color(&color.to_core()) }
+        Self {
+            inner: CoreOKLab::from_color(&color.to_core()),
+        }
     }
 
     /// Convert to Color (sRGB).
@@ -59,19 +56,29 @@ impl OKLab {
         let oklch = CoreOKLCH::new(
             self.inner.l,
             (self.inner.a * self.inner.a + self.inner.b * self.inner.b).sqrt(),
-            self.inner.b.atan2(self.inner.a).to_degrees().rem_euclid(360.0),
+            self.inner
+                .b
+                .atan2(self.inner.a)
+                .to_degrees()
+                .rem_euclid(360.0),
         );
         super::OKLCH::from_core(oklch)
     }
 
     #[wasm_bindgen(getter)]
-    pub fn l(&self) -> f64 { self.inner.l }
+    pub fn l(&self) -> f64 {
+        self.inner.l
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn a(&self) -> f64 { self.inner.a }
+    pub fn a(&self) -> f64 {
+        self.inner.a
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn b(&self) -> f64 { self.inner.b }
+    pub fn b(&self) -> f64 {
+        self.inner.b
+    }
 
     /// Linear interpolation in OKLab space.
     #[wasm_bindgen]
@@ -108,7 +115,9 @@ pub struct LinearRgba {
 impl LinearRgba {
     #[wasm_bindgen(constructor)]
     pub fn new(r: f64, g: f64, b: f64, a: f64) -> Self {
-        Self { inner: CoreLinearRgba::new(r, g, b, a) }
+        Self {
+            inner: CoreLinearRgba::new(r, g, b, a),
+        }
     }
 
     /// Create from OKLCH color with alpha.
@@ -122,20 +131,30 @@ impl LinearRgba {
     /// Create opaque from linear RGB.
     #[wasm_bindgen(js_name = "rgb")]
     pub fn rgb(r: f64, g: f64, b: f64) -> Self {
-        Self { inner: CoreLinearRgba::rgb(r, g, b) }
+        Self {
+            inner: CoreLinearRgba::rgb(r, g, b),
+        }
     }
 
     #[wasm_bindgen(getter)]
-    pub fn r(&self) -> f64 { self.inner.r }
+    pub fn r(&self) -> f64 {
+        self.inner.r
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn g(&self) -> f64 { self.inner.g }
+    pub fn g(&self) -> f64 {
+        self.inner.g
+    }
 
     #[wasm_bindgen(getter)]
-    pub fn b(&self) -> f64 { self.inner.b }
+    pub fn b(&self) -> f64 {
+        self.inner.b
+    }
 
     #[wasm_bindgen(getter, js_name = "a")]
-    pub fn alpha(&self) -> f64 { self.inner.a }
+    pub fn alpha(&self) -> f64 {
+        self.inner.a
+    }
 }
 
 // =============================================================================
@@ -195,14 +214,22 @@ pub fn wcag_passes(ratio: f64, level: u8, is_large: bool) -> bool {
         0 => CoreWCAGLevel::AA,
         _ => CoreWCAGLevel::AAA,
     };
-    let size = if is_large { CoreTextSize::Large } else { CoreTextSize::Normal };
+    let size = if is_large {
+        CoreTextSize::Large
+    } else {
+        CoreTextSize::Normal
+    };
     CoreWCAGMetric::passes(ratio, lvl, size)
 }
 
 /// Determine the highest WCAG level achieved.
 #[wasm_bindgen(js_name = "wcagLevel")]
 pub fn wcag_level(ratio: f64, is_large: bool) -> u8 {
-    let size = if is_large { CoreTextSize::Large } else { CoreTextSize::Normal };
+    let size = if is_large {
+        CoreTextSize::Large
+    } else {
+        CoreTextSize::Normal
+    };
     match CoreWCAGMetric::level(ratio, size) {
         Some(CoreWCAGLevel::AA) => 1,
         Some(CoreWCAGLevel::AAA) => 2,
@@ -223,7 +250,11 @@ pub fn wcag_requirement(level: u8, is_large: bool) -> f64 {
         0 => CoreWCAGLevel::AA,
         _ => CoreWCAGLevel::AAA,
     };
-    let size = if is_large { CoreTextSize::Large } else { CoreTextSize::Normal };
+    let size = if is_large {
+        CoreTextSize::Large
+    } else {
+        CoreTextSize::Normal
+    };
     lvl.requirement(size)
 }
 
@@ -273,8 +304,7 @@ pub fn apca_constants() -> Result<JsValue, JsValue> {
         "loClip": 0.1,
         "deltaYMin": 0.0005,
     });
-    Ok(serde_wasm_bindgen::to_value(&constants)
-        .map_err(|e| JsValue::from_str(&e.to_string()))?)
+    Ok(serde_wasm_bindgen::to_value(&constants).map_err(|e| JsValue::from_str(&e.to_string()))?)
 }
 
 // =============================================================================
@@ -290,32 +320,44 @@ pub struct CssRenderConfig {
 impl CssRenderConfig {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
-        Self { inner: momoto_core::backend::css_config::CssRenderConfig::new() }
+        Self {
+            inner: momoto_core::backend::css_config::CssRenderConfig::new(),
+        }
     }
 
     #[wasm_bindgen]
     pub fn minimal() -> Self {
-        Self { inner: momoto_core::backend::css_config::CssRenderConfig::minimal() }
+        Self {
+            inner: momoto_core::backend::css_config::CssRenderConfig::minimal(),
+        }
     }
 
     #[wasm_bindgen]
     pub fn premium() -> Self {
-        Self { inner: momoto_core::backend::css_config::CssRenderConfig::premium() }
+        Self {
+            inner: momoto_core::backend::css_config::CssRenderConfig::premium(),
+        }
     }
 
     #[wasm_bindgen]
     pub fn modal() -> Self {
-        Self { inner: momoto_core::backend::css_config::CssRenderConfig::modal() }
+        Self {
+            inner: momoto_core::backend::css_config::CssRenderConfig::modal(),
+        }
     }
 
     #[wasm_bindgen]
     pub fn subtle() -> Self {
-        Self { inner: momoto_core::backend::css_config::CssRenderConfig::subtle() }
+        Self {
+            inner: momoto_core::backend::css_config::CssRenderConfig::subtle(),
+        }
     }
 
     #[wasm_bindgen(js_name = "darkMode")]
     pub fn dark_mode() -> Self {
-        Self { inner: momoto_core::backend::css_config::CssRenderConfig::dark_mode() }
+        Self {
+            inner: momoto_core::backend::css_config::CssRenderConfig::dark_mode(),
+        }
     }
 
     #[wasm_bindgen(js_name = "withSpecularIntensity")]
@@ -375,8 +417,7 @@ impl CssRenderConfig {
             "border_radius": c.border_radius,
             "light_mode": c.light_mode,
         });
-        Ok(serde_wasm_bindgen::to_value(&json)
-            .map_err(|e| JsValue::from_str(&e.to_string()))?)
+        Ok(serde_wasm_bindgen::to_value(&json).map_err(|e| JsValue::from_str(&e.to_string()))?)
     }
 }
 
@@ -458,17 +499,15 @@ pub fn material_effective_specular(material: &super::EvaluatedMaterial) -> f64 {
 #[wasm_bindgen(js_name = "relativeLuminanceBatch")]
 pub fn relative_luminance_batch(rgb_data: &[u8]) -> Result<Box<[f64]>, JsValue> {
     if rgb_data.len() % 3 != 0 {
-        return Err(JsValue::from_str("Input must be multiple of 3: [r, g, b, ...]"));
+        return Err(JsValue::from_str(
+            "Input must be multiple of 3: [r, g, b, ...]",
+        ));
     }
     let count = rgb_data.len() / 3;
     let mut results = Vec::with_capacity(count);
     for i in 0..count {
         let base = i * 3;
-        let color = CoreColor::from_srgb8(
-            rgb_data[base],
-            rgb_data[base + 1],
-            rgb_data[base + 2],
-        );
+        let color = CoreColor::from_srgb8(rgb_data[base], rgb_data[base + 1], rgb_data[base + 2]);
         results.push(lum::relative_luminance_srgb(&color).0);
     }
     Ok(results.into_boxed_slice())
@@ -479,7 +518,7 @@ pub fn relative_luminance_batch(rgb_data: &[u8]) -> Result<Box<[f64]>, JsValue> 
 pub fn wcag_contrast_ratio_batch(pairs: &[u8]) -> Result<Box<[f64]>, JsValue> {
     if pairs.len() % 6 != 0 {
         return Err(JsValue::from_str(
-            "Input must be multiple of 6: [fg_r, fg_g, fg_b, bg_r, bg_g, bg_b, ...]"
+            "Input must be multiple of 6: [fg_r, fg_g, fg_b, bg_r, bg_g, bg_b, ...]",
         ));
     }
     let count = pairs.len() / 6;

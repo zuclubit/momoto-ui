@@ -15,10 +15,12 @@
 //!
 //! Where d() is a distance metric (MSE, perceptual, etc.).
 
-use super::optimizer::{DifferentiableOptimizer, AdamOptimizer, LBFGSOptimizer, AdamConfig, LBFGSConfig};
-use super::bounds::BoundsEnforcer;
 use super::super::differentiable::traits::DifferentiableBSDF;
 use super::super::unified_bsdf::{BSDFContext, Vector3};
+use super::bounds::BoundsEnforcer;
+use super::optimizer::{
+    AdamConfig, AdamOptimizer, DifferentiableOptimizer, LBFGSConfig, LBFGSOptimizer,
+};
 
 // ============================================================================
 // LOSS FUNCTIONS
@@ -166,7 +168,11 @@ impl ReferenceData {
         let mut data = Self::new();
         let n = reflectances.len();
         for (i, &r) in reflectances.iter().enumerate() {
-            let cos_theta = if n == 1 { 1.0 } else { 1.0 - (i as f64) / ((n - 1) as f64) };
+            let cos_theta = if n == 1 {
+                1.0
+            } else {
+                1.0 - (i as f64) / ((n - 1) as f64)
+            };
             let ctx = create_context(cos_theta, wavelength);
             data.add(ReferenceObservation::from_reflectance(ctx, r));
         }
@@ -552,7 +558,8 @@ impl InverseMaterialSolver {
             self.bounds.project(&mut params);
 
             // Check parameter convergence
-            let param_change: f64 = params.iter()
+            let param_change: f64 = params
+                .iter()
                 .zip(old_params.iter())
                 .map(|(&new, &old)| (new - old).powi(2))
                 .sum::<f64>()
@@ -597,10 +604,10 @@ impl InverseMaterialSolver {
 
             // Reflectance loss
             let r_residual = result.response.reflectance - obs.reflectance;
-            let (r_loss, r_grad_loss) = self.config.loss_function.loss_and_gradient(
-                r_residual,
-                self.config.huber_delta,
-            );
+            let (r_loss, r_grad_loss) = self
+                .config
+                .loss_function
+                .loss_and_gradient(r_residual, self.config.huber_delta);
 
             total_loss += obs.weight * r_loss;
 
@@ -614,15 +621,16 @@ impl InverseMaterialSolver {
             // Transmittance loss (if observed)
             if let Some(t_obs) = obs.transmittance {
                 let t_residual = result.response.transmittance - t_obs;
-                let (t_loss, t_grad_loss) = self.config.loss_function.loss_and_gradient(
-                    t_residual,
-                    self.config.huber_delta,
-                );
+                let (t_loss, t_grad_loss) = self
+                    .config
+                    .loss_function
+                    .loss_and_gradient(t_residual, self.config.huber_delta);
 
                 total_loss += obs.weight * t_loss;
 
                 for (i, &pg) in param_grads.iter().enumerate().take(param_count) {
-                    total_gradient[i] += obs.weight * t_grad_loss * pg * result.gradients.d_transmittance;
+                    total_gradient[i] +=
+                        obs.weight * t_grad_loss * pg * result.gradients.d_transmittance;
                 }
             }
         }
@@ -697,8 +705,8 @@ pub fn recover_roughness_from_glossiness(glossiness: f64) -> f64 {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::super::differentiable::dielectric::DifferentiableDielectric;
+    use super::*;
 
     #[test]
     fn test_loss_function_mse() {
@@ -740,8 +748,8 @@ mod tests {
     #[test]
     fn test_reference_data_from_reflectance() {
         let data = ReferenceData::from_reflectance(&[
-            (1.0, 0.04),  // Normal incidence
-            (0.5, 0.06),  // 60°
+            (1.0, 0.04), // Normal incidence
+            (0.5, 0.06), // 60°
         ]);
 
         assert_eq!(data.len(), 2);
@@ -755,9 +763,7 @@ mod tests {
         let ctx = create_context(1.0, 550.0);
         let response = target.eval_with_gradients(&ctx);
 
-        let reference = ReferenceData::from_reflectance(&[
-            (1.0, response.response.reflectance),
-        ]);
+        let reference = ReferenceData::from_reflectance(&[(1.0, response.response.reflectance)]);
 
         // Start from different initial guess
         let initial = DifferentiableDielectric::new(1.3, 0.1);
@@ -801,9 +807,7 @@ mod tests {
         let ctx = create_context(1.0, 550.0);
         let response = target.eval_with_gradients(&ctx);
 
-        let reference = ReferenceData::from_reflectance(&[
-            (1.0, response.response.reflectance),
-        ]);
+        let reference = ReferenceData::from_reflectance(&[(1.0, response.response.reflectance)]);
 
         let initial = DifferentiableDielectric::new(1.3, 0.1);
 

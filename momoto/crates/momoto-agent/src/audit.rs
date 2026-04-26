@@ -6,10 +6,10 @@
 //! statistical summaries, multi-format export (JSON, CSV, Markdown), and
 //! automatic report generation at configurable frequencies.
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::{Arc, Mutex};
-use serde::{Deserialize, Serialize};
 
 // ============================================================================
 // Export / Delivery / Frequency
@@ -527,10 +527,7 @@ impl Default for InMemoryAuditStore {
 
 impl AuditStore for InMemoryAuditStore {
     fn append(&self, entry: AuditEntry) -> Result<(), String> {
-        self.inner
-            .lock()
-            .map_err(|e| e.to_string())?
-            .push(entry);
+        self.inner.lock().map_err(|e| e.to_string())?.push(entry);
         Ok(())
     }
 
@@ -859,12 +856,7 @@ impl AuditLogger {
     /// Log an action with no additional metadata.
     ///
     /// Returns the `AuditId` of the newly created entry.
-    pub fn log(
-        &self,
-        action: AuditAction,
-        resource: Resource,
-        outcome: Outcome,
-    ) -> AuditId {
+    pub fn log(&self, action: AuditAction, resource: Resource, outcome: Outcome) -> AuditId {
         self.log_with_metadata(action, resource, outcome, HashMap::new())
     }
 
@@ -1047,9 +1039,7 @@ mod tests {
         assert!(AuditFilter::new()
             .action("workflow_executed")
             .matches(&entry));
-        assert!(!AuditFilter::new()
-            .action("color_validated")
-            .matches(&entry));
+        assert!(!AuditFilter::new().action("color_validated").matches(&entry));
     }
 
     #[test]
@@ -1073,8 +1063,14 @@ mod tests {
     #[test]
     fn test_outcome_is_ok() {
         assert!(Outcome::Success.is_ok());
-        assert!(Outcome::PartialSuccess { details: "x".into() }.is_ok());
-        assert!(!Outcome::Failure { reason: "err".into() }.is_ok());
+        assert!(Outcome::PartialSuccess {
+            details: "x".into()
+        }
+        .is_ok());
+        assert!(!Outcome::Failure {
+            reason: "err".into()
+        }
+        .is_ok());
     }
 
     // --- InMemoryAuditStore ---
@@ -1098,8 +1094,20 @@ mod tests {
     #[test]
     fn test_store_query_filtered() {
         let store = InMemoryAuditStore::new();
-        let e1 = AuditEntry::new(10, make_actor(), AuditAction::ColorValidated, make_resource(), Outcome::Success);
-        let e2 = AuditEntry::new(20, Actor::new("bot-1", "bot", "Bot"), AuditAction::WorkflowExecuted, make_resource(), Outcome::Success);
+        let e1 = AuditEntry::new(
+            10,
+            make_actor(),
+            AuditAction::ColorValidated,
+            make_resource(),
+            Outcome::Success,
+        );
+        let e2 = AuditEntry::new(
+            20,
+            Actor::new("bot-1", "bot", "Bot"),
+            AuditAction::WorkflowExecuted,
+            make_resource(),
+            Outcome::Success,
+        );
         store.append(e1).unwrap();
         store.append(e2).unwrap();
 
@@ -1111,9 +1119,35 @@ mod tests {
     #[test]
     fn test_store_statistics() {
         let store = InMemoryAuditStore::new();
-        store.append(AuditEntry::new(1, make_actor(), AuditAction::ColorValidated, make_resource(), Outcome::Success)).unwrap();
-        store.append(AuditEntry::new(2, make_actor(), AuditAction::ColorValidated, make_resource(), Outcome::Failure { reason: "low contrast".into() })).unwrap();
-        store.append(AuditEntry::new(3, Actor::new("u2", "user", "Bob"), AuditAction::WorkflowExecuted, make_resource(), Outcome::Success)).unwrap();
+        store
+            .append(AuditEntry::new(
+                1,
+                make_actor(),
+                AuditAction::ColorValidated,
+                make_resource(),
+                Outcome::Success,
+            ))
+            .unwrap();
+        store
+            .append(AuditEntry::new(
+                2,
+                make_actor(),
+                AuditAction::ColorValidated,
+                make_resource(),
+                Outcome::Failure {
+                    reason: "low contrast".into(),
+                },
+            ))
+            .unwrap();
+        store
+            .append(AuditEntry::new(
+                3,
+                Actor::new("u2", "user", "Bob"),
+                AuditAction::WorkflowExecuted,
+                make_resource(),
+                Outcome::Success,
+            ))
+            .unwrap();
 
         let stats = store.statistics();
         assert_eq!(stats.total_entries, 3);
@@ -1121,13 +1155,24 @@ mod tests {
         assert_eq!(stats.failure_count, 1);
         assert_eq!(stats.unique_actors, 2);
         assert_eq!(*stats.entries_per_action.get("color_validated").unwrap(), 2);
-        assert_eq!(*stats.entries_per_action.get("workflow_executed").unwrap(), 1);
+        assert_eq!(
+            *stats.entries_per_action.get("workflow_executed").unwrap(),
+            1
+        );
     }
 
     #[test]
     fn test_store_export_csv() {
         let store = InMemoryAuditStore::new();
-        store.append(AuditEntry::new(100, make_actor(), AuditAction::ColorValidated, make_resource(), Outcome::Success)).unwrap();
+        store
+            .append(AuditEntry::new(
+                100,
+                make_actor(),
+                AuditAction::ColorValidated,
+                make_resource(),
+                Outcome::Success,
+            ))
+            .unwrap();
         let csv = store.export(ExportFormat::Csv);
         assert!(csv.contains("id,timestamp"));
         assert!(csv.contains("color_validated"));
@@ -1137,7 +1182,15 @@ mod tests {
     #[test]
     fn test_store_export_markdown() {
         let store = InMemoryAuditStore::new();
-        store.append(AuditEntry::new(200, make_actor(), AuditAction::BotAuthenticated, make_resource(), Outcome::Success)).unwrap();
+        store
+            .append(AuditEntry::new(
+                200,
+                make_actor(),
+                AuditAction::BotAuthenticated,
+                make_resource(),
+                Outcome::Success,
+            ))
+            .unwrap();
         let md = store.export(ExportFormat::Markdown);
         assert!(md.contains('|'));
         assert!(md.contains("bot_authenticated"));
@@ -1146,7 +1199,15 @@ mod tests {
     #[test]
     fn test_store_export_json() {
         let store = InMemoryAuditStore::new();
-        store.append(AuditEntry::new(300, make_actor(), AuditAction::CertificateIssued, make_resource(), Outcome::Success)).unwrap();
+        store
+            .append(AuditEntry::new(
+                300,
+                make_actor(),
+                AuditAction::CertificateIssued,
+                make_resource(),
+                Outcome::Success,
+            ))
+            .unwrap();
         let json = store.export(ExportFormat::Json);
         assert!(json.contains("timestamp"));
         assert!(json.contains("CertificateIssued"));
@@ -1157,7 +1218,11 @@ mod tests {
     #[test]
     fn test_logger_log_and_query() {
         let logger = AuditLogger::new(make_actor());
-        let id = logger.log(AuditAction::ColorValidated, make_resource(), Outcome::Success);
+        let id = logger.log(
+            AuditAction::ColorValidated,
+            make_resource(),
+            Outcome::Success,
+        );
         assert!(!id.0.is_empty());
 
         let entries = logger.query(&AuditFilter::new());
@@ -1186,8 +1251,16 @@ mod tests {
     #[test]
     fn test_logger_statistics() {
         let logger = AuditLogger::new(make_actor());
-        logger.log(AuditAction::ColorValidated, make_resource(), Outcome::Success);
-        logger.log(AuditAction::ColorImproved, make_resource(), Outcome::Success);
+        logger.log(
+            AuditAction::ColorValidated,
+            make_resource(),
+            Outcome::Success,
+        );
+        logger.log(
+            AuditAction::ColorImproved,
+            make_resource(),
+            Outcome::Success,
+        );
         let stats = logger.statistics();
         assert_eq!(stats.total_entries, 2);
         assert_eq!(stats.success_count, 2);
@@ -1208,21 +1281,28 @@ mod tests {
 
     #[test]
     fn test_logger_query_own() {
-        let shared_store: Arc<dyn AuditStore + Send + Sync> =
-            Arc::new(InMemoryAuditStore::new());
+        let shared_store: Arc<dyn AuditStore + Send + Sync> = Arc::new(InMemoryAuditStore::new());
 
-        let logger_a = AuditLogger::with_store(
-            Actor::new("alice", "user", "Alice"),
-            shared_store.clone(),
-        );
-        let logger_b = AuditLogger::with_store(
-            Actor::new("bob", "user", "Bob"),
-            shared_store.clone(),
-        );
+        let logger_a =
+            AuditLogger::with_store(Actor::new("alice", "user", "Alice"), shared_store.clone());
+        let logger_b =
+            AuditLogger::with_store(Actor::new("bob", "user", "Bob"), shared_store.clone());
 
-        logger_a.log(AuditAction::ColorValidated, make_resource(), Outcome::Success);
-        logger_a.log(AuditAction::WorkflowExecuted, make_resource(), Outcome::Success);
-        logger_b.log(AuditAction::SessionCreated, make_resource(), Outcome::Success);
+        logger_a.log(
+            AuditAction::ColorValidated,
+            make_resource(),
+            Outcome::Success,
+        );
+        logger_a.log(
+            AuditAction::WorkflowExecuted,
+            make_resource(),
+            Outcome::Success,
+        );
+        logger_b.log(
+            AuditAction::SessionCreated,
+            make_resource(),
+            Outcome::Success,
+        );
 
         let alice_entries = logger_a.query_own();
         assert_eq!(alice_entries.len(), 2);
@@ -1236,7 +1316,15 @@ mod tests {
     #[test]
     fn test_auto_report_generate() {
         let store: Arc<dyn AuditStore + Send + Sync> = Arc::new(InMemoryAuditStore::new());
-        store.append(AuditEntry::new(1, make_actor(), AuditAction::ColorValidated, make_resource(), Outcome::Success)).unwrap();
+        store
+            .append(AuditEntry::new(
+                1,
+                make_actor(),
+                AuditAction::ColorValidated,
+                make_resource(),
+                Outcome::Success,
+            ))
+            .unwrap();
 
         let gen = AutoReportGenerator::with_store(
             Frequency::Daily,
@@ -1280,7 +1368,15 @@ mod tests {
     #[test]
     fn test_file_audit_store_delegates_to_memory() {
         let store = FileAuditStore::new("/tmp/audit-test.log");
-        store.append(AuditEntry::new(1, make_actor(), AuditAction::ColorValidated, make_resource(), Outcome::Success)).unwrap();
+        store
+            .append(AuditEntry::new(
+                1,
+                make_actor(),
+                AuditAction::ColorValidated,
+                make_resource(),
+                Outcome::Success,
+            ))
+            .unwrap();
         let results = store.query(&AuditFilter::new());
         assert_eq!(results.len(), 1);
         let stats = store.statistics();

@@ -192,7 +192,10 @@ impl JacobianRankAnalyzer {
                 param_index: idx,
                 singular_value: singular_values.get(idx).copied().unwrap_or(0.0),
                 confounded_with: Vec::new(),
-                explanation: format!("Parameter {} has near-zero singular value", self.param_names[idx]),
+                explanation: format!(
+                    "Parameter {} has near-zero singular value",
+                    self.param_names[idx]
+                ),
             })
             .collect();
 
@@ -334,7 +337,10 @@ pub fn compute_effective_rank(singular_values: &[f64], threshold: f64) -> usize 
     let max_sv = singular_values.iter().cloned().fold(0.0, f64::max);
     let relative_threshold = threshold * max_sv;
 
-    singular_values.iter().filter(|&&sv| sv > relative_threshold).count()
+    singular_values
+        .iter()
+        .filter(|&&sv| sv > relative_threshold)
+        .count()
 }
 
 /// Compute condition number from singular values.
@@ -344,7 +350,10 @@ pub fn compute_condition_number(singular_values: &[f64]) -> f64 {
     }
 
     let max_sv = singular_values.iter().cloned().fold(0.0, f64::max);
-    let min_sv = singular_values.iter().cloned().fold(f64::INFINITY, f64::min);
+    let min_sv = singular_values
+        .iter()
+        .cloned()
+        .fold(f64::INFINITY, f64::min);
 
     if min_sv > 1e-15 {
         max_sv / min_sv
@@ -451,11 +460,7 @@ mod tests {
 
     #[test]
     fn test_overdetermined() {
-        let jacobian = vec![
-            vec![1.0, 0.0],
-            vec![0.0, 1.0],
-            vec![1.0, 1.0],
-        ];
+        let jacobian = vec![vec![1.0, 0.0], vec![0.0, 1.0], vec![1.0, 1.0]];
         let analyzer = JacobianRankAnalyzer::new(jacobian);
 
         assert!(analyzer.is_overdetermined());

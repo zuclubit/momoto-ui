@@ -18,8 +18,7 @@ mod validation_tests {
         let incident = SpectralSignal::d65_illuminant();
         let input_energy = incident.total_energy();
 
-        let pipeline = SpectralPipeline::new()
-            .add_stage(ThinFilmStage::new(1.45, 300.0, 1.52));
+        let pipeline = SpectralPipeline::new().add_stage(ThinFilmStage::new(1.45, 300.0, 1.52));
 
         let context = EvaluationContext::default().with_angle_deg(0.0);
         let output = pipeline.evaluate(&incident, &context);
@@ -39,8 +38,7 @@ mod validation_tests {
         let incident = SpectralSignal::d65_illuminant();
         let input_energy = incident.total_energy();
 
-        let pipeline = SpectralPipeline::new()
-            .add_stage(MetalReflectanceStage::gold());
+        let pipeline = SpectralPipeline::new().add_stage(MetalReflectanceStage::gold());
 
         let context = EvaluationContext::default();
         let output = pipeline.evaluate(&incident, &context);
@@ -106,7 +104,10 @@ mod validation_tests {
 
         // Allow very small differences due to numerical precision
         // but they should generally be measurably different
-        println!("Order difference (A-B): {:?} vs {:?}, avg diff = {}", rgb_a, rgb_b, diff);
+        println!(
+            "Order difference (A-B): {:?} vs {:?}, avg diff = {}",
+            rgb_a, rgb_b, diff
+        );
     }
 
     /// Test 3: Angle affects thin film color (Bragg's law)
@@ -114,8 +115,7 @@ mod validation_tests {
     fn validate_angle_shifts_interference() {
         let incident = SpectralSignal::d65_illuminant();
 
-        let pipeline = SpectralPipeline::new()
-            .add_stage(ThinFilmStage::new(1.45, 300.0, 1.52));
+        let pipeline = SpectralPipeline::new().add_stage(ThinFilmStage::new(1.45, 300.0, 1.52));
 
         // Normal incidence (0°)
         let context_0 = EvaluationContext::default().with_angle_deg(0.0);
@@ -141,13 +141,12 @@ mod validation_tests {
     fn validate_temperature_affects_optics() {
         let incident = SpectralSignal::d65_illuminant();
 
-        let pipeline = SpectralPipeline::new()
-            .add_stage(ThermoOpticStage::new(
-                1.5,    // base n
-                1e-5,   // dn/dT
-                100.0,  // thickness nm
-                1e-5,   // alpha thermal
-            ));
+        let pipeline = SpectralPipeline::new().add_stage(ThermoOpticStage::new(
+            1.5,   // base n
+            1e-5,  // dn/dT
+            100.0, // thickness nm
+            1e-5,  // alpha thermal
+        ));
 
         // Room temperature (20°C)
         let context_20c = EvaluationContext::default().with_temperature(293.15);
@@ -173,8 +172,7 @@ mod validation_tests {
     fn validate_gold_spectral_character() {
         let incident = SpectralSignal::d65_illuminant();
 
-        let pipeline = SpectralPipeline::new()
-            .add_stage(MetalReflectanceStage::gold());
+        let pipeline = SpectralPipeline::new().add_stage(MetalReflectanceStage::gold());
 
         let context = EvaluationContext::default();
         let output = pipeline.evaluate(&incident, &context);
@@ -196,8 +194,7 @@ mod validation_tests {
     fn validate_silver_spectral_character() {
         let incident = SpectralSignal::d65_illuminant();
 
-        let pipeline = SpectralPipeline::new()
-            .add_stage(MetalReflectanceStage::silver());
+        let pipeline = SpectralPipeline::new().add_stage(MetalReflectanceStage::silver());
 
         let context = EvaluationContext::default();
         let output = pipeline.evaluate(&incident, &context);
@@ -225,12 +222,11 @@ mod validation_tests {
         let incident = SpectralSignal::d65_illuminant();
 
         // Small particles (Rayleigh regime) - scatter blue more than red
-        let pipeline = SpectralPipeline::new()
-            .add_stage(MieScatteringStage::new(
-                0.1,  // small radius
-                1.5,  // particle n
-                1.0,  // medium n
-            ));
+        let pipeline = SpectralPipeline::new().add_stage(MieScatteringStage::new(
+            0.1, // small radius
+            1.5, // particle n
+            1.0, // medium n
+        ));
 
         let context = EvaluationContext::default();
         let output = pipeline.evaluate(&incident, &context);
@@ -258,7 +254,9 @@ mod validation_tests {
         // D65 should be approximately white (equal RGB)
         // Allow some tolerance for chromaticity
         let avg = (rgb[0] + rgb[1] + rgb[2]) / 3.0;
-        let max_dev = ((rgb[0] - avg).abs()).max((rgb[1] - avg).abs()).max((rgb[2] - avg).abs());
+        let max_dev = ((rgb[0] - avg).abs())
+            .max((rgb[1] - avg).abs())
+            .max((rgb[2] - avg).abs());
 
         assert!(
             max_dev < 0.15,
@@ -287,10 +285,7 @@ mod validation_tests {
         let rgb_luminance = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
 
         // Should be correlated (within reasonable tolerance)
-        println!(
-            "Y = {}, RGB luminance = {}",
-            y_luminance, rgb_luminance
-        );
+        println!("Y = {}, RGB luminance = {}", y_luminance, rgb_luminance);
     }
 
     /// Test 10: Empty pipeline returns input unchanged

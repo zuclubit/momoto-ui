@@ -100,7 +100,13 @@ impl InterpolationMode {
             InterpolationMode::Smoothstep => smoothstep(t),
             InterpolationMode::Smootherstep => smootherstep(t),
             InterpolationMode::EaseInOut => ease_in_out(t),
-            InterpolationMode::Step => if t < 0.5 { 0.0 } else { 1.0 },
+            InterpolationMode::Step => {
+                if t < 0.5 {
+                    0.0
+                } else {
+                    1.0
+                }
+            }
         }
     }
 

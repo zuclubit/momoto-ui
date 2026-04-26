@@ -13,7 +13,6 @@
 //! This module provides methods to project parameters back into valid regions
 //! while preserving gradient information where possible.
 
-
 // ============================================================================
 // PROJECTION METHODS
 // ============================================================================
@@ -220,7 +219,8 @@ pub const SCATTERING_BOUNDS: ParameterBound = ParameterBound::new(0.0, 10.0, "sc
 pub const ASYMMETRY_BOUNDS: ParameterBound = ParameterBound::new(-0.99, 0.99, "asymmetry_g");
 
 /// Standard bounds for thin-film thickness (nm).
-pub const FILM_THICKNESS_BOUNDS: ParameterBound = ParameterBound::new(0.0, 2000.0, "film_thickness");
+pub const FILM_THICKNESS_BOUNDS: ParameterBound =
+    ParameterBound::new(0.0, 2000.0, "film_thickness");
 
 /// Standard bounds for thin-film IOR.
 pub const FILM_IOR_BOUNDS: ParameterBound = ParameterBound::new(1.0, 3.0, "film_ior");
@@ -274,19 +274,12 @@ impl BoundsEnforcer {
 
     /// Create enforcer for dielectric parameters.
     pub fn dielectric() -> Self {
-        Self::new(vec![
-            IOR_BOUNDS,
-            ROUGHNESS_BOUNDS,
-        ])
+        Self::new(vec![IOR_BOUNDS, ROUGHNESS_BOUNDS])
     }
 
     /// Create enforcer for conductor parameters.
     pub fn conductor() -> Self {
-        Self::new(vec![
-            IOR_BOUNDS,
-            EXTINCTION_BOUNDS,
-            ROUGHNESS_BOUNDS,
-        ])
+        Self::new(vec![IOR_BOUNDS, EXTINCTION_BOUNDS, ROUGHNESS_BOUNDS])
     }
 
     /// Create enforcer for thin-film parameters.
@@ -455,7 +448,11 @@ impl<T> BoxConstrainedOptimizer<T> {
     pub fn new(inner: T, bounds: BoundsEnforcer, initial_params: Vec<f64>) -> Self {
         let mut params = initial_params;
         bounds.project(&mut params);
-        Self { inner, bounds, params }
+        Self {
+            inner,
+            bounds,
+            params,
+        }
     }
 
     /// Get current parameters.
@@ -593,9 +590,7 @@ mod tests {
 
     #[test]
     fn test_bounds_enforcer_project_gradient() {
-        let enforcer = BoundsEnforcer::new(vec![
-            ParameterBound::new(0.0, 1.0, "test"),
-        ]);
+        let enforcer = BoundsEnforcer::new(vec![ParameterBound::new(0.0, 1.0, "test")]);
 
         // At lower bound, negative gradient should be zeroed
         let params = vec![0.0];

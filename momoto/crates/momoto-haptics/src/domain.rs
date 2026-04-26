@@ -88,16 +88,24 @@ impl HapticsDomain {
 
 impl Domain for HapticsDomain {
     #[inline]
-    fn id(&self) -> DomainId { DomainId::Haptics }
+    fn id(&self) -> DomainId {
+        DomainId::Haptics
+    }
 
     #[inline]
-    fn name(&self) -> &'static str { "momoto-haptics" }
+    fn name(&self) -> &'static str {
+        "momoto-haptics"
+    }
 
     #[inline]
-    fn version(&self) -> &'static str { env!("CARGO_PKG_VERSION") }
+    fn version(&self) -> &'static str {
+        env!("CARGO_PKG_VERSION")
+    }
 
     #[inline]
-    fn is_deterministic(&self) -> bool { true }
+    fn is_deterministic(&self) -> bool {
+        true
+    }
 }
 
 impl EnergyConserving for HapticsDomain {
@@ -108,15 +116,19 @@ impl EnergyConserving for HapticsDomain {
     /// - `absorbed` = remaining capacity (not yet delivered)
     /// - `scattered` = 0
     fn energy_report(&self, input: f32) -> EnergyReport {
-        let capacity  = self.budget.capacity_j;
-        let consumed  = capacity - self.budget.available_j();
+        let capacity = self.budget.capacity_j;
+        let consumed = capacity - self.budget.available_j();
         let remaining = self.budget.available_j();
         // Scale by input/capacity ratio for API compatibility
-        let scale = if capacity > f32::EPSILON { input / capacity } else { 0.0 };
+        let scale = if capacity > f32::EPSILON {
+            input / capacity
+        } else {
+            0.0
+        };
         EnergyReport {
             input,
-            output:    consumed   * scale,
-            absorbed:  remaining  * scale,
+            output: consumed * scale,
+            absorbed: remaining * scale,
             scattered: 0.0,
         }
     }
@@ -157,9 +169,9 @@ mod tests {
     #[test]
     fn try_generate_fails_when_budget_exhausted() {
         let mut d = HapticsDomain::new(ActuatorModel::Lra, 0.000001); // 1 µJ budget
-        // Force a large event that exceeds budget
+                                                                      // Force a large event that exceeds budget
         let spec = d.try_generate(1.0, 10000.0); // 10 second event
-        // Either succeeds or fails depending on energy estimate — just shouldn't panic
+                                                 // Either succeeds or fails depending on energy estimate — just shouldn't panic
         let _ = spec;
     }
 
@@ -179,7 +191,7 @@ mod tests {
         // Consume 40 mJ → 10 mJ remaining
         d.budget.consume_unchecked(0.040);
         let before = d.budget.available_j(); // ≈ 0.010 J
-        // Tick 2 seconds at 10 mJ/s → recover 20 mJ → now ≈ 0.030 J available
+                                             // Tick 2 seconds at 10 mJ/s → recover 20 mJ → now ≈ 0.030 J available
         d.tick(2.0);
         assert!(
             d.budget.available_j() > before,

@@ -57,7 +57,13 @@ impl BiquadCoeffs {
     /// All-pass identity section: `H(z) = 1`.
     #[must_use]
     pub const fn identity() -> Self {
-        Self { b0: 1.0, b1: 0.0, b2: 0.0, a1: 0.0, a2: 0.0 }
+        Self {
+            b0: 1.0,
+            b1: 0.0,
+            b2: 0.0,
+            a1: 0.0,
+            a2: 0.0,
+        }
     }
 }
 
@@ -82,7 +88,11 @@ impl BiquadFilter {
     /// Create a new filter with the given coefficients and zeroed state.
     #[must_use]
     pub fn new(coeffs: BiquadCoeffs) -> Self {
-        Self { coeffs, w1: 0.0, w2: 0.0 }
+        Self {
+            coeffs,
+            w1: 0.0,
+            w2: 0.0,
+        }
     }
 
     /// Create an identity (all-pass) filter.
@@ -158,7 +168,11 @@ impl BiquadFilter {
     ///
     /// Panics if `input.len() != output.len()`.
     pub fn process_into(&mut self, input: &[f64], output: &mut [f64]) {
-        assert_eq!(input.len(), output.len(), "input and output slices must have equal length");
+        assert_eq!(
+            input.len(),
+            output.len(),
+            "input and output slices must have equal length"
+        );
         for (x, y) in input.iter().zip(output.iter_mut()) {
             *y = self.process(*x);
         }
@@ -182,7 +196,13 @@ mod tests {
 
     #[test]
     fn reset_clears_state() {
-        let coeffs = BiquadCoeffs { b0: 1.0, b1: 0.5, b2: 0.0, a1: 0.5, a2: 0.0 };
+        let coeffs = BiquadCoeffs {
+            b0: 1.0,
+            b1: 0.5,
+            b2: 0.0,
+            a1: 0.5,
+            a2: 0.0,
+        };
         let mut f = BiquadFilter::new(coeffs);
         f.process(1.0);
         f.process(1.0);
@@ -194,13 +214,22 @@ mod tests {
     #[test]
     fn process_impulse_response_stable() {
         // A simple low-pass (butterworth-like): should not diverge for impulse
-        let coeffs = BiquadCoeffs { b0: 0.25, b1: 0.5, b2: 0.25, a1: -0.0, a2: 0.0 };
+        let coeffs = BiquadCoeffs {
+            b0: 0.25,
+            b1: 0.5,
+            b2: 0.25,
+            a1: -0.0,
+            a2: 0.0,
+        };
         let mut f = BiquadFilter::new(coeffs);
         let impulse = [1.0_f64, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
         let mut out = [0.0_f64; 8];
         f.process_into(&impulse, &mut out);
         for y in out {
-            assert!(y.abs() <= 1.0 + 1e-9, "IIR should be bounded for stable coefficients");
+            assert!(
+                y.abs() <= 1.0 + 1e-9,
+                "IIR should be bounded for stable coefficients"
+            );
         }
     }
 

@@ -6,7 +6,9 @@
 use momoto_core::color::Color;
 use momoto_core::gamma::{linear_to_srgb, srgb_to_linear};
 use momoto_core::gamut::GAMUT_COEFFICIENTS;
-use momoto_core::luminance::{relative_luminance_apca, relative_luminance_srgb, soft_clamp, RelativeLuminance};
+use momoto_core::luminance::{
+    relative_luminance_apca, relative_luminance_srgb, soft_clamp, RelativeLuminance,
+};
 use momoto_core::space::oklch::OKLCH;
 
 // ============================================================================
@@ -99,11 +101,7 @@ fn test_gamut_coefficients_count() {
 fn test_gamut_coefficients_hue_range() {
     // All hue values should be in 0-360 range
     for &(hue, _) in &GAMUT_COEFFICIENTS {
-        assert!(
-            hue < 360,
-            "Hue {} should be less than 360",
-            hue
-        );
+        assert!(hue < 360, "Hue {} should be less than 360", hue);
     }
 }
 
@@ -112,7 +110,11 @@ fn test_gamut_coefficients_positive() {
     // All coefficients should be positive
     for &(hue, (a, b)) in &GAMUT_COEFFICIENTS {
         assert!(a > 0.0, "Coefficient 'a' at hue {} should be positive", hue);
-        assert!(b >= 0.0, "Coefficient 'b' at hue {} should be non-negative", hue);
+        assert!(
+            b >= 0.0,
+            "Coefficient 'b' at hue {} should be non-negative",
+            hue
+        );
     }
 }
 
@@ -279,7 +281,10 @@ fn test_integration_saturated_color_workflow() {
 
     // Blue-500 has moderate chroma
     assert!(oklch.c > 0.05, "Blue-500 should have noticeable chroma");
-    assert!(oklch.l > 0.5 && oklch.l < 0.8, "Blue-500 should have moderate lightness");
+    assert!(
+        oklch.l > 0.5 && oklch.l < 0.8,
+        "Blue-500 should have moderate lightness"
+    );
 
     // Map to gamut and verify it's valid
     let gamut_safe = oklch.map_to_gamut();

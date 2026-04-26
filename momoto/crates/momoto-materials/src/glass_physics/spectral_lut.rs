@@ -84,8 +84,8 @@ impl ThinFilmLUT {
                     let angle = 90.0 * (angle_idx as f64) / ((angle_steps - 1).max(1) as f64);
 
                     // Full spectral evaluation
-                    let pipeline = SpectralPipeline::new()
-                        .add_stage(ThinFilmStage::new(n, t, substrate_n));
+                    let pipeline =
+                        SpectralPipeline::new().add_stage(ThinFilmStage::new(n, t, substrate_n));
                     let context = EvaluationContext::default().with_angle_deg(angle);
                     let output = pipeline.evaluate(&d65, &context);
 
@@ -119,12 +119,12 @@ impl ThinFilmLUT {
         // thickness: 50nm to 600nm (visible interference)
         // angles: 0° to 90°
         Self::new(
-            (1.3, 2.5),   // n range
-            13,           // n steps (0.1 increments)
+            (1.3, 2.5),    // n range
+            13,            // n steps (0.1 increments)
             (50.0, 600.0), // thickness range
-            56,           // thickness steps (~10nm increments)
-            19,           // angle steps (5° increments)
-            1.52,         // glass substrate
+            56,            // thickness steps (~10nm increments)
+            19,            // angle steps (5° increments)
+            1.52,          // glass substrate
         )
     }
 
@@ -155,10 +155,9 @@ impl ThinFilmLUT {
             for dt in 0..2 {
                 for da in 0..2 {
                     let idx = self.index(n0 + dn, t0 + dt, a0 + da);
-                    let w =
-                        (if dn == 0 { 1.0 - nf } else { nf }) *
-                        (if dt == 0 { 1.0 - tf } else { tf }) *
-                        (if da == 0 { 1.0 - af } else { af });
+                    let w = (if dn == 0 { 1.0 - nf } else { nf })
+                        * (if dt == 0 { 1.0 - tf } else { tf })
+                        * (if da == 0 { 1.0 - af } else { af });
 
                     for c in 0..3 {
                         result[c] += w * self.data[idx][c];
@@ -176,9 +175,11 @@ impl ThinFilmLUT {
         let t = thickness_nm.clamp(self.t_min, self.t_max);
         let angle = angle_deg.clamp(0.0, 90.0);
 
-        let n_idx = (((n - self.n_min) / (self.n_max - self.n_min) * (self.n_steps - 1) as f64).round() as usize)
+        let n_idx = (((n - self.n_min) / (self.n_max - self.n_min) * (self.n_steps - 1) as f64)
+            .round() as usize)
             .min(self.n_steps - 1);
-        let t_idx = (((t - self.t_min) / (self.t_max - self.t_min) * (self.t_steps - 1) as f64).round() as usize)
+        let t_idx = (((t - self.t_min) / (self.t_max - self.t_min) * (self.t_steps - 1) as f64)
+            .round() as usize)
             .min(self.t_steps - 1);
         let angle_idx = ((angle / 90.0 * (self.angle_steps - 1) as f64).round() as usize)
             .min(self.angle_steps - 1);
@@ -230,13 +231,12 @@ impl MetalLUT {
             for angle_idx in 0..angle_steps {
                 let angle = 90.0 * (angle_idx as f64) / ((angle_steps - 1) as f64);
 
-                let pipeline = SpectralPipeline::new()
-                    .add_stage(match metal {
-                        "gold" => MetalReflectanceStage::gold(),
-                        "silver" => MetalReflectanceStage::silver(),
-                        "copper" => MetalReflectanceStage::copper(),
-                        _ => MetalReflectanceStage::gold(),
-                    });
+                let pipeline = SpectralPipeline::new().add_stage(match metal {
+                    "gold" => MetalReflectanceStage::gold(),
+                    "silver" => MetalReflectanceStage::silver(),
+                    "copper" => MetalReflectanceStage::copper(),
+                    _ => MetalReflectanceStage::gold(),
+                });
                 let context = EvaluationContext::default().with_angle_deg(angle);
                 let output = pipeline.evaluate(&d65, &context);
 
@@ -389,9 +389,9 @@ impl SpectralLUTEvaluator {
 
     /// Total memory usage
     pub fn memory_bytes(&self) -> usize {
-        self.thin_film_lut.memory_bytes() +
-        self.metal_lut.memory_bytes() +
-        self.pipeline_cache.cache.len() * (24 + 24) // key + value
+        self.thin_film_lut.memory_bytes()
+            + self.metal_lut.memory_bytes()
+            + self.pipeline_cache.cache.len() * (24 + 24) // key + value
     }
 }
 
@@ -435,8 +435,11 @@ impl LUTValidation {
             let lut_rgb = lut.eval_thin_film(n, t, angle);
 
             // Full spectral result
-            let pipeline = SpectralPipeline::new()
-                .add_stage(ThinFilmStage::new(n, t, lut.thin_film_lut.substrate_n));
+            let pipeline = SpectralPipeline::new().add_stage(ThinFilmStage::new(
+                n,
+                t,
+                lut.thin_film_lut.substrate_n,
+            ));
             let context = EvaluationContext::default().with_angle_deg(angle);
             let ref_rgb = pipeline.evaluate(&d65, &context).to_rgb();
 
@@ -451,13 +454,12 @@ impl LUTValidation {
 
                 let lut_rgb = lut.eval_metal(metal, angle);
 
-                let pipeline = SpectralPipeline::new()
-                    .add_stage(match metal {
-                        "gold" => MetalReflectanceStage::gold(),
-                        "silver" => MetalReflectanceStage::silver(),
-                        "copper" => MetalReflectanceStage::copper(),
-                        _ => MetalReflectanceStage::gold(),
-                    });
+                let pipeline = SpectralPipeline::new().add_stage(match metal {
+                    "gold" => MetalReflectanceStage::gold(),
+                    "silver" => MetalReflectanceStage::silver(),
+                    "copper" => MetalReflectanceStage::copper(),
+                    _ => MetalReflectanceStage::gold(),
+                });
                 let context = EvaluationContext::default().with_angle_deg(angle);
                 let ref_rgb = pipeline.evaluate(&d65, &context).to_rgb();
 
@@ -482,8 +484,7 @@ impl LUTValidation {
 
     /// Check if LUT meets quality targets
     pub fn meets_targets(&self, max_delta_e: f64) -> bool {
-        self.thin_film_max_delta_e <= max_delta_e &&
-        self.metal_max_delta_e <= max_delta_e
+        self.thin_film_max_delta_e <= max_delta_e && self.metal_max_delta_e <= max_delta_e
     }
 
     pub fn summary(&self) -> String {
@@ -533,14 +534,20 @@ mod tests {
 
         println!("ThinFilmLUT created in {:?}", creation_time);
         println!("Memory: {} KB", lut.memory_bytes() / 1024);
-        println!("Entries: {} × {} × {} = {}",
-            lut.n_steps, lut.t_steps, lut.angle_steps,
-            lut.n_steps * lut.t_steps * lut.angle_steps);
+        println!(
+            "Entries: {} × {} × {} = {}",
+            lut.n_steps,
+            lut.t_steps,
+            lut.angle_steps,
+            lut.n_steps * lut.t_steps * lut.angle_steps
+        );
 
         // Test lookup
         let rgb = lut.lookup(1.45, 300.0, 30.0);
-        println!("Test lookup (n=1.45, t=300nm, θ=30°): RGB=[{:.3}, {:.3}, {:.3}]",
-            rgb[0], rgb[1], rgb[2]);
+        println!(
+            "Test lookup (n=1.45, t=300nm, θ=30°): RGB=[{:.3}, {:.3}, {:.3}]",
+            rgb[0], rgb[1], rgb[2]
+        );
 
         assert!(rgb[0] >= 0.0 && rgb[0] <= 1.0);
         assert!(rgb[1] >= 0.0 && rgb[1] <= 1.0);
@@ -560,8 +567,10 @@ mod tests {
         for metal in ["gold", "silver", "copper"] {
             let rgb_0 = lut.lookup(metal, 0.0);
             let rgb_60 = lut.lookup(metal, 60.0);
-            println!("{}: 0° RGB=[{:.3}, {:.3}, {:.3}], 60° RGB=[{:.3}, {:.3}, {:.3}]",
-                metal, rgb_0[0], rgb_0[1], rgb_0[2], rgb_60[0], rgb_60[1], rgb_60[2]);
+            println!(
+                "{}: 0° RGB=[{:.3}, {:.3}, {:.3}], 60° RGB=[{:.3}, {:.3}, {:.3}]",
+                metal, rgb_0[0], rgb_0[1], rgb_0[2], rgb_60[0], rgb_60[1], rgb_60[2]
+            );
         }
     }
 
@@ -613,13 +622,13 @@ mod tests {
         // Benchmark full spectral
         let d65 = SpectralSignal::d65_illuminant();
         let start = Instant::now();
-        for i in 0..(iterations / 100) { // Fewer iterations for slow path
+        for i in 0..(iterations / 100) {
+            // Fewer iterations for slow path
             let n = 1.3 + (i as f64 * 0.01);
             let t = 100.0 + (i as f64 * 5.0);
             let angle = (i as f64 * 0.9) % 90.0;
 
-            let pipeline = SpectralPipeline::new()
-                .add_stage(ThinFilmStage::new(n, t, 1.52));
+            let pipeline = SpectralPipeline::new().add_stage(ThinFilmStage::new(n, t, 1.52));
             let context = EvaluationContext::default().with_angle_deg(angle);
             let _ = pipeline.evaluate(&d65, &context).to_rgb();
         }
@@ -630,8 +639,15 @@ mod tests {
         let speedup = full_per_op / lut_per_op;
 
         println!("\nPerformance Comparison:");
-        println!("  LUT lookup: {:.1} ns/op ({} iterations)", lut_per_op, iterations);
-        println!("  Full spectral: {:.1} ns/op ({} iterations)", full_per_op, iterations / 100);
+        println!(
+            "  LUT lookup: {:.1} ns/op ({} iterations)",
+            lut_per_op, iterations
+        );
+        println!(
+            "  Full spectral: {:.1} ns/op ({} iterations)",
+            full_per_op,
+            iterations / 100
+        );
         println!("  Speedup: {:.1}×", speedup);
 
         // Relaxed expectation - actual speedup varies by hardware/compiler optimizations
@@ -645,7 +661,10 @@ mod tests {
         let total = evaluator.memory_bytes();
 
         println!("\nTotal LUT Memory: {} KB", total / 1024);
-        println!("  ThinFilm: {} KB", evaluator.thin_film_lut.memory_bytes() / 1024);
+        println!(
+            "  ThinFilm: {} KB",
+            evaluator.thin_film_lut.memory_bytes() / 1024
+        );
         println!("  Metal: {} bytes", evaluator.metal_lut.memory_bytes());
 
         // Should be reasonable for browser context

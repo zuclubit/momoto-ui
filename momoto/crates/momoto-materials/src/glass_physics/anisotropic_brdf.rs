@@ -24,9 +24,9 @@
 
 use std::f64::consts::PI;
 
-use super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse, BSDFSample, Vector3};
+use super::complex_ior::{fresnel_conductor_unpolarized, ComplexIOR};
 use super::fresnel::fresnel_schlick;
-use super::complex_ior::{ComplexIOR, fresnel_conductor_unpolarized};
+use super::unified_bsdf::{BSDFContext, BSDFResponse, BSDFSample, Vector3, BSDF};
 
 // ============================================================================
 // ANISOTROPIC GGX MODEL
@@ -151,7 +151,8 @@ impl AnisotropicGGX {
             self.alpha_x * wi_local.x,
             self.alpha_y * wi_local.y,
             wi_local.z,
-        ).normalize();
+        )
+        .normalize();
 
         // Build orthonormal basis around stretched wi
         let t1 = if wi_stretched.z.abs() < 0.999 {
@@ -178,14 +179,16 @@ impl AnisotropicGGX {
         let p2 = r * phi.sin() * if u2 < a { 1.0 } else { wi_stretched.z };
 
         // Compute normal in stretched space
-        let n_stretched = t1 * p1 + t2 * p2 + wi_stretched * (1.0 - p1 * p1 - p2 * p2).max(0.0).sqrt();
+        let n_stretched =
+            t1 * p1 + t2 * p2 + wi_stretched * (1.0 - p1 * p1 - p2 * p2).max(0.0).sqrt();
 
         // Transform back to original space
         let h_local = Vector3::new(
             self.alpha_x * n_stretched.x,
             self.alpha_y * n_stretched.y,
             n_stretched.z.max(0.0),
-        ).normalize();
+        )
+        .normalize();
 
         // Transform to world space
         self.to_world(&h_local, ctx)
@@ -252,12 +255,7 @@ impl BSDF for AnisotropicGGX {
 
         // Check if wo is above surface
         if wo.dot(&ctx.normal) < 0.0 {
-            return BSDFSample::new(
-                wo,
-                BSDFResponse::new(0.0, 1.0, 0.0),
-                1e-10,
-                false,
-            );
+            return BSDFSample::new(wo, BSDFResponse::new(0.0, 1.0, 0.0), 1e-10, false);
         }
 
         // Evaluate at sampled direction
@@ -423,13 +421,7 @@ pub struct FiberBSDF {
 
 impl FiberBSDF {
     /// Create a new fiber BSDF
-    pub fn new(
-        alpha_x: f64,
-        alpha_y: f64,
-        ior: f64,
-        fiber_direction: Vector3,
-        sheen: f64,
-    ) -> Self {
+    pub fn new(alpha_x: f64, alpha_y: f64, ior: f64, fiber_direction: Vector3, sheen: f64) -> Self {
         Self {
             base: AnisotropicGGX::new(alpha_x, alpha_y, ior),
             fiber_direction: fiber_direction.normalize(),
@@ -581,10 +573,10 @@ pub fn strength_to_alphas(roughness: f64, strength: f64) -> (f64, f64) {
 
 /// Total memory used by anisotropic module
 pub fn total_anisotropic_memory() -> usize {
-    std::mem::size_of::<AnisotropicGGX>() +
-    std::mem::size_of::<AnisotropicConductor>() +
-    std::mem::size_of::<FiberBSDF>() +
-    500 // Overhead
+    std::mem::size_of::<AnisotropicGGX>()
+        + std::mem::size_of::<AnisotropicConductor>()
+        + std::mem::size_of::<FiberBSDF>()
+        + 500 // Overhead
 }
 
 // ============================================================================
@@ -608,7 +600,12 @@ mod tests {
         let iso_r = iso.evaluate(&ctx).reflectance;
         let aniso_r = aniso.evaluate(&ctx).reflectance;
 
-        assert!((iso_r - aniso_r).abs() < 0.01, "Isotropic recovery: {} vs {}", iso_r, aniso_r);
+        assert!(
+            (iso_r - aniso_r).abs() < 0.01,
+            "Isotropic recovery: {} vs {}",
+            iso_r,
+            aniso_r
+        );
     }
 
     #[test]

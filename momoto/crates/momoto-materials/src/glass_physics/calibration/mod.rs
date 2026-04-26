@@ -28,25 +28,23 @@
 //! - Confidence weighting for sparse data
 //! - Robust fitting with outlier handling
 
-mod sources;
 mod aggregation;
 mod partial_data;
+mod sources;
 
 pub use sources::{
-    CalibrationSource, BRDFSource, SpectralSource, TimeSeriesSource, CombinedSource,
-    BRDFObservation, SpectralObservation, TemporalObservation,
-    SourceMetadata,
+    BRDFObservation, BRDFSource, CalibrationSource, CombinedSource, SourceMetadata,
+    SpectralObservation, SpectralSource, TemporalObservation, TimeSeriesSource,
 };
 
 pub use aggregation::{
-    LossAggregator, LossWeights, LossComponents, AggregatedLoss,
-    compute_physical_loss, compute_perceptual_loss, compute_temporal_loss,
-    compute_energy_loss,
+    compute_energy_loss, compute_perceptual_loss, compute_physical_loss, compute_temporal_loss,
+    AggregatedLoss, LossAggregator, LossComponents, LossWeights,
 };
 
 pub use partial_data::{
-    ImputationStrategy, PartialDataHandler, DataQuality, MissingDataReport,
-    impute_spectral, impute_angular, detect_outliers,
+    detect_outliers, impute_angular, impute_spectral, DataQuality, ImputationStrategy,
+    MissingDataReport, PartialDataHandler,
 };
 
 // ============================================================================

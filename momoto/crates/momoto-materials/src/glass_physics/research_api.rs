@@ -98,9 +98,7 @@ impl ParameterBounds {
     /// Create new bounds
     pub fn new(lower: Vec<f64>, upper: Vec<f64>) -> Self {
         assert_eq!(lower.len(), upper.len(), "Bounds dimensions must match");
-        let names = (0..lower.len())
-            .map(|i| format!("param_{}", i))
-            .collect();
+        let names = (0..lower.len()).map(|i| format!("param_{}", i)).collect();
         Self {
             lower,
             upper,
@@ -111,11 +109,7 @@ impl ParameterBounds {
     /// Create bounds with names
     pub fn with_names(lower: Vec<f64>, upper: Vec<f64>, names: Vec<String>) -> Self {
         assert_eq!(lower.len(), upper.len(), "Bounds dimensions must match");
-        assert_eq!(
-            lower.len(),
-            names.len(),
-            "Names length must match bounds"
-        );
+        assert_eq!(lower.len(), names.len(), "Names length must match bounds");
         Self {
             lower,
             upper,
@@ -1009,12 +1003,9 @@ mod tests {
 
     #[test]
     fn test_constraint() {
-        let constraint = Constraint::new(
-            "max_value",
-            ConstraintType::LessOrEqual,
-            0.5,
-            |params| params.iter().cloned().fold(0.0, f64::max),
-        );
+        let constraint = Constraint::new("max_value", ConstraintType::LessOrEqual, 0.5, |params| {
+            params.iter().cloned().fold(0.0, f64::max)
+        });
 
         assert!(constraint.is_satisfied(&[0.1, 0.2, 0.3]));
         assert!(!constraint.is_satisfied(&[0.1, 0.6, 0.3]));

@@ -8,7 +8,7 @@
 //! - **Temporal Jitter Control**: Deterministic per-frame jitter
 //! - **Coherent Selection**: Same wavelengths across frames for stability
 
-use super::packet::{SpectralPacket, CoherenceMetadata, WavelengthBand};
+use super::packet::{CoherenceMetadata, SpectralPacket, WavelengthBand};
 
 // ============================================================================
 // SAMPLING STRATEGY
@@ -201,10 +201,8 @@ impl CoherentSampler {
                 let jitter = self.deterministic_jitter(i as u64) * self.config.jitter_scale;
                 let offset = (jitter - 0.5) * stratum_size;
 
-                (stratum_center + offset).clamp(
-                    self.config.min_wavelength,
-                    self.config.max_wavelength,
-                )
+                (stratum_center + offset)
+                    .clamp(self.config.min_wavelength, self.config.max_wavelength)
             })
             .collect()
     }
@@ -225,10 +223,10 @@ impl CoherentSampler {
 
             // Add small jitter
             let jitter = self.deterministic_jitter(i as u64) * 5.0;
-            wavelengths.push((wavelength + jitter - 2.5).clamp(
-                self.config.min_wavelength,
-                self.config.max_wavelength,
-            ));
+            wavelengths.push(
+                (wavelength + jitter - 2.5)
+                    .clamp(self.config.min_wavelength, self.config.max_wavelength),
+            );
         }
 
         wavelengths.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -243,8 +241,7 @@ impl CoherentSampler {
 
         // Secondary samples at fixed positions
         vec![
-            hero,
-            486.1, // F (blue)
+            hero, 486.1, // F (blue)
             555.0, // V (peak luminance)
             656.3, // C (red)
         ]
@@ -294,11 +291,10 @@ impl CoherentSampler {
         let wavelengths = self.sample();
         let values = vec![0.0; wavelengths.len()];
 
-        SpectralPacket::from_data(wavelengths, values)
-            .with_coherence(CoherenceMetadata {
-                frame_index: self.frame_index,
-                ..Default::default()
-            })
+        SpectralPacket::from_data(wavelengths, values).with_coherence(CoherenceMetadata {
+            frame_index: self.frame_index,
+            ..Default::default()
+        })
     }
 
     /// Get current configuration.
@@ -617,8 +613,7 @@ mod tests {
 
     #[test]
     fn test_jittered_sampler() {
-        let sampler = JitteredSampler::new(31, 400.0, 700.0)
-            .with_seed(12345);
+        let sampler = JitteredSampler::new(31, 400.0, 700.0).with_seed(12345);
 
         let wavelengths = sampler.sample_sorted();
 
@@ -642,9 +637,7 @@ mod tests {
 
     #[test]
     fn test_band_sampler() {
-        let sampler = BandSampler::new()
-            .visible_spectrum()
-            .samples_per_band(3);
+        let sampler = BandSampler::new().visible_spectrum().samples_per_band(3);
 
         let wavelengths = sampler.sample();
 

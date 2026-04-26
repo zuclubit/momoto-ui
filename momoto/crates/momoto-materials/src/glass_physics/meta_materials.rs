@@ -30,11 +30,11 @@
 //! let crystal = PhotonicCrystal::new(LatticeType::Hexagonal, 350.0, 0.5);
 //! ```
 
-use std::f64::consts::PI;
 use serde::{Deserialize, Serialize};
+use std::f64::consts::PI;
 
-use super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse, BSDFSample, Vector3};
 use super::anisotropic::Color;
+use super::unified_bsdf::{BSDFContext, BSDFResponse, BSDFSample, Vector3, BSDF};
 
 // ============================================================================
 // Material Reference (for composite materials)
@@ -405,22 +405,18 @@ impl StructuralColor {
             NanostructureType::ThinFilmStack { layers } => {
                 self.evaluate_thin_film(layers, wavelength, cos_theta)
             }
-            NanostructureType::Grating { period, depth, profile } => {
-                self.evaluate_grating(*period, *depth, *profile, wavelength, cos_theta)
-            }
+            NanostructureType::Grating {
+                period,
+                depth,
+                profile,
+            } => self.evaluate_grating(*period, *depth, *profile, wavelength, cos_theta),
             NanostructureType::PhotonicCrystal(pc) => {
                 let r = pc.reflectance_at(wavelength, cos_theta.acos());
                 (r, 1.0 - r)
             }
-            NanostructureType::MorphoButterfly => {
-                self.evaluate_morpho(wavelength, cos_theta)
-            }
-            NanostructureType::PeacockFeather => {
-                self.evaluate_peacock(wavelength, cos_theta)
-            }
-            NanostructureType::BeetleShell => {
-                self.evaluate_beetle(wavelength, cos_theta)
-            }
+            NanostructureType::MorphoButterfly => self.evaluate_morpho(wavelength, cos_theta),
+            NanostructureType::PeacockFeather => self.evaluate_peacock(wavelength, cos_theta),
+            NanostructureType::BeetleShell => self.evaluate_beetle(wavelength, cos_theta),
         }
     }
 
@@ -445,8 +441,10 @@ impl StructuralColor {
             let phase = 2.0 * PI * path_length / wavelength;
 
             // Fresnel reflection at interfaces
-            let r_s = ((n0 * cos_theta - n * cos_theta_t) / (n0 * cos_theta + n * cos_theta_t)).powi(2);
-            let r_p = ((n * cos_theta - n0 * cos_theta_t) / (n * cos_theta + n0 * cos_theta_t)).powi(2);
+            let r_s =
+                ((n0 * cos_theta - n * cos_theta_t) / (n0 * cos_theta + n * cos_theta_t)).powi(2);
+            let r_p =
+                ((n * cos_theta - n0 * cos_theta_t) / (n * cos_theta + n0 * cos_theta_t)).powi(2);
             let r = (r_s + r_p) / 2.0;
 
             // Interference
@@ -648,7 +646,12 @@ impl DiffractionGrating {
     }
 
     /// Calculate diffraction angle for order m.
-    pub fn diffraction_angle(&self, wavelength: f64, incident_angle: f64, order: i32) -> Option<f64> {
+    pub fn diffraction_angle(
+        &self,
+        wavelength: f64,
+        incident_angle: f64,
+        order: i32,
+    ) -> Option<f64> {
         let sin_i = incident_angle.sin();
         let sin_m = sin_i + order as f64 * wavelength / self.period;
 
@@ -701,7 +704,9 @@ impl BSDF for DiffractionGrating {
         let order = (u1 * 7.0).floor() as i32 - 3;
         let incident_angle = ctx.cos_theta_i().acos();
 
-        let wo = if let Some(diff_angle) = self.diffraction_angle(ctx.wavelength, incident_angle, order) {
+        let wo = if let Some(diff_angle) =
+            self.diffraction_angle(ctx.wavelength, incident_angle, order)
+        {
             // Create direction at diffraction angle
             let cos_diff = diff_angle.cos();
             let sin_diff = diff_angle.sin();
@@ -919,6 +924,9 @@ pub fn estimate_meta_materials_memory() -> usize {
     let material_ref_size = std::mem::size_of::<MaterialRef>();
     let nanostructure_size = std::mem::size_of::<NanostructureType>();
 
-    photonic_crystal_size + structural_color_size + diffraction_grating_size
-        + material_ref_size + nanostructure_size
+    photonic_crystal_size
+        + structural_color_size
+        + diffraction_grating_size
+        + material_ref_size
+        + nanostructure_size
 }

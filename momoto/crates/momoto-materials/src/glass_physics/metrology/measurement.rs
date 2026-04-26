@@ -40,7 +40,10 @@ pub enum Uncertainty {
 impl Uncertainty {
     /// Create Type A uncertainty.
     pub fn type_a(std_error: f64, n_samples: usize) -> Self {
-        Self::TypeA { std_error, n_samples }
+        Self::TypeA {
+            std_error,
+            n_samples,
+        }
     }
 
     /// Create Type B uncertainty.
@@ -160,29 +163,17 @@ impl Default for MeasurementQuality {
 #[derive(Debug, Clone)]
 pub enum MeasurementSource {
     /// Direct instrument measurement.
-    Instrument {
-        name: String,
-        model: String,
-    },
+    Instrument { name: String, model: String },
     /// Model prediction.
-    Model {
-        name: String,
-        version: String,
-    },
+    Model { name: String, version: String },
     /// Literature or database value.
-    Reference {
-        citation: String,
-    },
+    Reference { citation: String },
     /// User-provided value.
     UserInput,
     /// Calculated/derived value.
-    Calculated {
-        method: String,
-    },
+    Calculated { method: String },
     /// Neural network correction.
-    NeuralCorrection {
-        magnitude: f64,
-    },
+    NeuralCorrection { magnitude: f64 },
     /// Unknown source.
     Unknown,
 }
@@ -225,7 +216,10 @@ impl MeasurementSource {
 
     /// Is from a model/calculation?
     pub fn is_computed(&self) -> bool {
-        matches!(self, Self::Model { .. } | Self::Calculated { .. } | Self::NeuralCorrection { .. })
+        matches!(
+            self,
+            Self::Model { .. } | Self::Calculated { .. } | Self::NeuralCorrection { .. }
+        )
     }
 }
 
@@ -562,7 +556,10 @@ impl MeasurementArray {
 
     /// Get maximum value.
     pub fn max(&self) -> f64 {
-        self.values.iter().cloned().fold(f64::NEG_INFINITY, f64::max)
+        self.values
+            .iter()
+            .cloned()
+            .fold(f64::NEG_INFINITY, f64::max)
     }
 
     /// Get minimum value.
@@ -612,8 +609,7 @@ mod tests {
 
     #[test]
     fn test_confidence_interval() {
-        let m = Measurement::reflectance(0.5)
-            .with_uncertainty(Uncertainty::type_a(0.01, 100));
+        let m = Measurement::reflectance(0.5).with_uncertainty(Uncertainty::type_a(0.01, 100));
 
         let (lower, upper) = m.confidence_interval();
         assert!(lower < 0.5);
@@ -623,8 +619,7 @@ mod tests {
 
     #[test]
     fn test_relative_uncertainty() {
-        let m = Measurement::reflectance(0.5)
-            .with_uncertainty(Uncertainty::type_a(0.05, 10));
+        let m = Measurement::reflectance(0.5).with_uncertainty(Uncertainty::type_a(0.05, 10));
 
         assert!((m.relative_uncertainty() - 0.1).abs() < 1e-10);
     }
@@ -640,8 +635,7 @@ mod tests {
     fn test_measurement_array() {
         let wavelengths = vec![400.0, 500.0, 600.0, 700.0];
         let values = vec![0.1, 0.2, 0.3, 0.4];
-        let arr = MeasurementArray::spectral(wavelengths, values)
-            .with_uniform_uncertainty(0.01);
+        let arr = MeasurementArray::spectral(wavelengths, values).with_uniform_uncertainty(0.01);
 
         assert_eq!(arr.len(), 4);
         assert!((arr.mean() - 0.25).abs() < 1e-10);

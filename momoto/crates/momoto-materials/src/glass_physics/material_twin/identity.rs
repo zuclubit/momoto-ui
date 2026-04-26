@@ -12,10 +12,9 @@ use super::super::unified_bsdf::{BSDFContext, Vector3};
 /// Standard wavelengths for identity computation (nm).
 /// Covers visible spectrum from 380nm to 780nm in 13nm steps (31 samples).
 pub const IDENTITY_WAVELENGTHS: [f64; 31] = [
-    380.0, 393.0, 406.0, 419.0, 432.0, 445.0, 458.0, 471.0, 484.0, 497.0,
-    510.0, 523.0, 536.0, 549.0, 562.0, 575.0, 588.0, 601.0, 614.0, 627.0,
-    640.0, 653.0, 666.0, 679.0, 692.0, 705.0, 718.0, 731.0, 744.0, 757.0,
-    770.0,
+    380.0, 393.0, 406.0, 419.0, 432.0, 445.0, 458.0, 471.0, 484.0, 497.0, 510.0, 523.0, 536.0,
+    549.0, 562.0, 575.0, 588.0, 601.0, 614.0, 627.0, 640.0, 653.0, 666.0, 679.0, 692.0, 705.0,
+    718.0, 731.0, 744.0, 757.0, 770.0,
 ];
 
 /// Number of standard angles for identity (θ from 0° to 85° in 5° steps).
@@ -104,7 +103,8 @@ impl SpectralSignature {
 
     /// Get dominant wavelength (highest reflectance).
     pub fn dominant_wavelength(&self) -> f64 {
-        let (max_idx, _) = self.reflectance
+        let (max_idx, _) = self
+            .reflectance
             .iter()
             .enumerate()
             .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
@@ -188,7 +188,8 @@ impl SpectralIdentity {
         let hash = Self::compute_hash(&signatures);
 
         // Find dominant wavelength from normal incidence
-        let dominant_wavelength = signatures.get(0)
+        let dominant_wavelength = signatures
+            .get(0)
             .map(|s| s.dominant_wavelength())
             .unwrap_or(550.0);
 
@@ -264,14 +265,11 @@ impl SpectralIdentity {
         }
 
         // Variance of average reflectance across angles
-        let values: Vec<f64> = signatures.iter()
-            .map(|s| s.avg_reflectance())
-            .collect();
+        let values: Vec<f64> = signatures.iter().map(|s| s.avg_reflectance()).collect();
 
         let mean = values.iter().sum::<f64>() / values.len() as f64;
-        let variance = values.iter()
-            .map(|v| (v - mean) * (v - mean))
-            .sum::<f64>() / values.len() as f64;
+        let variance =
+            values.iter().map(|v| (v - mean) * (v - mean)).sum::<f64>() / values.len() as f64;
 
         variance
     }
@@ -310,13 +308,11 @@ impl SpectralIdentity {
 
     /// Get signature nearest to given angle.
     pub fn at_angle(&self, angle_deg: f64) -> Option<&SpectralSignature> {
-        self.signatures
-            .iter()
-            .min_by(|a, b| {
-                let diff_a = (a.angle_deg - angle_deg).abs();
-                let diff_b = (b.angle_deg - angle_deg).abs();
-                diff_a.partial_cmp(&diff_b).unwrap()
-            })
+        self.signatures.iter().min_by(|a, b| {
+            let diff_a = (a.angle_deg - angle_deg).abs();
+            let diff_b = (b.angle_deg - angle_deg).abs();
+            diff_a.partial_cmp(&diff_b).unwrap()
+        })
     }
 
     /// Check if hash matches (quick comparison).
@@ -396,7 +392,11 @@ pub fn compute_spectral_distance(a: &SpectralIdentity, b: &SpectralIdentity) -> 
 
     // Compare at matching angles
     for sig_a in &a.signatures {
-        if let Some(sig_b) = b.signatures.iter().find(|s| (s.angle_deg - sig_a.angle_deg).abs() < 1.0) {
+        if let Some(sig_b) = b
+            .signatures
+            .iter()
+            .find(|s| (s.angle_deg - sig_a.angle_deg).abs() < 1.0)
+        {
             let dist = sig_a.distance(sig_b);
             let sam = sig_a.spectral_angle(sig_b);
 
@@ -413,8 +413,16 @@ pub fn compute_spectral_distance(a: &SpectralIdentity, b: &SpectralIdentity) -> 
         }
     }
 
-    let avg_dist = if count > 0 { total_dist / count as f64 } else { 1.0 };
-    let avg_sam = if count > 0 { total_sam / count as f64 } else { std::f64::consts::FRAC_PI_2 };
+    let avg_dist = if count > 0 {
+        total_dist / count as f64
+    } else {
+        1.0
+    };
+    let avg_sam = if count > 0 {
+        total_sam / count as f64
+    } else {
+        std::f64::consts::FRAC_PI_2
+    };
     let f0_diff = (a.f0 - b.f0).abs();
 
     // Compute similarity (0-1)
@@ -438,8 +446,8 @@ pub fn compute_spectral_distance(a: &SpectralIdentity, b: &SpectralIdentity) -> 
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::super::differentiable::DifferentiableDielectric;
+    use super::*;
 
     #[test]
     fn test_identity_wavelengths() {

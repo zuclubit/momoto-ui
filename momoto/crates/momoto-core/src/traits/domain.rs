@@ -33,8 +33,8 @@ impl DomainId {
     #[must_use]
     pub fn label(self) -> &'static str {
         match self {
-            DomainId::Color   => "color",
-            DomainId::Audio   => "audio",
+            DomainId::Color => "color",
+            DomainId::Audio => "audio",
             DomainId::Haptics => "haptics",
         }
     }
@@ -105,8 +105,8 @@ mod tests {
 
     #[test]
     fn domain_id_labels_are_stable() {
-        assert_eq!(DomainId::Color.label(),   "color");
-        assert_eq!(DomainId::Audio.label(),   "audio");
+        assert_eq!(DomainId::Color.label(), "color");
+        assert_eq!(DomainId::Audio.label(), "audio");
         assert_eq!(DomainId::Haptics.label(), "haptics");
     }
 
@@ -126,8 +126,8 @@ mod tests {
 
     #[test]
     fn domain_id_repr_is_stable() {
-        assert_eq!(DomainId::Color   as u8, 0);
-        assert_eq!(DomainId::Audio   as u8, 1);
+        assert_eq!(DomainId::Color as u8, 0);
+        assert_eq!(DomainId::Audio as u8, 1);
         assert_eq!(DomainId::Haptics as u8, 2);
     }
 }

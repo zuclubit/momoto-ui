@@ -31,11 +31,11 @@
 //! let silver_film = PlasmonicFilm::silver_nanorods(2.0);
 //! ```
 
-use std::f64::consts::PI;
 use serde::{Deserialize, Serialize};
+use std::f64::consts::PI;
 
-use super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse, BSDFSample, Vector3};
 use super::anisotropic::Color;
+use super::unified_bsdf::{BSDFContext, BSDFResponse, BSDFSample, Vector3, BSDF};
 
 // ============================================================================
 // Metal Types
@@ -180,8 +180,8 @@ impl ParticleShape {
                 if r > 1.0 {
                     // Prolate spheroid
                     let e = (1.0 - 1.0 / (r * r)).sqrt();
-                    let l_long = (1.0 - e * e) / (e * e)
-                        * (((1.0 + e) / (1.0 - e)).ln() / (2.0 * e) - 1.0);
+                    let l_long =
+                        (1.0 - e * e) / (e * e) * (((1.0 + e) / (1.0 - e)).ln() / (2.0 * e) - 1.0);
                     let l_trans = (1.0 - l_long) / 2.0;
                     (l_long, l_trans)
                 } else {
@@ -315,7 +315,11 @@ impl PlasmonicNanoparticle {
         let v = 4.0 / 3.0 * PI * (self.size_nm / 2.0).powi(3); // Volume in nm^3
 
         // Sum over modes
-        for (i, &l) in [l_long, l_trans, l_trans].iter().enumerate().take(self.shape.mode_count()) {
+        for (i, &l) in [l_long, l_trans, l_trans]
+            .iter()
+            .enumerate()
+            .take(self.shape.mode_count())
+        {
             let denom_r = eps_r + (1.0 - l) / l * em;
             let denom_i = eps_i;
             let denom = denom_r * denom_r + denom_i * denom_i;
@@ -382,7 +386,8 @@ fn wavelength_to_xyz(wavelength: f64) -> (f64, f64, f64) {
     let t2 = (wavelength - 599.8) * (if wavelength < 599.8 { 0.0264 } else { 0.0323 });
     let t3 = (wavelength - 501.1) * (if wavelength < 501.1 { 0.0490 } else { 0.0382 });
 
-    let x = 0.362 * (-0.5 * t1 * t1).exp() + 1.056 * (-0.5 * t2 * t2).exp() - 0.065 * (-0.5 * t3 * t3).exp();
+    let x = 0.362 * (-0.5 * t1 * t1).exp() + 1.056 * (-0.5 * t2 * t2).exp()
+        - 0.065 * (-0.5 * t3 * t3).exp();
     let y = 0.821 * (-0.5 * ((wavelength - 568.8) * 0.0213).powi(2)).exp()
         + 0.286 * (-0.5 * ((wavelength - 530.9) * 0.0613).powi(2)).exp();
     let z = 1.217 * (-0.5 * ((wavelength - 437.0) * 0.0845).powi(2)).exp()
@@ -428,11 +433,7 @@ impl BSDF for PlasmonicNanoparticle {
         let cos_theta = 1.0 - 2.0 * u2;
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
-        let wo = Vector3::new(
-            sin_theta * phi.cos(),
-            sin_theta * phi.sin(),
-            cos_theta,
-        );
+        let wo = Vector3::new(sin_theta * phi.cos(), sin_theta * phi.sin(), cos_theta);
 
         BSDFSample::new(wo, self.evaluate(ctx), 1.0 / (4.0 * PI), false)
     }

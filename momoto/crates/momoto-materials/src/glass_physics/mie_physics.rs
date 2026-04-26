@@ -186,7 +186,7 @@ impl MediumProperties {
     /// Vacuum/space
     pub fn vacuum() -> Self {
         Self {
-            temperature: 2.7,  // CMB temperature
+            temperature: 2.7, // CMB temperature
             viscosity: 0.0,
             density: 0.0,
             n_medium: 1.0,
@@ -272,7 +272,13 @@ impl ParticleDynamics {
     }
 
     /// Update particle position and velocity for one time step
-    pub fn step(&self, particle: &mut Particle, dt: f64, species: &ParticleSpecies, seed: &mut u64) {
+    pub fn step(
+        &self,
+        particle: &mut Particle,
+        dt: f64,
+        species: &ParticleSpecies,
+        seed: &mut u64,
+    ) {
         // Brownian motion
         if self.brownian_motion {
             let d = self.medium.diffusion_coefficient(particle.radius);
@@ -285,16 +291,19 @@ impl ParticleDynamics {
 
         // Gravitational settling
         if self.settling {
-            let v_settle = self.medium.settling_velocity(particle.radius, species.density);
+            let v_settle = self
+                .medium
+                .settling_velocity(particle.radius, species.density);
             particle.velocity[2] = -v_settle * 1e6; // Convert to µm/s, downward
             particle.position[2] += particle.velocity[2] * dt;
         }
 
         // Turbulent velocity fluctuations
         if self.turbulence {
-            let eta_k = (self.medium.viscosity.powi(3) /
-                        (self.medium.density.powi(3) * self.epsilon_turb)).powf(0.25);
-            let v_rms = (self.epsilon_turb * eta_k).powf(1.0/3.0) * 1e6;
+            let eta_k = (self.medium.viscosity.powi(3)
+                / (self.medium.density.powi(3) * self.epsilon_turb))
+                .powf(0.25);
+            let v_rms = (self.epsilon_turb * eta_k).powf(1.0 / 3.0) * 1e6;
 
             particle.velocity[0] += v_rms * Self::rand_normal(seed) * dt.sqrt();
             particle.velocity[1] += v_rms * Self::rand_normal(seed) * dt.sqrt();
@@ -324,13 +333,13 @@ impl ParticleDynamics {
         let dx = p1.position[0] - p2.position[0];
         let dy = p1.position[1] - p2.position[1];
         let dz = p1.position[2] - p2.position[2];
-        let dist = (dx*dx + dy*dy + dz*dz).sqrt();
+        let dist = (dx * dx + dy * dy + dz * dz).sqrt();
 
         // Collision if distance < sum of radii
         if dist < p1.radius + p2.radius {
             // Volume-conserving coalescence
             let v_total = p1.volume() + p2.volume();
-            let r_new = (3.0 * v_total / (4.0 * PI)).powf(1.0/3.0);
+            let r_new = (3.0 * v_total / (4.0 * PI)).powf(1.0 / 3.0);
 
             // Center of mass position
             let m1 = p1.volume();
@@ -414,12 +423,15 @@ impl ParticleEnsemble {
             let r = (mu + sigma * z).exp();
 
             // Random position in domain
-            let x = self.domain[0] + ParticleDynamics::rand_normal(&mut self.seed).abs()
-                * (self.domain[1] - self.domain[0]);
-            let y = self.domain[2] + ParticleDynamics::rand_normal(&mut self.seed).abs()
-                * (self.domain[3] - self.domain[2]);
-            let z_pos = self.domain[4] + ParticleDynamics::rand_normal(&mut self.seed).abs()
-                * (self.domain[5] - self.domain[4]);
+            let x = self.domain[0]
+                + ParticleDynamics::rand_normal(&mut self.seed).abs()
+                    * (self.domain[1] - self.domain[0]);
+            let y = self.domain[2]
+                + ParticleDynamics::rand_normal(&mut self.seed).abs()
+                    * (self.domain[3] - self.domain[2]);
+            let z_pos = self.domain[4]
+                + ParticleDynamics::rand_normal(&mut self.seed).abs()
+                    * (self.domain[5] - self.domain[4]);
 
             let species = &self.species[species_idx.min(self.species.len() - 1)];
             let mut particle = Particle::new(
@@ -449,8 +461,9 @@ impl ParticleEnsemble {
                 let mut merged = false;
 
                 while j < self.particles.len() {
-                    if let Some(merged_particle) =
-                        self.dynamics.coalesce(&self.particles[i], &self.particles[j])
+                    if let Some(merged_particle) = self
+                        .dynamics
+                        .coalesce(&self.particles[i], &self.particles[j])
                     {
                         self.particles[i] = merged_particle;
                         self.particles.remove(j);
@@ -468,9 +481,12 @@ impl ParticleEnsemble {
 
         // Remove particles that left domain
         self.particles.retain(|p| {
-            p.position[0] >= self.domain[0] && p.position[0] <= self.domain[1] &&
-            p.position[1] >= self.domain[2] && p.position[1] <= self.domain[3] &&
-            p.position[2] >= self.domain[4] && p.position[2] <= self.domain[5]
+            p.position[0] >= self.domain[0]
+                && p.position[0] <= self.domain[1]
+                && p.position[1] >= self.domain[2]
+                && p.position[1] <= self.domain[3]
+                && p.position[2] >= self.domain[4]
+                && p.position[2] <= self.domain[5]
         });
     }
 
@@ -491,7 +507,11 @@ impl ParticleEnsemble {
         let median = sorted[sorted.len() / 2];
 
         let log_mean = radii.iter().map(|r| r.ln()).sum::<f64>() / n;
-        let log_var = radii.iter().map(|r| (r.ln() - log_mean).powi(2)).sum::<f64>() / n;
+        let log_var = radii
+            .iter()
+            .map(|r| (r.ln() - log_mean).powi(2))
+            .sum::<f64>()
+            / n;
 
         SizeStatistics {
             count: self.particles.len(),
@@ -566,7 +586,11 @@ impl ScatteringField {
     }
 
     /// Compute from particle ensemble
-    pub fn from_ensemble(ensemble: &ParticleEnsemble, dimensions: [usize; 3], wavelength_nm: f64) -> Self {
+    pub fn from_ensemble(
+        ensemble: &ParticleEnsemble,
+        dimensions: [usize; 3],
+        wavelength_nm: f64,
+    ) -> Self {
         let size = [
             ensemble.domain[1] - ensemble.domain[0],
             ensemble.domain[3] - ensemble.domain[2],
@@ -683,7 +707,8 @@ pub fn mie_approximation(x: f64, m: f64) -> (f64, f64, f64) {
         x.powi(2) / (2.0 + x.powi(2))
     } else {
         1.0 - 2.0 / (x + 2.0)
-    }.clamp(0.0, 0.95);
+    }
+    .clamp(0.0, 0.95);
 
     (q_ext.clamp(0.0, 4.0), q_sca.clamp(0.0, 4.0), g)
 }
@@ -695,11 +720,7 @@ pub fn henyey_greenstein(cos_theta: f64, g: f64) -> f64 {
 }
 
 /// Phase function for ensemble at a point
-pub fn ensemble_phase_function(
-    cos_theta: f64,
-    field: &ScatteringField,
-    position: [f64; 3],
-) -> f64 {
+pub fn ensemble_phase_function(cos_theta: f64, field: &ScatteringField, position: [f64; 3]) -> f64 {
     let voxel = field.voxel_size();
     let ix = (position[0] / voxel[0]).floor() as usize;
     let iy = (position[1] / voxel[1]).floor() as usize;
@@ -736,7 +757,7 @@ impl TurbulenceParams {
     pub fn from_epsilon(epsilon: f64, viscosity: f64) -> Self {
         let eta_k = (viscosity.powi(3) / epsilon).powf(0.25);
         let length_scale = eta_k * 100.0; // Rough estimate
-        let tke = (epsilon * length_scale).powf(2.0/3.0);
+        let tke = (epsilon * length_scale).powf(2.0 / 3.0);
 
         Self {
             tke,
@@ -767,7 +788,7 @@ impl TurbulenceParams {
             self.tke
         } else if scale > self.eta_k {
             // Inertial subrange: Kolmogorov scaling
-            (self.epsilon * scale).powf(2.0/3.0)
+            (self.epsilon * scale).powf(2.0 / 3.0)
         } else {
             // Dissipation range
             self.epsilon * scale.powi(2) / self.eta_k.powi(2)
@@ -860,7 +881,11 @@ pub fn to_css_scattering(field: &ScatteringField, depth: f64) -> String {
     let transmission = (-tau).exp();
 
     // Single-scattering albedo
-    let albedo = if avg_ext > 1e-10 { avg_sca / avg_ext } else { 0.0 };
+    let albedo = if avg_ext > 1e-10 {
+        avg_sca / avg_ext
+    } else {
+        0.0
+    };
 
     // Visual opacity and color
     let opacity = 1.0 - transmission;
@@ -883,7 +908,8 @@ pub fn to_css_scattering_animation(
     depth: f64,
 ) -> String {
     let initial_ext: f64 = initial.extinction.iter().sum::<f64>() / initial.extinction.len() as f64;
-    let final_ext: f64 = final_field.extinction.iter().sum::<f64>() / final_field.extinction.len() as f64;
+    let final_ext: f64 =
+        final_field.extinction.iter().sum::<f64>() / final_field.extinction.len() as f64;
 
     let tau_i = initial_ext * depth;
     let tau_f = final_ext * depth;
@@ -921,7 +947,7 @@ mod tests {
     fn test_brownian_diffusion() {
         let medium = MediumProperties::air_standard();
         let d = medium.diffusion_coefficient(1.0); // 1µm particle
-        // Stokes-Einstein: D ~ 10^-12 m²/s for 1µm in air at 20°C
+                                                   // Stokes-Einstein: D ~ 10^-12 m²/s for 1µm in air at 20°C
         assert!(d > 1e-13 && d < 1e-10);
     }
 
@@ -929,7 +955,7 @@ mod tests {
     fn test_settling_velocity() {
         let medium = MediumProperties::air_standard();
         let v = medium.settling_velocity(10.0, 1.0); // 10µm water droplet
-        // Stokes: v ~ 0.003 m/s for 10µm water in air
+                                                     // Stokes: v ~ 0.003 m/s for 10µm water in air
         assert!(v > 1e-4 && v < 0.1);
     }
 

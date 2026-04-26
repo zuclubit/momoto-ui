@@ -145,13 +145,13 @@ pub struct ValidationConfig {
 impl Default for ValidationConfig {
     fn default() -> Self {
         Self {
-            max_energy: 1.0 + 1e-6,   // Allow tiny numerical error
+            max_energy: 1.0 + 1e-6, // Allow tiny numerical error
             min_energy: 0.0,
-            max_spectral_gradient: 0.5,  // Max change per nm
+            max_spectral_gradient: 0.5, // Max change per nm
             ior_bounds: (1.0, 3.5),
             roughness_bounds: (0.0, 1.0),
             absorption_bounds: (0.0, 100.0),
-            max_drift_rate: 0.01,  // 1% per frame max
+            max_drift_rate: 0.01, // 1% per frame max
         }
     }
 }
@@ -229,10 +229,7 @@ impl TwinValidator {
         if ior < min || ior > max {
             ValidationResult::fail(vec![ValidationIssue {
                 category: IssueCategory::ParameterOutOfBounds,
-                description: format!(
-                    "IOR {} outside physical bounds [{}, {}]",
-                    ior, min, max
-                ),
+                description: format!("IOR {} outside physical bounds [{}, {}]", ior, min, max),
                 param_index: Some(param_index),
                 actual: Some(ior),
                 expected: Some((min, max)),
@@ -248,10 +245,7 @@ impl TwinValidator {
         if roughness < min || roughness > max {
             ValidationResult::fail(vec![ValidationIssue {
                 category: IssueCategory::ParameterOutOfBounds,
-                description: format!(
-                    "Roughness {} outside bounds [{}, {}]",
-                    roughness, min, max
-                ),
+                description: format!("Roughness {} outside bounds [{}, {}]", roughness, min, max),
                 param_index: Some(param_index),
                 actual: Some(roughness),
                 expected: Some((min, max)),
@@ -325,9 +319,7 @@ impl TwinValidator {
 
         for (i, (&param, &name)) in params.iter().zip(names.iter()).enumerate() {
             let check = match name {
-                n if n.contains("ior") || n.contains("IOR") => {
-                    self.validate_ior(param, i)
-                }
+                n if n.contains("ior") || n.contains("IOR") => self.validate_ior(param, i),
                 n if n.contains("roughness") || n.contains("alpha") => {
                     self.validate_roughness(param, i)
                 }
@@ -357,7 +349,12 @@ impl TwinValidator {
     }
 
     /// Record a validation result.
-    pub fn record(&mut self, fingerprint: MaterialFingerprint, result: ValidationResult, timestamp: u64) {
+    pub fn record(
+        &mut self,
+        fingerprint: MaterialFingerprint,
+        result: ValidationResult,
+        timestamp: u64,
+    ) {
         self.history.push(ValidationRecord {
             fingerprint,
             result,
@@ -372,7 +369,10 @@ impl TwinValidator {
 
     /// Get validation history for a fingerprint.
     pub fn history_for(&self, fingerprint: &MaterialFingerprint) -> Vec<&ValidationRecord> {
-        self.history.iter().filter(|r| &r.fingerprint == fingerprint).collect()
+        self.history
+            .iter()
+            .filter(|r| &r.fingerprint == fingerprint)
+            .collect()
     }
 
     /// Get overall validation pass rate.
@@ -485,7 +485,7 @@ impl DriftMonitor {
             observations: Vec::new(),
             max_observations: 10000,
             param_names: (0..n_params).map(|i| format!("p{}", i)).collect(),
-            max_drift_rate: 0.001,  // 0.1% per frame
+            max_drift_rate: 0.001, // 0.1% per frame
             trend_window: 100,
         }
     }
@@ -577,7 +577,9 @@ impl DriftMonitor {
         }
 
         // Collect values
-        let values: Vec<f64> = self.observations.iter()
+        let values: Vec<f64> = self
+            .observations
+            .iter()
             .map(|o| o.parameters[param_index])
             .collect();
 
@@ -634,7 +636,11 @@ impl DriftMonitor {
         }
 
         // Use last `trend_window` values
-        let start = if n > self.trend_window { n - self.trend_window } else { 0 };
+        let start = if n > self.trend_window {
+            n - self.trend_window
+        } else {
+            0
+        };
         let window = &values[start..];
         let w_len = window.len() as f64;
 
@@ -682,7 +688,8 @@ impl DriftMonitor {
 
     /// Get parameter value history.
     pub fn parameter_history(&self, param_index: usize) -> Vec<(u64, f64)> {
-        self.observations.iter()
+        self.observations
+            .iter()
             .filter_map(|o| {
                 if param_index < o.parameters.len() {
                     Some((o.timestamp, o.parameters[param_index]))
@@ -804,7 +811,11 @@ mod tests {
 
         // Negative value
         let bad_values = vec![0.1, -0.2, 0.3, 0.35, 0.4];
-        assert!(!validator.validate_spectral(&wavelengths, &bad_values).passed);
+        assert!(
+            !validator
+                .validate_spectral(&wavelengths, &bad_values)
+                .passed
+        );
     }
 
     #[test]

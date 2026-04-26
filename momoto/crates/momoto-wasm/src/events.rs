@@ -5,24 +5,17 @@
 // Exposes momoto-events crate via wasm-bindgen.
 // =============================================================================
 
-use wasm_bindgen::prelude::*;
 use momoto_events::{
-    event::{
-        Event as CoreEvent,
-        EventCategory as CoreEventCategory,
-    },
     broadcaster::{
-        EventBroadcaster as CoreBroadcaster,
-        EventFilter as CoreFilter,
-        BroadcasterConfig as CoreBroadcasterConfig,
-        EventHandler,
+        BroadcasterConfig as CoreBroadcasterConfig, EventBroadcaster as CoreBroadcaster,
+        EventFilter as CoreFilter, EventHandler,
     },
+    event::{Event as CoreEvent, EventCategory as CoreEventCategory},
     stream::{
-        EventStream as CoreStream,
-        StreamConfig as CoreStreamConfig,
-        StreamState as CoreStreamState,
+        EventStream as CoreStream, StreamConfig as CoreStreamConfig, StreamState as CoreStreamState,
     },
 };
+use wasm_bindgen::prelude::*;
 
 // =============================================================================
 // EventBroadcaster — Pub/sub event bus
@@ -65,10 +58,9 @@ impl MomotoEventBus {
         impl EventHandler for JsHandler {
             fn handle(&self, event: &CoreEvent) {
                 if let Ok(json) = event.to_json() {
-                    let _ = self.callback.call1(
-                        &JsValue::NULL,
-                        &JsValue::from_str(&json),
-                    );
+                    let _ = self
+                        .callback
+                        .call1(&JsValue::NULL, &JsValue::from_str(&json));
                 }
             }
         }
@@ -80,7 +72,11 @@ impl MomotoEventBus {
         let handler = JsHandler { callback };
         let subscription = self.inner.subscribe(handler);
         let id_str = subscription.id().to_string(); // "sub-N"
-        let id: u64 = id_str.strip_prefix("sub-").unwrap_or("0").parse().unwrap_or(0);
+        let id: u64 = id_str
+            .strip_prefix("sub-")
+            .unwrap_or("0")
+            .parse()
+            .unwrap_or(0);
         std::mem::forget(subscription); // Keep subscription alive
         Ok(id)
     }
@@ -93,11 +89,7 @@ impl MomotoEventBus {
         callback: js_sys::Function,
     ) -> Result<u64, JsValue> {
         let filter = CoreFilter::new()
-            .with_categories(
-                categories.iter()
-                    .map(|&c| category_from_u8(c))
-                    .collect()
-            );
+            .with_categories(categories.iter().map(|&c| category_from_u8(c)).collect());
 
         struct JsFilteredHandler {
             callback: js_sys::Function,
@@ -107,10 +99,9 @@ impl MomotoEventBus {
         impl EventHandler for JsFilteredHandler {
             fn handle(&self, event: &CoreEvent) {
                 if let Ok(json) = event.to_json() {
-                    let _ = self.callback.call1(
-                        &JsValue::NULL,
-                        &JsValue::from_str(&json),
-                    );
+                    let _ = self
+                        .callback
+                        .call1(&JsValue::NULL, &JsValue::from_str(&json));
                 }
             }
             fn filter(&self) -> Option<CoreFilter> {
@@ -124,7 +115,11 @@ impl MomotoEventBus {
         let handler = JsFilteredHandler { callback, filter };
         let subscription = self.inner.subscribe(handler);
         let id_str = subscription.id().to_string(); // "sub-N"
-        let id: u64 = id_str.strip_prefix("sub-").unwrap_or("0").parse().unwrap_or(0);
+        let id: u64 = id_str
+            .strip_prefix("sub-")
+            .unwrap_or("0")
+            .parse()
+            .unwrap_or(0);
         std::mem::forget(subscription);
         Ok(id)
     }
@@ -182,9 +177,7 @@ impl MomotoEventBus {
     #[wasm_bindgen(js_name = "bufferedEvents")]
     pub fn buffered_events(&self) -> Result<String, JsValue> {
         let events = self.inner.buffered_events();
-        let jsons: Vec<String> = events.iter()
-            .filter_map(|e| e.to_json().ok())
-            .collect();
+        let jsons: Vec<String> = events.iter().filter_map(|e| e.to_json().ok()).collect();
         Ok(format!("[{}]", jsons.join(",")))
     }
 
@@ -210,10 +203,7 @@ impl MomotoEventStream {
     #[wasm_bindgen(js_name = "fromBus")]
     pub fn from_bus(bus: &MomotoEventBus) -> Self {
         Self {
-            inner: CoreStream::from_broadcaster(
-                &bus.inner,
-                CoreStreamConfig::realtime(),
-            ),
+            inner: CoreStream::from_broadcaster(&bus.inner, CoreStreamConfig::realtime()),
         }
     }
 
@@ -241,7 +231,8 @@ impl MomotoEventStream {
     pub fn push(&self, event_json: &str) -> Result<(), JsValue> {
         let event: CoreEvent = CoreEvent::from_json(event_json)
             .map_err(|e| JsValue::from_str(&format!("Invalid event: {}", e)))?;
-        self.inner.push(event)
+        self.inner
+            .push(event)
             .map_err(|e| JsValue::from_str(&format!("Push error: {:?}", e)))
     }
 
@@ -250,7 +241,9 @@ impl MomotoEventStream {
     pub fn poll(&self) -> Result<JsValue, JsValue> {
         match self.inner.poll() {
             Some(batch) => {
-                let events: Vec<String> = batch.events.iter()
+                let events: Vec<String> = batch
+                    .events
+                    .iter()
                     .filter_map(|e| e.to_json().ok())
                     .collect();
                 let json = serde_json::json!({
@@ -275,7 +268,9 @@ impl MomotoEventStream {
     pub fn flush(&self) -> Result<JsValue, JsValue> {
         match self.inner.flush() {
             Some(batch) => {
-                let events: Vec<String> = batch.events.iter()
+                let events: Vec<String> = batch
+                    .events
+                    .iter()
                     .filter_map(|e| e.to_json().ok())
                     .collect();
                 Ok(JsValue::from_str(&format!("[{}]", events.join(","))))
@@ -319,20 +314,25 @@ impl MomotoEventStream {
     }
 
     #[wasm_bindgen]
-    pub fn pause(&self) { self.inner.pause(); }
+    pub fn pause(&self) {
+        self.inner.pause();
+    }
 
     #[wasm_bindgen]
-    pub fn resume(&self) { self.inner.resume(); }
+    pub fn resume(&self) {
+        self.inner.resume();
+    }
 
     #[wasm_bindgen]
-    pub fn close(&self) { self.inner.close(); }
+    pub fn close(&self) {
+        self.inner.close();
+    }
 
     /// Get stream stats as JSON.
     #[wasm_bindgen]
     pub fn stats(&self) -> Result<String, JsValue> {
         let stats = self.inner.stats();
-        serde_json::to_string(&stats)
-            .map_err(|e| JsValue::from_str(&e.to_string()))
+        serde_json::to_string(&stats).map_err(|e| JsValue::from_str(&e.to_string()))
     }
 }
 

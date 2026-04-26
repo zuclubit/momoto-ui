@@ -19,25 +19,23 @@
 //!                    Chain rule through all transformations
 //! ```
 
-pub mod wavelength;
 pub mod delta_e;
+pub mod wavelength;
 
 // Re-exports
 pub use wavelength::{
-    SpectralGradient, WavelengthGradient, SpectralJacobian,
-    compute_spectral_gradient, VISIBLE_WAVELENGTHS,
-    CauchyDispersion, SellmeierDispersion,
+    compute_spectral_gradient, CauchyDispersion, SellmeierDispersion, SpectralGradient,
+    SpectralJacobian, WavelengthGradient, VISIBLE_WAVELENGTHS,
 };
 
 pub use delta_e::{
-    DeltaE2000Gradient, Lab, LabGradient, PerceptualLoss,
-    delta_e_2000, delta_e_2000_gradient,
+    delta_e_2000, delta_e_2000_gradient, DeltaE2000Gradient, Lab, LabGradient, PerceptualLoss,
 };
 
 /// Prelude for convenient imports.
 pub mod prelude {
-    pub use super::wavelength::{SpectralGradient, compute_spectral_gradient};
-    pub use super::delta_e::{DeltaE2000Gradient, delta_e_2000_gradient};
+    pub use super::delta_e::{delta_e_2000_gradient, DeltaE2000Gradient};
+    pub use super::wavelength::{compute_spectral_gradient, SpectralGradient};
 }
 
 // ============================================================================

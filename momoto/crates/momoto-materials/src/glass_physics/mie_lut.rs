@@ -53,7 +53,11 @@ pub struct MieParams {
 impl MieParams {
     /// Create new Mie parameters
     pub const fn new(radius_um: f64, n_particle: f64, n_medium: f64) -> Self {
-        Self { radius_um, n_particle, n_medium }
+        Self {
+            radius_um,
+            n_particle,
+            n_medium,
+        }
     }
 
     /// Calculate size parameter for a given wavelength
@@ -74,9 +78,9 @@ impl MieParams {
     /// Size parameters for RGB wavelengths
     pub fn size_param_rgb(&self) -> [f64; 3] {
         [
-            self.size_parameter(650.0),  // Red
-            self.size_parameter(550.0),  // Green
-            self.size_parameter(450.0),  // Blue
+            self.size_parameter(650.0), // Red
+            self.size_parameter(550.0), // Green
+            self.size_parameter(450.0), // Blue
         ]
     }
 }
@@ -132,9 +136,9 @@ pub fn rayleigh_intensity_rgb(cos_theta: f64) -> [f64; 3] {
 
     // Wavelength factors: (550/lambda)^4
     let lambda_factor = [
-        (550.0 / 650.0_f64).powi(4),  // Red: less scattering
-        1.0,                            // Green: reference
-        (550.0 / 450.0_f64).powi(4),  // Blue: more scattering
+        (550.0 / 650.0_f64).powi(4), // Red: less scattering
+        1.0,                         // Green: reference
+        (550.0 / 450.0_f64).powi(4), // Blue: more scattering
     ];
 
     [
@@ -157,7 +161,7 @@ pub fn rayleigh_intensity_rgb(cos_theta: f64) -> [f64; 3] {
 /// - Large particles (x→∞): g→1 (forward)
 pub fn mie_asymmetry_g(size_param: f64, relative_ior: f64) -> f64 {
     if size_param < 0.1 {
-        return 0.0;  // Rayleigh regime
+        return 0.0; // Rayleigh regime
     }
 
     // Empirical fit based on Mie calculations
@@ -195,7 +199,7 @@ pub fn mie_efficiencies(size_param: f64, relative_ior: f64) -> (f64, f64) {
     if x < 0.3 {
         // Rayleigh regime
         let q_sca = rayleigh_efficiency(x, m);
-        return (q_sca, q_sca);  // No absorption assumed
+        return (q_sca, q_sca); // No absorption assumed
     }
 
     // Anomalous diffraction approximation
@@ -285,7 +289,10 @@ impl MieLUT {
             }
         }
 
-        Self { phase_table, g_table }
+        Self {
+            phase_table,
+            g_table,
+        }
     }
 
     /// Get global LUT instance
@@ -329,8 +336,12 @@ impl MieLUT {
 
     fn interpolate_3d(
         &self,
-        i_size: usize, i_ior: usize, i_angle: usize,
-        t_size: f64, t_ior: f64, t_angle: f64,
+        i_size: usize,
+        i_ior: usize,
+        i_angle: usize,
+        t_size: f64,
+        t_ior: f64,
+        t_angle: f64,
     ) -> f64 {
         let v000 = self.phase_table[i_size][i_ior][i_angle] as f64;
         let v001 = self.phase_table[i_size][i_ior][i_angle + 1] as f64;
@@ -383,8 +394,8 @@ impl MieLUT {
 
     /// Memory size in bytes
     pub fn memory_size(&self) -> usize {
-        Self::SIZE_COUNT * Self::IOR_COUNT * Self::ANGLE_COUNT * 4 +
-        Self::SIZE_COUNT * Self::IOR_COUNT * 4
+        Self::SIZE_COUNT * Self::IOR_COUNT * Self::ANGLE_COUNT * 4
+            + Self::SIZE_COUNT * Self::IOR_COUNT * 4
     }
 }
 
@@ -460,9 +471,9 @@ pub fn mie_particle(cos_theta: f64, params: &MieParams, wavelength_nm: f64) -> f
 /// RGB Mie scattering for particle (wavelength-dependent)
 pub fn mie_particle_rgb(cos_theta: f64, params: &MieParams) -> [f64; 3] {
     [
-        mie_particle(cos_theta, params, 650.0),  // Red
-        mie_particle(cos_theta, params, 550.0),  // Green
-        mie_particle(cos_theta, params, 450.0),  // Blue
+        mie_particle(cos_theta, params, 650.0), // Red
+        mie_particle(cos_theta, params, 550.0), // Green
+        mie_particle(cos_theta, params, 450.0), // Blue
     ]
 }
 
@@ -484,7 +495,10 @@ mod tests {
         // Rayleigh phase should be symmetric
         let forward = rayleigh_phase(1.0);
         let backward = rayleigh_phase(-1.0);
-        assert!((forward - backward).abs() < 1e-10, "Rayleigh should be symmetric");
+        assert!(
+            (forward - backward).abs() < 1e-10,
+            "Rayleigh should be symmetric"
+        );
 
         // Maximum at forward and backward
         let side = rayleigh_phase(0.0);
@@ -533,9 +547,9 @@ mod tests {
 
         // Test a few points
         let test_cases = [
-            (0.5, 1.0, 1.2),   // Small particle
-            (5.0, 0.5, 1.33),  // Medium particle
-            (15.0, 0.0, 1.5),  // Large particle
+            (0.5, 1.0, 1.2),  // Small particle
+            (5.0, 0.5, 1.33), // Medium particle
+            (15.0, 0.0, 1.5), // Large particle
         ];
 
         for (x, cos_t, m) in test_cases {
@@ -546,7 +560,10 @@ mod tests {
             assert!(
                 error < 0.1,
                 "LUT error {}% at x={}, cos={}, m={}",
-                error * 100.0, x, cos_t, m
+                error * 100.0,
+                x,
+                cos_t,
+                m
             );
         }
     }

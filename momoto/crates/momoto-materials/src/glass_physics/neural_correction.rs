@@ -14,7 +14,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse, BSDFSample, EnergyValidation};
+use super::unified_bsdf::{BSDFContext, BSDFResponse, BSDFSample, EnergyValidation, BSDF};
 
 // ============================================================================
 // CORRECTION INPUT/OUTPUT
@@ -78,15 +78,15 @@ impl CorrectionInput {
     pub fn from_context(ctx: &BSDFContext, roughness: f64, ior: f64) -> Self {
         Self::new(
             ctx.wavelength,
-            ctx.wi.z.abs(),  // cos_theta_i
-            ctx.wo.z.abs(),  // cos_theta_o
+            ctx.wi.z.abs(), // cos_theta_i
+            ctx.wo.z.abs(), // cos_theta_o
             roughness,
             ior,
-            0.0,    // k
-            0.0,    // thickness
-            0.0,    // absorption
-            0.0,    // scattering
-            0.0,    // g
+            0.0, // k
+            0.0, // thickness
+            0.0, // absorption
+            0.0, // scattering
+            0.0, // g
         )
     }
 
@@ -211,18 +211,12 @@ impl NeuralCorrectionMLP {
         let w0: Vec<f64> = (0..hidden * Self::INPUT_DIM)
             .map(|_| rng.uniform(-c0, c0))
             .collect();
-        let b0: Vec<f64> = (0..hidden)
-            .map(|_| rng.uniform(-c0, c0))
-            .collect();
+        let b0: Vec<f64> = (0..hidden).map(|_| rng.uniform(-c0, c0)).collect();
 
         // Hidden layers: c = sqrt(6/hidden)
         let c1 = (6.0 / hidden as f64).sqrt();
-        let w1: Vec<f64> = (0..hidden * hidden)
-            .map(|_| rng.uniform(-c1, c1))
-            .collect();
-        let b1: Vec<f64> = (0..hidden)
-            .map(|_| rng.uniform(-c1, c1))
-            .collect();
+        let w1: Vec<f64> = (0..hidden * hidden).map(|_| rng.uniform(-c1, c1)).collect();
+        let b1: Vec<f64> = (0..hidden).map(|_| rng.uniform(-c1, c1)).collect();
 
         // Output layer
         let c_out = (6.0 / hidden as f64).sqrt();
@@ -255,9 +249,12 @@ impl NeuralCorrectionMLP {
         // w0: hidden * input, b0: hidden
         // w1: hidden * hidden, b1: hidden
         // w_out: output * hidden, b_out: output
-        hidden * Self::INPUT_DIM + hidden +
-        hidden * hidden + hidden +
-        Self::OUTPUT_DIM * hidden + Self::OUTPUT_DIM
+        hidden * Self::INPUT_DIM
+            + hidden
+            + hidden * hidden
+            + hidden
+            + Self::OUTPUT_DIM * hidden
+            + Self::OUTPUT_DIM
     }
 
     /// Memory usage in bytes
@@ -304,11 +301,7 @@ impl NeuralCorrectionMLP {
     }
 
     /// Apply correction to a physical BSDF response with energy conservation
-    pub fn apply(
-        &self,
-        physical: &BSDFResponse,
-        input: &CorrectionInput,
-    ) -> BSDFResponse {
+    pub fn apply(&self, physical: &BSDFResponse, input: &CorrectionInput) -> BSDFResponse {
         let correction = self.forward(input);
 
         // Apply corrections
@@ -324,18 +317,10 @@ impl NeuralCorrectionMLP {
         if total > 1.0 {
             // Scale proportionally
             let scale = 1.0 / total;
-            BSDFResponse::new(
-                r_clamped * scale,
-                t_clamped * scale,
-                0.0,
-            )
+            BSDFResponse::new(r_clamped * scale, t_clamped * scale, 0.0)
         } else {
             // Absorption is the remainder
-            BSDFResponse::new(
-                r_clamped,
-                t_clamped,
-                1.0 - r_clamped - t_clamped,
-            )
+            BSDFResponse::new(r_clamped, t_clamped, 1.0 - r_clamped - t_clamped)
         }
     }
 
@@ -382,7 +367,8 @@ impl NeuralCorrectionMLP {
         idx += w_out_len;
 
         // b_out
-        self.b_out.copy_from_slice(&params[idx..idx + Self::OUTPUT_DIM]);
+        self.b_out
+            .copy_from_slice(&params[idx..idx + Self::OUTPUT_DIM]);
     }
 
     /// Apply parameter updates (for gradient descent)
@@ -503,10 +489,10 @@ impl<B: BSDF + Clone> BSDF for NeuralCorrectedBSDF<B> {
                 self.roughness,
                 self.ior,
                 self.k,
-                0.0,  // thickness
-                0.0,  // absorption
-                0.0,  // scattering
-                0.0,  // g
+                0.0, // thickness
+                0.0, // absorption
+                0.0, // scattering
+                0.0, // g
             );
 
             // Apply neural correction
@@ -598,27 +584,27 @@ pub fn total_neural_correction_memory() -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::unified_bsdf::DielectricBSDF;
+    use super::*;
 
     #[test]
     fn test_correction_input() {
         let input = CorrectionInput::new(
-            550.0,  // wavelength
-            0.866,  // cos_theta_i (30 degrees)
-            0.866,  // cos_theta_o
-            0.1,    // roughness
-            1.5,    // ior
-            0.0,    // k
-            0.0,    // thickness
-            0.0,    // absorption
-            0.0,    // scattering
-            0.0,    // g
+            550.0, // wavelength
+            0.866, // cos_theta_i (30 degrees)
+            0.866, // cos_theta_o
+            0.1,   // roughness
+            1.5,   // ior
+            0.0,   // k
+            0.0,   // thickness
+            0.0,   // absorption
+            0.0,   // scattering
+            0.0,   // g
         );
 
         let vec = input.to_vec();
         assert_eq!(vec.len(), 10);
-        assert!((vec[0] - 0.5).abs() < 0.01);  // (550-400)/300 = 0.5
+        assert!((vec[0] - 0.5).abs() < 0.01); // (550-400)/300 = 0.5
     }
 
     #[test]
@@ -627,7 +613,7 @@ mod tests {
         let network = NeuralCorrectionMLP::new(config);
 
         assert_eq!(network.param_count(), 1474);
-        assert!(network.memory_bytes() < 12000);  // < 12 KB
+        assert!(network.memory_bytes() < 12000); // < 12 KB
     }
 
     #[test]
@@ -652,7 +638,11 @@ mod tests {
 
         // Energy must be conserved
         let total = corrected.reflectance + corrected.transmittance + corrected.absorption;
-        assert!((total - 1.0).abs() < 1e-10, "Energy not conserved: {}", total);
+        assert!(
+            (total - 1.0).abs() < 1e-10,
+            "Energy not conserved: {}",
+            total
+        );
 
         // All components must be non-negative
         assert!(corrected.reflectance >= 0.0);
@@ -668,12 +658,14 @@ mod tests {
         // Test with physical response near boundaries
         let physical_high = BSDFResponse::new(0.95, 0.04, 0.01);
         let corrected_high = network.apply(&physical_high, &input);
-        let total = corrected_high.reflectance + corrected_high.transmittance + corrected_high.absorption;
+        let total =
+            corrected_high.reflectance + corrected_high.transmittance + corrected_high.absorption;
         assert!((total - 1.0).abs() < 1e-10);
 
         let physical_low = BSDFResponse::new(0.01, 0.01, 0.98);
         let corrected_low = network.apply(&physical_low, &input);
-        let total = corrected_low.reflectance + corrected_low.transmittance + corrected_low.absorption;
+        let total =
+            corrected_low.reflectance + corrected_low.transmittance + corrected_low.absorption;
         assert!((total - 1.0).abs() < 1e-10);
     }
 
@@ -714,7 +706,7 @@ mod tests {
         let network = NeuralCorrectionMLP::with_default_config();
         let corrected = NeuralCorrectedBSDF::new(physical.clone(), network, 0.0, 1.5);
 
-        let ctx = BSDFContext::new_simple(1.0);  // Normal incidence
+        let ctx = BSDFContext::new_simple(1.0); // Normal incidence
 
         // Test evaluation
         let response = corrected.evaluate(&ctx);
@@ -771,8 +763,11 @@ mod tests {
             );
 
             let output = network.forward(&input);
-            assert!(output.magnitude() <= 0.2 + 1e-6,
-                "Correction magnitude {} exceeds limit", output.magnitude());
+            assert!(
+                output.magnitude() <= 0.2 + 1e-6,
+                "Correction magnitude {} exceeds limit",
+                output.magnitude()
+            );
         }
     }
 

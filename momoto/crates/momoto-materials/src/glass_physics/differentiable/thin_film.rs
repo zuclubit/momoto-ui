@@ -2,11 +2,11 @@
 //!
 //! Thin-film interference material with analytical gradient computation.
 
-use super::traits::{
-    DifferentiableBSDF, DifferentiableResponse, ParameterGradients, ParameterBounds,
-};
+use super::super::unified_bsdf::{BSDFContext, BSDFResponse, BSDFSample, EnergyValidation, BSDF};
 use super::gradients::thin_film_gradient;
-use super::super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse, BSDFSample, EnergyValidation};
+use super::traits::{
+    DifferentiableBSDF, DifferentiableResponse, ParameterBounds, ParameterGradients,
+};
 
 // ============================================================================
 // DIFFERENTIABLE THIN FILM
@@ -118,7 +118,11 @@ impl BSDF for DifferentiableThinFilm {
         let reflectance = self.compute_reflectance(ctx.wavelength, cos_theta_i);
 
         let is_reflection = u1 < reflectance;
-        let pdf = if is_reflection { reflectance } else { 1.0 - reflectance };
+        let pdf = if is_reflection {
+            reflectance
+        } else {
+            1.0 - reflectance
+        };
 
         let wo = if is_reflection {
             let d = ctx.wi * -1.0;
@@ -225,8 +229,8 @@ impl DifferentiableBSDF for DifferentiableThinFilm {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::super::unified_bsdf::Vector3;
+    use super::*;
 
     fn create_ctx(cos_theta: f64, wavelength: f64) -> BSDFContext {
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
@@ -326,9 +330,11 @@ mod tests {
         // Numerical gradient for thickness
         let eps = 0.1; // nm
         let r_plus = DifferentiableThinFilm::new(1.5, 1.4, 200.0 + eps)
-            .evaluate(&ctx).reflectance;
+            .evaluate(&ctx)
+            .reflectance;
         let r_minus = DifferentiableThinFilm::new(1.5, 1.4, 200.0 - eps)
-            .evaluate(&ctx).reflectance;
+            .evaluate(&ctx)
+            .reflectance;
         let numeric_dt = (r_plus - r_minus) / (2.0 * eps);
 
         let result = film.eval_with_gradients(&ctx);

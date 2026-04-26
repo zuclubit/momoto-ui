@@ -15,17 +15,11 @@
 
 use std::time::Instant;
 
-use super::dispersion::{
-    CauchyDispersion, SellmeierDispersion, Dispersion, wavelengths,
-};
-use super::scattering::{
-    henyey_greenstein, double_henyey_greenstein, hg_fast,
-};
-use super::dhg_lut::{
-    dhg_fast, dhg_preset, DHGPreset, DoubleHGLUT, CompactDHGLUT,
-};
-use super::quality_tiers::TierFeatures;
+use super::dhg_lut::{dhg_fast, dhg_preset, CompactDHGLUT, DHGPreset, DoubleHGLUT};
+use super::dispersion::{wavelengths, CauchyDispersion, Dispersion, SellmeierDispersion};
 use super::enhanced_presets::QualityTier;
+use super::quality_tiers::TierFeatures;
+use super::scattering::{double_henyey_greenstein, henyey_greenstein, hg_fast};
 use super::spectral_fresnel::{fresnel_rgb, fresnel_rgb_fast};
 
 // ============================================================================
@@ -250,7 +244,12 @@ pub fn compare_sellmeier_vs_cauchy() -> Vec<ComparisonResult> {
         wavelengths::GREEN,
         wavelengths::RED,
         wavelengths::SODIUM_D,
-        450.0, 500.0, 550.0, 600.0, 650.0, 700.0,
+        450.0,
+        500.0,
+        550.0,
+        600.0,
+        650.0,
+        700.0,
     ];
 
     let mut max_error = 0.0f64;
@@ -459,14 +458,32 @@ pub fn memory_analysis() -> Vec<(String, usize)> {
     let mut report = Vec::new();
 
     // Phase 1 LUTs
-    report.push(("Fresnel LUT".to_string(), super::lut::FresnelLUT::global().memory_size()));
-    report.push(("Beer-Lambert LUT".to_string(), super::lut::BeerLambertLUT::global().memory_size()));
-    report.push(("H-G LUT".to_string(), super::scattering::HenyeyGreensteinLUT::global().memory_size()));
-    report.push(("Spectral Fresnel LUT".to_string(), super::spectral_fresnel::SpectralFresnelLUT::global().memory_size()));
+    report.push((
+        "Fresnel LUT".to_string(),
+        super::lut::FresnelLUT::global().memory_size(),
+    ));
+    report.push((
+        "Beer-Lambert LUT".to_string(),
+        super::lut::BeerLambertLUT::global().memory_size(),
+    ));
+    report.push((
+        "H-G LUT".to_string(),
+        super::scattering::HenyeyGreensteinLUT::global().memory_size(),
+    ));
+    report.push((
+        "Spectral Fresnel LUT".to_string(),
+        super::spectral_fresnel::SpectralFresnelLUT::global().memory_size(),
+    ));
 
     // Phase 2 LUTs
-    report.push(("DHG Full LUT".to_string(), DoubleHGLUT::global().memory_size()));
-    report.push(("DHG Compact LUT".to_string(), CompactDHGLUT::global().memory_size()));
+    report.push((
+        "DHG Full LUT".to_string(),
+        DoubleHGLUT::global().memory_size(),
+    ));
+    report.push((
+        "DHG Compact LUT".to_string(),
+        CompactDHGLUT::global().memory_size(),
+    ));
 
     // Total
     let total: usize = report.iter().map(|(_, size)| size).sum();
@@ -566,7 +583,11 @@ mod tests {
             // In debug mode, LUT might not be faster due to bounds checking
             // In release mode, LUT should be ~3-4x faster
             // We only check accuracy here; speedup is best verified in release builds
-            assert!(result.accuracy_ok, "LUT accuracy should be within tolerance for {:?}", result.name);
+            assert!(
+                result.accuracy_ok,
+                "LUT accuracy should be within tolerance for {:?}",
+                result.name
+            );
         }
     }
 
@@ -604,7 +625,10 @@ mod tests {
 
         let (_, total_size) = total.unwrap();
         // Should be under 2MB total
-        assert!(*total_size < 2_000_000, "Total LUT memory should be under 2MB");
+        assert!(
+            *total_size < 2_000_000,
+            "Total LUT memory should be under 2MB"
+        );
     }
 
     #[test]

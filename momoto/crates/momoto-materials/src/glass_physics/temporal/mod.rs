@@ -54,42 +54,34 @@
 //! All temporal materials evaluate to their Phase 11 static equivalent at t=0.
 //! Existing code continues to work unchanged.
 
-pub mod context;
 pub mod bsdf;
-pub mod materials;
+pub mod context;
 pub mod interpolation;
+pub mod materials;
 
 // Re-exports
 pub use context::{
-    TemporalContext, TemporalContextBuilder,
-    DriftTracker, DriftConfig, DriftStatus,
+    DriftConfig, DriftStatus, DriftTracker, TemporalContext, TemporalContextBuilder,
 };
 
-pub use bsdf::{
-    TemporalBSDF, TemporalBSDFInfo,
-    TemporalEvolution, EvolutionRate,
-};
+pub use bsdf::{EvolutionRate, TemporalBSDF, TemporalBSDFInfo, TemporalEvolution};
 
 pub use materials::{
-    TemporalDielectric, DielectricEvolution,
+    ConductorEvolution, DielectricEvolution, TemporalConductor, TemporalDielectric,
     TemporalThinFilm, ThinFilmEvolution,
-    TemporalConductor, ConductorEvolution,
 };
 
 pub use interpolation::{
-    Interpolation, InterpolationMode,
-    RateLimiter, RateLimitConfig,
-    ExponentialMovingAverage,
-    smoothstep, smootherstep, ease_in_out,
-    lerp, inverse_lerp, remap,
+    ease_in_out, inverse_lerp, lerp, remap, smootherstep, smoothstep, ExponentialMovingAverage,
+    Interpolation, InterpolationMode, RateLimitConfig, RateLimiter,
 };
 
 /// Prelude for convenient imports.
 pub mod prelude {
-    pub use super::context::{TemporalContext, TemporalContextBuilder, DriftTracker};
     pub use super::bsdf::{TemporalBSDF, TemporalEvolution};
-    pub use super::materials::{TemporalDielectric, TemporalThinFilm, TemporalConductor};
-    pub use super::interpolation::{smoothstep, smootherstep, ease_in_out};
+    pub use super::context::{DriftTracker, TemporalContext, TemporalContextBuilder};
+    pub use super::interpolation::{ease_in_out, smootherstep, smoothstep};
+    pub use super::materials::{TemporalConductor, TemporalDielectric, TemporalThinFilm};
 }
 
 // ============================================================================

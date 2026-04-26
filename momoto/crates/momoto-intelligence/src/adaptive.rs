@@ -3,7 +3,7 @@
 //! Provides self-tuning machinery for iterative color optimization loops.
 //! All algorithms are deterministic and alloc-free beyond the history buffer.
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 // =============================================================================
 // cost_estimator submodule
@@ -11,7 +11,7 @@ use serde::{Serialize, Deserialize};
 
 /// Cost estimation helpers — kept in a submodule to allow granular imports.
 pub mod cost_estimator {
-    use serde::{Serialize, Deserialize};
+    use serde::{Deserialize, Serialize};
 
     /// Factors that affect computational cost of a pipeline step.
     ///
@@ -44,7 +44,12 @@ pub mod cost_estimator {
         /// Create factors with sensible defaults (1 color, no extra stages).
         #[inline]
         pub fn new() -> Self {
-            Self { color_count: 1, spectral: false, neural: false, material: false }
+            Self {
+                color_count: 1,
+                spectral: false,
+                neural: false,
+                material: false,
+            }
         }
 
         /// Set the number of colors to process.
@@ -312,7 +317,10 @@ impl ConvergenceDetector {
             let amplitude = window.iter().cloned().fold(f64::NEG_INFINITY, f64::max)
                 - window.iter().cloned().fold(f64::INFINITY, f64::min);
             let frequency = sign_changes as f64 / (2.0 * deltas.len() as f64);
-            return ConvergenceStatus::Oscillating { amplitude, frequency };
+            return ConvergenceStatus::Oscillating {
+                amplitude,
+                frequency,
+            };
         }
 
         // Converged: std-dev below tolerance
@@ -366,7 +374,11 @@ impl ConvergenceDetector {
 
     /// Best quality observed so far.
     pub fn best_quality(&self) -> f64 {
-        if self.best == f64::NEG_INFINITY { 0.0 } else { self.best }
+        if self.best == f64::NEG_INFINITY {
+            0.0
+        } else {
+            self.best
+        }
     }
 
     /// Number of iterations processed.
@@ -376,26 +388,30 @@ impl ConvergenceDetector {
 
     /// Total improvement: best observed minus first observation.
     pub fn total_improvement(&self) -> f64 {
-        if self.history.is_empty() { return 0.0; }
+        if self.history.is_empty() {
+            return 0.0;
+        }
         (self.best - self.history[0]).max(0.0)
     }
 
     /// Average improvement per iteration.
     pub fn improvement_rate(&self) -> f64 {
-        if self.iterations == 0 { return 0.0; }
+        if self.iterations == 0 {
+            return 0.0;
+        }
         self.total_improvement() / self.iterations as f64
     }
 
     /// Whether quality is still improving within the current window.
     pub fn is_progressing(&self) -> bool {
         let n = self.history.len();
-        if n < 2 { return false; }
+        if n < 2 {
+            return false;
+        }
         let window_start = n.saturating_sub(self.config.window_size);
         let window = &self.history[window_start..];
-        let mean_delta = window.windows(2)
-            .map(|w| w[1] - w[0])
-            .sum::<f64>()
-            / (window.len() - 1).max(1) as f64;
+        let mean_delta =
+            window.windows(2).map(|w| w[1] - w[0]).sum::<f64>() / (window.len() - 1).max(1) as f64;
         mean_delta > self.config.min_improvement
     }
 
@@ -407,8 +423,7 @@ impl ConvergenceDetector {
         } else {
             let window_start = n.saturating_sub(self.config.window_size);
             let window = &self.history[window_start..];
-            window.windows(2).map(|w| w[1] - w[0]).sum::<f64>()
-                / (window.len() - 1).max(1) as f64
+            window.windows(2).map(|w| w[1] - w[0]).sum::<f64>() / (window.len() - 1).max(1) as f64
         };
 
         ConvergenceStats {
@@ -494,13 +509,7 @@ impl StepSelector {
     /// `improvement` — observed quality delta (can be negative if step hurt quality).
     /// `cost` — relative computational cost (1.0 = baseline).
     /// `success` — whether the step completed without error.
-    pub fn record_outcome(
-        &mut self,
-        step_type: &str,
-        improvement: f64,
-        cost: f64,
-        success: bool,
-    ) {
+    pub fn record_outcome(&mut self, step_type: &str, improvement: f64, cost: f64, success: bool) {
         self.history.push(StepRecord {
             step_type: step_type.to_string(),
             improvement,
@@ -517,19 +526,23 @@ impl StepSelector {
 
         // Candidate steps with their baseline cost
         let candidates: &[(&str, f64)] = &[
-            ("wcag_adjust",       1.0),
-            ("siren_correct",     2.5),
-            ("gamut_map",         0.5),
-            ("hue_shift",         0.8),
+            ("wcag_adjust", 1.0),
+            ("siren_correct", 2.5),
+            ("gamut_map", 0.5),
+            ("hue_shift", 0.8),
             ("saturation_adjust", 0.7),
         ];
 
         // Score each candidate by historical effectiveness / cost ratio
-        let best = candidates.iter().max_by(|(a_type, a_cost), (b_type, b_cost)| {
-            let a_score = self.candidate_score(a_type, *a_cost);
-            let b_score = self.candidate_score(b_type, *b_cost);
-            a_score.partial_cmp(&b_score).unwrap_or(std::cmp::Ordering::Equal)
-        })?;
+        let best = candidates
+            .iter()
+            .max_by(|(a_type, a_cost), (b_type, b_cost)| {
+                let a_score = self.candidate_score(a_type, *a_cost);
+                let b_score = self.candidate_score(b_type, *b_cost);
+                a_score
+                    .partial_cmp(&b_score)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })?;
 
         let (step_type, cost_estimate) = *best;
         let score = self.candidate_score(step_type, cost_estimate);
@@ -542,13 +555,21 @@ impl StepSelector {
             expected_improvement,
             confidence,
             cost_estimate,
-            priority: if confidence > 0.7 { 1 } else if confidence > 0.5 { 2 } else { 3 },
+            priority: if confidence > 0.7 {
+                1
+            } else if confidence > 0.5 {
+                2
+            } else {
+                3
+            },
         })
     }
 
     /// Current progress ratio in [0.0, 1.0] towards the target.
     pub fn goal_progress(&self) -> f64 {
-        if self.target <= 0.0 { return 1.0; }
+        if self.target <= 0.0 {
+            return 1.0;
+        }
         (self.current / self.target).clamp(0.0, 1.0)
     }
 
@@ -559,7 +580,9 @@ impl StepSelector {
 
     /// Compute a score for a candidate step type based on history.
     fn candidate_score(&self, step_type: &str, base_cost: f64) -> f64 {
-        let records: Vec<&StepRecord> = self.history.iter()
+        let records: Vec<&StepRecord> = self
+            .history
+            .iter()
             .filter(|r| r.step_type == step_type && r.success)
             .collect();
 
@@ -568,13 +591,14 @@ impl StepSelector {
             return 5.0 / base_cost;
         }
 
-        let mean_improvement = records.iter().map(|r| r.improvement).sum::<f64>()
-            / records.len() as f64;
-        let mean_cost = records.iter().map(|r| r.cost).sum::<f64>()
-            / records.len() as f64;
+        let mean_improvement =
+            records.iter().map(|r| r.improvement).sum::<f64>() / records.len() as f64;
+        let mean_cost = records.iter().map(|r| r.cost).sum::<f64>() / records.len() as f64;
 
         // Score = improvement / cost, with recency not weighted (simple mean)
-        if mean_cost < 1e-9 { return 0.0; }
+        if mean_cost < 1e-9 {
+            return 0.0;
+        }
         mean_improvement / mean_cost
     }
 }
@@ -619,34 +643,30 @@ impl CostEstimator {
     }
 
     /// Estimate cost for one step type with given factors.
-    pub fn estimate(
-        &self,
-        step_type: &str,
-        factors: &cost_estimator::CostFactors,
-    ) -> CostEstimate {
+    pub fn estimate(&self, step_type: &str, factors: &cost_estimator::CostFactors) -> CostEstimate {
         // Base costs per step type (ms, single color)
         let (base_ms, mem_mb, parallelizable) = match step_type {
-            "wcag_adjust"       => (0.05, 0.001, true),
-            "apca_adjust"       => (0.06, 0.001, true),
-            "siren_correct"     => (1.20, 0.5,   true),
-            "gamut_map"         => (0.02, 0.001, true),
-            "hue_shift"         => (0.01, 0.001, true),
+            "wcag_adjust" => (0.05, 0.001, true),
+            "apca_adjust" => (0.06, 0.001, true),
+            "siren_correct" => (1.20, 0.5, true),
+            "gamut_map" => (0.02, 0.001, true),
+            "hue_shift" => (0.01, 0.001, true),
             "saturation_adjust" => (0.01, 0.001, true),
-            "thin_film"         => (2.50, 0.1,   false),
-            "mie_scattering"    => (5.00, 0.2,   false),
-            "spectral_pipeline" => (8.00, 0.5,   false),
-            "harmony_score"     => (0.10, 0.01,  true),
-            "cvd_simulate"      => (0.08, 0.01,  true),
-            _                   => (0.10, 0.01,  true),
+            "thin_film" => (2.50, 0.1, false),
+            "mie_scattering" => (5.00, 0.2, false),
+            "spectral_pipeline" => (8.00, 0.5, false),
+            "harmony_score" => (0.10, 0.01, true),
+            "cvd_simulate" => (0.08, 0.01, true),
+            _ => (0.10, 0.01, true),
         };
 
         // Scale by color count
         let count_factor = factors.color_count.max(1) as f64;
 
         // Additional stage multipliers
-        let spectral_mul   = if factors.spectral  { 3.0 } else { 1.0 };
-        let neural_mul     = if factors.neural     { 2.0 } else { 1.0 };
-        let material_mul   = if factors.material   { 4.0 } else { 1.0 };
+        let spectral_mul = if factors.spectral { 3.0 } else { 1.0 };
+        let neural_mul = if factors.neural { 2.0 } else { 1.0 };
+        let material_mul = if factors.material { 4.0 } else { 1.0 };
 
         let cpu_factor = count_factor * spectral_mul * neural_mul * material_mul;
         let total_ms = base_ms * cpu_factor;
@@ -672,11 +692,11 @@ impl CostEstimator {
     }
 
     /// Sum of `total_estimate` across all steps (useful for pipeline total cost).
-    pub fn sequential_total(
-        &self,
-        steps: &[(&str, &cost_estimator::CostFactors)],
-    ) -> f64 {
-        steps.iter().map(|(s, f)| self.estimate(s, f).total_estimate).sum()
+    pub fn sequential_total(&self, steps: &[(&str, &cost_estimator::CostFactors)]) -> f64 {
+        steps
+            .iter()
+            .map(|(s, f)| self.estimate(s, f).total_estimate)
+            .sum()
     }
 }
 
@@ -718,7 +738,9 @@ mod tests {
     fn test_convergence_detector_converges() {
         let mut det = ConvergenceDetector::with_defaults();
         // Feed a clearly converging sequence
-        let values = [0.1, 0.3, 0.5, 0.65, 0.75, 0.82, 0.87, 0.90, 0.91, 0.92, 0.92, 0.92];
+        let values = [
+            0.1, 0.3, 0.5, 0.65, 0.75, 0.82, 0.87, 0.90, 0.91, 0.92, 0.92, 0.92,
+        ];
         let mut last_status = None;
         for v in values {
             last_status = Some(det.update(v));
@@ -776,7 +798,8 @@ mod tests {
         let est = CostEstimator::new();
         let f1 = cost_estimator::CostFactors::new().with_color_count(10);
         let f2 = cost_estimator::CostFactors::new().with_spectral();
-        let estimates = est.estimate_sequential(&[("wcag_adjust", &f1), ("spectral_pipeline", &f2)]);
+        let estimates =
+            est.estimate_sequential(&[("wcag_adjust", &f1), ("spectral_pipeline", &f2)]);
         assert_eq!(estimates.len(), 2);
     }
 }

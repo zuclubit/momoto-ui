@@ -228,11 +228,7 @@ where
 }
 
 /// Quick neural audit.
-pub fn quick_neural_audit(
-    share: f64,
-    max_magnitude: f64,
-    max_share_limit: f64,
-) -> bool {
+pub fn quick_neural_audit(share: f64, max_magnitude: f64, max_share_limit: f64) -> bool {
     use crate::glass_physics::certification::NeuralCorrectionStats;
 
     let mut stats = NeuralCorrectionStats::new();
@@ -381,10 +377,17 @@ mod tests {
     #[test]
     fn test_quick_ground_truth() {
         // Perfect gold prediction should pass
-        let passed = quick_ground_truth_check(|wl, _| {
-            // Approximate gold
-            if wl < 500.0 { 0.35 } else { 0.9 }
-        }, 5.0);
+        let passed = quick_ground_truth_check(
+            |wl, _| {
+                // Approximate gold
+                if wl < 500.0 {
+                    0.35
+                } else {
+                    0.9
+                }
+            },
+            5.0,
+        );
 
         // May or may not pass depending on exact values
         // Just verify it runs without panic
@@ -407,11 +410,8 @@ mod tests {
     fn test_full_compliance() {
         let stats = NeuralCorrectionStats::new();
 
-        let result = full_compliance_check(
-            |wl, _| if wl < 500.0 { 0.35 } else { 0.9 },
-            &stats,
-            5.0,
-        );
+        let result =
+            full_compliance_check(|wl, _| if wl < 500.0 { 0.35 } else { 0.9 }, &stats, 5.0);
 
         // Check structure
         assert!(result.reproducibility_score >= 0.0);

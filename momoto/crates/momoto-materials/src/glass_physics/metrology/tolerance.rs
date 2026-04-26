@@ -274,7 +274,11 @@ impl ToleranceBudget {
     /// Get total by category.
     pub fn total_by_category(&self, category: ToleranceCategory) -> (f64, f64) {
         let comps = self.components_by_category(category);
-        let allocated: f64 = comps.iter().map(|c| c.allocated.powi(2)).sum::<f64>().sqrt();
+        let allocated: f64 = comps
+            .iter()
+            .map(|c| c.allocated.powi(2))
+            .sum::<f64>()
+            .sqrt();
         let actual: f64 = comps.iter().map(|c| c.actual.powi(2)).sum::<f64>().sqrt();
         (allocated, actual)
     }
@@ -282,10 +286,7 @@ impl ToleranceBudget {
     /// Generate budget report.
     pub fn report(&self) -> String {
         let mut report = String::new();
-        report.push_str(&format!(
-            "Tolerance Budget: {}\n",
-            self.name
-        ));
+        report.push_str(&format!("Tolerance Budget: {}\n", self.name));
         report.push_str(&format!(
             "Target: {:.4} | Used: {:.4} | Margin: {:.4} | Utilization: {:.1}%\n",
             self.target,
@@ -515,8 +516,8 @@ mod tests {
 
     #[test]
     fn test_tolerance_component_exceeded() {
-        let comp = ToleranceComponent::new("Exceeded", ToleranceCategory::Neural, 0.1)
-            .with_actual(0.15);
+        let comp =
+            ToleranceComponent::new("Exceeded", ToleranceCategory::Neural, 0.1).with_actual(0.15);
 
         assert!(!comp.is_within_tolerance());
         assert!(comp.margin() < 0.0);

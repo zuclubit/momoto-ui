@@ -30,38 +30,28 @@
 //! └───────────────┘      └───────────────┘      └───────────────────┘
 //! ```
 
+pub mod interpolation;
 pub mod packet;
 pub mod sampling;
-pub mod interpolation;
 pub mod validation;
 
 // Re-exports
-pub use packet::{
-    SpectralPacket, SpectralPacketBuilder,
-    CoherenceMetadata, WavelengthBand,
-};
+pub use packet::{CoherenceMetadata, SpectralPacket, SpectralPacketBuilder, WavelengthBand};
 
-pub use sampling::{
-    CoherentSampler, SamplingStrategy,
-    StratifiedSampler, JitteredSampler,
-};
+pub use sampling::{CoherentSampler, JitteredSampler, SamplingStrategy, StratifiedSampler};
 
-pub use interpolation::{
-    SpectralInterpolator, BlendConfig,
-    GradientLimiter,
-};
+pub use interpolation::{BlendConfig, GradientLimiter, SpectralInterpolator};
 
 pub use validation::{
-    FlickerValidator, FlickerConfig, FlickerStatus,
-    FlickerReport, FrameComparison,
+    FlickerConfig, FlickerReport, FlickerStatus, FlickerValidator, FrameComparison,
 };
 
 /// Prelude for convenient imports.
 pub mod prelude {
+    pub use super::interpolation::{BlendConfig, SpectralInterpolator};
     pub use super::packet::{SpectralPacket, SpectralPacketBuilder};
     pub use super::sampling::{CoherentSampler, SamplingStrategy};
-    pub use super::interpolation::{SpectralInterpolator, BlendConfig};
-    pub use super::validation::{FlickerValidator, FlickerStatus};
+    pub use super::validation::{FlickerStatus, FlickerValidator};
 }
 
 // ============================================================================

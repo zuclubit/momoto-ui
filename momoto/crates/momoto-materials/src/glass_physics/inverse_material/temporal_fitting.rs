@@ -10,9 +10,9 @@
 //! This module handles sequences of observations at different times,
 //! recovering both initial state and evolution parameters.
 
-use super::optimizer::{DifferentiableOptimizer, AdamOptimizer, AdamConfig};
 use super::super::differentiable::traits::DifferentiableBSDF;
 use super::super::unified_bsdf::{BSDFContext, Vector3};
+use super::optimizer::{AdamConfig, AdamOptimizer, DifferentiableOptimizer};
 
 // ============================================================================
 // TEMPORAL SEQUENCE
@@ -93,7 +93,8 @@ impl TemporalSequence {
             self.duration = frame.time;
         }
         self.frames.push(frame);
-        self.frames.sort_by(|a, b| a.time.partial_cmp(&b.time).unwrap());
+        self.frames
+            .sort_by(|a, b| a.time.partial_cmp(&b.time).unwrap());
     }
 
     /// Get number of frames.
@@ -385,10 +386,13 @@ impl TemporalFitter {
         Self {
             config: TemporalFitterConfig::default(),
             material_optimizer: AdamOptimizer::new(AdamConfig::default(), material_param_count),
-            evolution_optimizer: AdamOptimizer::new(AdamConfig {
-                learning_rate: 0.01,
-                ..Default::default()
-            }, 4),
+            evolution_optimizer: AdamOptimizer::new(
+                AdamConfig {
+                    learning_rate: 0.01,
+                    ..Default::default()
+                },
+                4,
+            ),
         }
     }
 
@@ -397,10 +401,13 @@ impl TemporalFitter {
         Self {
             config: config.clone(),
             material_optimizer: AdamOptimizer::new(AdamConfig::default(), material_param_count),
-            evolution_optimizer: AdamOptimizer::new(AdamConfig {
-                learning_rate: config.evolution_lr,
-                ..Default::default()
-            }, 4),
+            evolution_optimizer: AdamOptimizer::new(
+                AdamConfig {
+                    learning_rate: config.evolution_lr,
+                    ..Default::default()
+                },
+                4,
+            ),
         }
     }
 
@@ -443,17 +450,15 @@ impl TemporalFitter {
 
         for iteration in 0..self.config.max_iterations {
             // Compute loss and gradients
-            let (loss, mat_grad, evol_grad) = self.compute_loss_and_gradients(
-                sequence,
-                &material_params,
-                &evolution_params,
-            );
+            let (loss, mat_grad, evol_grad) =
+                self.compute_loss_and_gradients(sequence, &material_params, &evolution_params);
 
             loss_history.push(loss);
 
             // Check convergence
             if iteration > 0 && (best_loss - loss).abs() < self.config.tolerance {
-                let residuals = self.compute_residuals(sequence, &material_params, &evolution_params);
+                let residuals =
+                    self.compute_residuals(sequence, &material_params, &evolution_params);
                 return TemporalFitResult {
                     initial_params: material_params,
                     evolution_params,
@@ -488,7 +493,8 @@ impl TemporalFitter {
                 0.0, // Placeholder
             ];
             let evol_update = self.evolution_optimizer.step(&evol_grad);
-            let new_evol: Vec<f64> = evol_vec.iter()
+            let new_evol: Vec<f64> = evol_vec
+                .iter()
                 .zip(evol_update.iter())
                 .map(|(&v, &u)| v - u)
                 .collect();
@@ -526,11 +532,10 @@ impl TemporalFitter {
 
         for frame in &sequence.frames {
             // Compute evolved IOR at this time
-            let evolved_ior = self.config.evolution_model.evaluate(
-                frame.time,
-                initial_ior,
-                evolution_params,
-            );
+            let evolved_ior =
+                self.config
+                    .evolution_model
+                    .evaluate(frame.time, initial_ior, evolution_params);
 
             // Compute predicted reflectance (Fresnel at normal incidence approximation)
             let predicted_r = ((evolved_ior - 1.0) / (evolved_ior + 1.0)).powi(2);
@@ -544,10 +549,10 @@ impl TemporalFitter {
             let dr_dn = 4.0 * (evolved_ior - 1.0) / (evolved_ior + 1.0).powi(3);
 
             // Gradient w.r.t. initial IOR
-            let dn_d_initial = self.config.evolution_model.gradient_initial(
-                frame.time,
-                evolution_params,
-            );
+            let dn_d_initial = self
+                .config
+                .evolution_model
+                .gradient_initial(frame.time, evolution_params);
             if !mat_grad.is_empty() {
                 mat_grad[0] += frame.weight * residual * dr_dn * dn_d_initial;
             }
@@ -599,11 +604,10 @@ impl TemporalFitter {
         let mut residuals = Vec::with_capacity(sequence.len());
 
         for frame in &sequence.frames {
-            let evolved_ior = self.config.evolution_model.evaluate(
-                frame.time,
-                initial_ior,
-                evolution_params,
-            );
+            let evolved_ior =
+                self.config
+                    .evolution_model
+                    .evaluate(frame.time, initial_ior, evolution_params);
             let predicted_r = ((evolved_ior - 1.0) / (evolved_ior + 1.0)).powi(2);
             residuals.push(predicted_r - frame.reflectance);
         }
@@ -630,8 +634,8 @@ impl Default for TemporalFitter {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::super::differentiable::dielectric::DifferentiableDielectric;
+    use super::*;
 
     #[test]
     fn test_temporal_frame_new() {

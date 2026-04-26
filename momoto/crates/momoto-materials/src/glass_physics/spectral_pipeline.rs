@@ -75,7 +75,10 @@ pub struct SpectralSample {
 
 impl SpectralSample {
     pub fn new(wavelength_nm: f64, intensity: f64) -> Self {
-        Self { wavelength_nm, intensity }
+        Self {
+            wavelength_nm,
+            intensity,
+        }
     }
 }
 
@@ -92,8 +95,13 @@ pub struct SpectralSignal {
 impl SpectralSignal {
     /// Create from wavelengths and intensities arrays
     pub fn from_arrays(wavelengths: &[f64], intensities: &[f64]) -> Self {
-        assert_eq!(wavelengths.len(), intensities.len(), "Arrays must have same length");
-        let mut samples: Vec<_> = wavelengths.iter()
+        assert_eq!(
+            wavelengths.len(),
+            intensities.len(),
+            "Arrays must have same length"
+        );
+        let mut samples: Vec<_> = wavelengths
+            .iter()
             .zip(intensities.iter())
             .map(|(&w, &i)| SpectralSample::new(w, i))
             .collect();
@@ -116,16 +124,22 @@ impl SpectralSignal {
     pub fn d65_illuminant() -> Self {
         let wavelengths = wavelengths::default_sampling();
         // D65 SPD approximation (simplified, relative values)
-        let intensities: Vec<_> = wavelengths.iter().map(|&w| {
-            // Planck-like + atmospheric filtering approximation
-            let t = 6500.0; // Color temperature
-            let x = (1.4388e7 / (w * t)).min(50.0);
-            let planck = 1.0 / (w.powi(5) * (x.exp() - 1.0));
-            // Normalize to peak at ~1.0
-            planck * 1e20
-        }).collect();
+        let intensities: Vec<_> = wavelengths
+            .iter()
+            .map(|&w| {
+                // Planck-like + atmospheric filtering approximation
+                let t = 6500.0; // Color temperature
+                let x = (1.4388e7 / (w * t)).min(50.0);
+                let planck = 1.0 / (w.powi(5) * (x.exp() - 1.0));
+                // Normalize to peak at ~1.0
+                planck * 1e20
+            })
+            .collect();
         // Normalize
-        let max = intensities.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+        let max = intensities
+            .iter()
+            .cloned()
+            .fold(f64::NEG_INFINITY, f64::max);
         let normalized: Vec<_> = intensities.iter().map(|&i| i / max).collect();
         Self::from_arrays(&wavelengths, &normalized)
     }
@@ -186,18 +200,31 @@ impl SpectralSignal {
 
     /// Multiply by another signal (element-wise, with interpolation)
     pub fn multiply(&self, other: &SpectralSignal) -> SpectralSignal {
-        let new_samples: Vec<_> = self.samples.iter()
-            .map(|s| SpectralSample::new(s.wavelength_nm, s.intensity * other.intensity_at(s.wavelength_nm)))
+        let new_samples: Vec<_> = self
+            .samples
+            .iter()
+            .map(|s| {
+                SpectralSample::new(
+                    s.wavelength_nm,
+                    s.intensity * other.intensity_at(s.wavelength_nm),
+                )
+            })
             .collect();
-        SpectralSignal { samples: new_samples }
+        SpectralSignal {
+            samples: new_samples,
+        }
     }
 
     /// Scale by constant factor
     pub fn scale(&self, factor: f64) -> SpectralSignal {
-        let new_samples: Vec<_> = self.samples.iter()
+        let new_samples: Vec<_> = self
+            .samples
+            .iter()
             .map(|s| SpectralSample::new(s.wavelength_nm, s.intensity * factor))
             .collect();
-        SpectralSignal { samples: new_samples }
+        SpectralSignal {
+            samples: new_samples,
+        }
     }
 
     /// Convert to RGB using CIE 1931 color matching functions
@@ -220,7 +247,8 @@ impl SpectralSignal {
 
         // Normalize (approximate integration weight)
         let dw = if self.samples.len() > 1 {
-            (self.samples.last().unwrap().wavelength_nm - self.samples.first().unwrap().wavelength_nm)
+            (self.samples.last().unwrap().wavelength_nm
+                - self.samples.first().unwrap().wavelength_nm)
                 / (self.samples.len() - 1) as f64
         } else {
             10.0
@@ -260,17 +288,14 @@ fn cie_1931_cmf(wavelength_nm: f64) -> (f64, f64, f64) {
     let w = wavelength_nm;
 
     // x̄(λ) - two Gaussian peaks (red and violet)
-    let x = 1.056 * gaussian(w, 599.8, 37.9, 31.0)
-          + 0.362 * gaussian(w, 442.0, 16.0, 26.7)
-          - 0.065 * gaussian(w, 501.1, 20.4, 26.2);
+    let x = 1.056 * gaussian(w, 599.8, 37.9, 31.0) + 0.362 * gaussian(w, 442.0, 16.0, 26.7)
+        - 0.065 * gaussian(w, 501.1, 20.4, 26.2);
 
     // ȳ(λ) - luminance, single peak
-    let y = 0.821 * gaussian(w, 568.8, 46.9, 40.5)
-          + 0.286 * gaussian(w, 530.9, 16.3, 31.1);
+    let y = 0.821 * gaussian(w, 568.8, 46.9, 40.5) + 0.286 * gaussian(w, 530.9, 16.3, 31.1);
 
     // z̄(λ) - blue, single peak
-    let z = 1.217 * gaussian(w, 437.0, 11.8, 36.0)
-          + 0.681 * gaussian(w, 459.0, 26.0, 13.8);
+    let z = 1.217 * gaussian(w, 437.0, 11.8, 36.0) + 0.681 * gaussian(w, 459.0, 26.0, 13.8);
 
     (x.max(0.0), y.max(0.0), z.max(0.0))
 }
@@ -352,11 +377,11 @@ pub struct EvaluationContext {
 impl Default for EvaluationContext {
     fn default() -> Self {
         Self {
-            cos_theta: 1.0,  // Normal incidence
-            temperature_k: 293.15,  // 20°C
+            cos_theta: 1.0,        // Normal incidence
+            temperature_k: 293.15, // 20°C
             stress_mpa: [0.0; 6],
             position: (0.5, 0.5),
-            pressure_pa: 101325.0,  // 1 atm
+            pressure_pa: 101325.0, // 1 atm
             humidity: 0.5,
         }
     }
@@ -415,7 +440,11 @@ impl SpectralPipeline {
     ///
     /// # Returns
     /// Final spectral signal (NOT RGB - use .to_rgb() for that)
-    pub fn evaluate(&self, incident: &SpectralSignal, context: &EvaluationContext) -> SpectralSignal {
+    pub fn evaluate(
+        &self,
+        incident: &SpectralSignal,
+        context: &EvaluationContext,
+    ) -> SpectralSignal {
         let mut signal = incident.clone();
         for stage in &self.stages {
             signal = stage.process(&signal, context);
@@ -451,12 +480,16 @@ impl SpectralPipeline {
     }
 
     /// Verify energy conservation across all stages
-    pub fn verify_energy_conservation(&self, incident: &SpectralSignal, context: &EvaluationContext) -> bool {
+    pub fn verify_energy_conservation(
+        &self,
+        incident: &SpectralSignal,
+        context: &EvaluationContext,
+    ) -> bool {
         let intermediates = self.evaluate_with_intermediates(incident, context);
 
         let incident_energy = incident.total_energy();
         if incident_energy == 0.0 {
-            return true;  // No energy to conserve
+            return true; // No energy to conserve
         }
 
         for (i, (name, signal)) in intermediates.iter().enumerate().skip(1) {
@@ -465,7 +498,10 @@ impl SpectralPipeline {
                 let energy = signal.total_energy();
                 // Allow 1% tolerance for numerical errors
                 if energy > incident_energy * 1.01 {
-                    eprintln!("Energy violation at stage '{}': {} > {}", name, energy, incident_energy);
+                    eprintln!(
+                        "Energy violation at stage '{}': {} > {}",
+                        name, energy, incident_energy
+                    );
                     return false;
                 }
             }
@@ -496,12 +532,16 @@ pub struct ThinFilmStage {
 
 impl ThinFilmStage {
     pub fn new(n_film: f64, thickness_nm: f64, n_substrate: f64) -> Self {
-        Self { n_film, thickness_nm, n_substrate }
+        Self {
+            n_film,
+            thickness_nm,
+            n_substrate,
+        }
     }
 
     /// Calculate reflectance at a single wavelength
     fn reflectance_at(&self, wavelength_nm: f64, cos_theta: f64) -> f64 {
-        let n1 = 1.0;  // Air
+        let n1 = 1.0; // Air
         let n2 = self.n_film;
         let n3 = self.n_substrate;
         let d = self.thickness_nm;
@@ -510,7 +550,7 @@ impl ThinFilmStage {
         let sin_theta1 = (1.0 - cos_theta * cos_theta).sqrt();
         let sin_theta2 = sin_theta1 / n2;
         if sin_theta2 >= 1.0 {
-            return 1.0;  // Total internal reflection
+            return 1.0; // Total internal reflection
         }
         let cos_theta2 = (1.0 - sin_theta2 * sin_theta2).sqrt();
 
@@ -531,13 +571,17 @@ impl ThinFilmStage {
 
 impl SpectralStage for ThinFilmStage {
     fn process(&self, input: &SpectralSignal, context: &EvaluationContext) -> SpectralSignal {
-        let new_samples: Vec<_> = input.samples().iter()
+        let new_samples: Vec<_> = input
+            .samples()
+            .iter()
             .map(|s| {
                 let r = self.reflectance_at(s.wavelength_nm, context.cos_theta);
                 SpectralSample::new(s.wavelength_nm, s.intensity * r)
             })
             .collect();
-        SpectralSignal { samples: new_samples }
+        SpectralSignal {
+            samples: new_samples,
+        }
     }
 
     fn name(&self) -> &str {
@@ -557,7 +601,9 @@ pub struct DispersionStage {
 
 impl DispersionStage {
     pub fn new(a: f64, b: f64, c: f64) -> Self {
-        Self { cauchy_coeffs: [a, b, c] }
+        Self {
+            cauchy_coeffs: [a, b, c],
+        }
     }
 
     /// Crown glass preset
@@ -580,12 +626,12 @@ impl DispersionStage {
 
     /// Calculate Fresnel reflectance for dielectric
     fn fresnel_dielectric(&self, n: f64, cos_theta: f64) -> f64 {
-        let n1 = 1.0;  // Air
+        let n1 = 1.0; // Air
         let sin_theta1 = (1.0 - cos_theta * cos_theta).sqrt();
         let sin_theta2 = n1 * sin_theta1 / n;
 
         if sin_theta2 >= 1.0 {
-            return 1.0;  // TIR
+            return 1.0; // TIR
         }
 
         let cos_theta2 = (1.0 - sin_theta2 * sin_theta2).sqrt();
@@ -600,14 +646,18 @@ impl DispersionStage {
 
 impl SpectralStage for DispersionStage {
     fn process(&self, input: &SpectralSignal, context: &EvaluationContext) -> SpectralSignal {
-        let new_samples: Vec<_> = input.samples().iter()
+        let new_samples: Vec<_> = input
+            .samples()
+            .iter()
             .map(|s| {
                 let n = self.n_at(s.wavelength_nm);
                 let r = self.fresnel_dielectric(n, context.cos_theta);
                 SpectralSample::new(s.wavelength_nm, s.intensity * r)
             })
             .collect();
-        SpectralSignal { samples: new_samples }
+        SpectralSignal {
+            samples: new_samples,
+        }
     }
 
     fn name(&self) -> &str {
@@ -631,23 +681,27 @@ pub struct MieScatteringStage {
 
 impl MieScatteringStage {
     pub fn new(radius_um: f64, n_particle: f64, n_medium: f64) -> Self {
-        Self { radius_um, n_particle, n_medium }
+        Self {
+            radius_um,
+            n_particle,
+            n_medium,
+        }
     }
 
     /// Fog preset
     pub fn fog() -> Self {
-        Self::new(5.0, 1.33, 1.0)  // Water droplets in air
+        Self::new(5.0, 1.33, 1.0) // Water droplets in air
     }
 
     /// Milk preset
     pub fn milk() -> Self {
-        Self::new(0.5, 1.46, 1.33)  // Fat globules in water
+        Self::new(0.5, 1.46, 1.33) // Fat globules in water
     }
 
     /// Calculate scattering efficiency (simplified Mie)
     fn scatter_efficiency(&self, wavelength_nm: f64, cos_theta: f64) -> f64 {
-        let x = 2.0 * PI * self.radius_um * 1000.0 / wavelength_nm;  // Size parameter
-        let m = self.n_particle / self.n_medium;  // Relative IOR
+        let x = 2.0 * PI * self.radius_um * 1000.0 / wavelength_nm; // Size parameter
+        let m = self.n_particle / self.n_medium; // Relative IOR
 
         if x < 0.3 {
             // Rayleigh regime
@@ -658,9 +712,9 @@ impl MieScatteringStage {
             q_sca * p_theta
         } else {
             // Simplified Mie (Henyey-Greenstein approximation)
-            let g = 0.85_f64.min(0.1 * x.sqrt());  // Asymmetry parameter
+            let g = 0.85_f64.min(0.1 * x.sqrt()); // Asymmetry parameter
             let hg = (1.0 - g * g) / (1.0 + g * g - 2.0 * g * cos_theta).powf(1.5);
-            let q_sca = 2.0 * (1.0 - (-0.1 * x).exp());  // Extinction efficiency
+            let q_sca = 2.0 * (1.0 - (-0.1 * x).exp()); // Extinction efficiency
             q_sca * hg / (4.0 * PI)
         }
     }
@@ -668,14 +722,18 @@ impl MieScatteringStage {
 
 impl SpectralStage for MieScatteringStage {
     fn process(&self, input: &SpectralSignal, context: &EvaluationContext) -> SpectralSignal {
-        let new_samples: Vec<_> = input.samples().iter()
+        let new_samples: Vec<_> = input
+            .samples()
+            .iter()
             .map(|s| {
                 let scatter = self.scatter_efficiency(s.wavelength_nm, context.cos_theta);
                 // Scattering reduces forward intensity
                 SpectralSample::new(s.wavelength_nm, s.intensity * (1.0 - scatter.min(1.0)))
             })
             .collect();
-        SpectralSignal { samples: new_samples }
+        SpectralSignal {
+            samples: new_samples,
+        }
     }
 
     fn name(&self) -> &str {
@@ -683,7 +741,7 @@ impl SpectralStage for MieScatteringStage {
     }
 
     fn conserves_energy(&self) -> bool {
-        false  // Scattering redirects energy, doesn't conserve in forward direction
+        false // Scattering redirects energy, doesn't conserve in forward direction
     }
 }
 
@@ -712,17 +770,17 @@ impl ThermoOpticStage {
             dn_dt,
             thickness_nm,
             alpha_thermal,
-            t_ref: 293.15,  // 20°C
+            t_ref: 293.15, // 20°C
         }
     }
 
     /// Glass coating preset
     pub fn glass_coating(thickness_nm: f64) -> Self {
         Self::new(
-            1.52,      // BK7-like
-            1.0e-5,    // Typical glass dn/dT
+            1.52,   // BK7-like
+            1.0e-5, // Typical glass dn/dT
             thickness_nm,
-            7.0e-6,    // Glass thermal expansion
+            7.0e-6, // Glass thermal expansion
         )
     }
 
@@ -754,19 +812,24 @@ impl ThermoOpticStage {
 
         // Single surface reflectance modified by interference
         let base_r = r12 * r12;
-        base_r * (1.0 + 0.5 * delta.cos())  // Simplified interference term
+        base_r * (1.0 + 0.5 * delta.cos()) // Simplified interference term
     }
 }
 
 impl SpectralStage for ThermoOpticStage {
     fn process(&self, input: &SpectralSignal, context: &EvaluationContext) -> SpectralSignal {
-        let new_samples: Vec<_> = input.samples().iter()
+        let new_samples: Vec<_> = input
+            .samples()
+            .iter()
             .map(|s| {
-                let r = self.reflectance_at(s.wavelength_nm, context.cos_theta, context.temperature_k);
+                let r =
+                    self.reflectance_at(s.wavelength_nm, context.cos_theta, context.temperature_k);
                 SpectralSample::new(s.wavelength_nm, s.intensity * r.clamp(0.0, 1.0))
             })
             .collect();
-        SpectralSignal { samples: new_samples }
+        SpectralSignal {
+            samples: new_samples,
+        }
     }
 
     fn name(&self) -> &str {
@@ -792,27 +855,27 @@ impl MetalReflectanceStage {
     /// Gold preset (Johnson & Christy data)
     pub fn gold() -> Self {
         Self::new([
-            (0.18, 3.00),   // Red (650nm)
-            (0.42, 2.40),   // Green (550nm)
-            (1.47, 1.95),   // Blue (450nm)
+            (0.18, 3.00), // Red (650nm)
+            (0.42, 2.40), // Green (550nm)
+            (1.47, 1.95), // Blue (450nm)
         ])
     }
 
     /// Silver preset
     pub fn silver() -> Self {
         Self::new([
-            (0.15, 4.00),   // Red
-            (0.13, 3.50),   // Green
-            (0.14, 2.50),   // Blue
+            (0.15, 4.00), // Red
+            (0.13, 3.50), // Green
+            (0.14, 2.50), // Blue
         ])
     }
 
     /// Copper preset
     pub fn copper() -> Self {
         Self::new([
-            (0.21, 4.00),   // Red
-            (0.95, 2.60),   // Green
-            (1.22, 2.44),   // Blue
+            (0.21, 4.00), // Red
+            (0.95, 2.60), // Green
+            (1.22, 2.44), // Blue
         ])
     }
 
@@ -860,14 +923,18 @@ impl MetalReflectanceStage {
 
 impl SpectralStage for MetalReflectanceStage {
     fn process(&self, input: &SpectralSignal, context: &EvaluationContext) -> SpectralSignal {
-        let new_samples: Vec<_> = input.samples().iter()
+        let new_samples: Vec<_> = input
+            .samples()
+            .iter()
             .map(|s| {
                 let (n, k) = self.nk_at(s.wavelength_nm);
                 let r = self.fresnel_conductor(n, k, context.cos_theta);
                 SpectralSample::new(s.wavelength_nm, s.intensity * r)
             })
             .collect();
-        SpectralSignal { samples: new_samples }
+        SpectralSignal {
+            samples: new_samples,
+        }
     }
 
     fn name(&self) -> &str {
@@ -886,11 +953,15 @@ pub struct PipelineBuilder {
 
 impl PipelineBuilder {
     pub fn new() -> Self {
-        Self { pipeline: SpectralPipeline::new() }
+        Self {
+            pipeline: SpectralPipeline::new(),
+        }
     }
 
     pub fn with_thin_film(mut self, n_film: f64, thickness_nm: f64, n_substrate: f64) -> Self {
-        self.pipeline = self.pipeline.add_stage(ThinFilmStage::new(n_film, thickness_nm, n_substrate));
+        self.pipeline =
+            self.pipeline
+                .add_stage(ThinFilmStage::new(n_film, thickness_nm, n_substrate));
         self
     }
 
@@ -905,7 +976,9 @@ impl PipelineBuilder {
     }
 
     pub fn with_mie_scattering(mut self, radius_um: f64, n_particle: f64, n_medium: f64) -> Self {
-        self.pipeline = self.pipeline.add_stage(MieScatteringStage::new(radius_um, n_particle, n_medium));
+        self.pipeline = self
+            .pipeline
+            .add_stage(MieScatteringStage::new(radius_um, n_particle, n_medium));
         self
     }
 
@@ -914,8 +987,16 @@ impl PipelineBuilder {
         self
     }
 
-    pub fn with_thermo_optic(mut self, n_base: f64, dn_dt: f64, thickness_nm: f64, alpha: f64) -> Self {
-        self.pipeline = self.pipeline.add_stage(ThermoOpticStage::new(n_base, dn_dt, thickness_nm, alpha));
+    pub fn with_thermo_optic(
+        mut self,
+        n_base: f64,
+        dn_dt: f64,
+        thickness_nm: f64,
+        alpha: f64,
+    ) -> Self {
+        self.pipeline =
+            self.pipeline
+                .add_stage(ThermoOpticStage::new(n_base, dn_dt, thickness_nm, alpha));
         self
     }
 
@@ -1064,7 +1145,7 @@ mod tests {
 
         let intermediates = pipeline.evaluate_with_intermediates(&incident, &context);
 
-        assert_eq!(intermediates.len(), 3);  // Incident + 2 stages
+        assert_eq!(intermediates.len(), 3); // Incident + 2 stages
         assert_eq!(intermediates[0].0, "Incident");
         assert_eq!(intermediates[1].0, "Thin Film");
         assert_eq!(intermediates[2].0, "Metal Reflectance");
@@ -1072,9 +1153,7 @@ mod tests {
 
     #[test]
     fn test_metal_gold_color() {
-        let pipeline = PipelineBuilder::new()
-            .with_gold()
-            .build();
+        let pipeline = PipelineBuilder::new().with_gold().build();
 
         // Use uniform white light instead of D65 for simpler test
         let incident = SpectralSignal::uniform_default(1.0);
@@ -1087,7 +1166,12 @@ mod tests {
         let r_650 = output.intensity_at(650.0);
         let b_450 = output.intensity_at(450.0);
 
-        assert!(r_650 > b_450, "Gold should reflect more red (650nm) than blue (450nm): R={} B={}", r_650, b_450);
+        assert!(
+            r_650 > b_450,
+            "Gold should reflect more red (650nm) than blue (450nm): R={} B={}",
+            r_650,
+            b_450
+        );
     }
 
     #[test]
@@ -1108,14 +1192,15 @@ mod tests {
         let cold_energy = cold_output.total_energy();
         let hot_energy = hot_output.total_energy();
 
-        assert!((cold_energy - hot_energy).abs() > 0.001, "Temperature should affect output");
+        assert!(
+            (cold_energy - hot_energy).abs() > 0.001,
+            "Temperature should affect output"
+        );
     }
 
     #[test]
     fn test_angle_affects_output() {
-        let pipeline = PipelineBuilder::new()
-            .with_gold()
-            .build();
+        let pipeline = PipelineBuilder::new().with_gold().build();
 
         let incident = SpectralSignal::uniform_default(1.0);
 
@@ -1129,6 +1214,9 @@ mod tests {
         let grazing_energy = grazing_output.total_energy();
 
         // Grazing angle should have higher reflectance (Fresnel)
-        assert!(grazing_energy > normal_energy, "Grazing angle should increase reflectance");
+        assert!(
+            grazing_energy > normal_energy,
+            "Grazing angle should increase reflectance"
+        );
     }
 }

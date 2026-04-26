@@ -260,10 +260,16 @@ impl LBFGSOptimizer {
     pub fn update(&mut self, params: &[f64], gradient: &[f64]) {
         if let (Some(prev_p), Some(prev_g)) = (&self.prev_params, &self.prev_gradient) {
             // Compute differences
-            let s: Vec<f64> = params.iter().zip(prev_p.iter())
-                .map(|(&p, &pp)| p - pp).collect();
-            let y: Vec<f64> = gradient.iter().zip(prev_g.iter())
-                .map(|(&g, &pg)| g - pg).collect();
+            let s: Vec<f64> = params
+                .iter()
+                .zip(prev_p.iter())
+                .map(|(&p, &pp)| p - pp)
+                .collect();
+            let y: Vec<f64> = gradient
+                .iter()
+                .zip(prev_g.iter())
+                .map(|(&g, &pg)| g - pg)
+                .collect();
 
             // Compute ρ = 1 / (y · s)
             let ys: f64 = y.iter().zip(s.iter()).map(|(&yi, &si)| yi * si).sum();
@@ -357,7 +363,10 @@ impl DifferentiableOptimizer for LBFGSOptimizer {
         let direction = self.compute_direction(gradient);
 
         // Scale by learning rate
-        direction.iter().map(|&d| self.config.learning_rate * d).collect()
+        direction
+            .iter()
+            .map(|&d| self.config.learning_rate * d)
+            .collect()
     }
 
     fn reset(&mut self) {

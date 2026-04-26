@@ -2,8 +2,8 @@
 //!
 //! Human-readable uncertainty summaries for material twins.
 
-use super::covariance::ParameterCovarianceMatrix;
 use super::bootstrap::ConfidenceInterval;
+use super::covariance::ParameterCovarianceMatrix;
 
 // ============================================================================
 // CONFIDENCE LEVEL
@@ -73,9 +73,16 @@ impl Default for ConfidenceLevel {
 #[derive(Debug, Clone)]
 pub enum ConfidenceWarning {
     /// Insufficient data for reliable estimation.
-    InsufficientData { n_observations: usize, minimum: usize },
+    InsufficientData {
+        n_observations: usize,
+        minimum: usize,
+    },
     /// High parameter correlation.
-    HighCorrelation { param_a: String, param_b: String, correlation: f64 },
+    HighCorrelation {
+        param_a: String,
+        param_b: String,
+        correlation: f64,
+    },
     /// Wide confidence interval (high uncertainty).
     WideInterval { param: String, relative_width: f64 },
     /// Covariance matrix ill-conditioned.
@@ -95,10 +102,18 @@ impl ConfidenceWarning {
             ConfidenceWarning::InsufficientData { .. } => 3,
             ConfidenceWarning::NonIdentifiable { .. } => 3,
             ConfidenceWarning::HighCorrelation { correlation, .. } => {
-                if correlation.abs() > 0.99 { 3 } else { 2 }
+                if correlation.abs() > 0.99 {
+                    3
+                } else {
+                    2
+                }
             }
             ConfidenceWarning::WideInterval { relative_width, .. } => {
-                if *relative_width > 1.0 { 3 } else { 2 }
+                if *relative_width > 1.0 {
+                    3
+                } else {
+                    2
+                }
             }
             ConfidenceWarning::IllConditioned { .. } => 2,
             ConfidenceWarning::AtBoundary { .. } => 1,
@@ -109,17 +124,37 @@ impl ConfidenceWarning {
     /// Get warning message.
     pub fn message(&self) -> String {
         match self {
-            ConfidenceWarning::InsufficientData { n_observations, minimum } => {
+            ConfidenceWarning::InsufficientData {
+                n_observations,
+                minimum,
+            } => {
                 format!("Only {} observations (need {})", n_observations, minimum)
             }
-            ConfidenceWarning::HighCorrelation { param_a, param_b, correlation } => {
-                format!("{} and {} are highly correlated (r={:.3})", param_a, param_b, correlation)
+            ConfidenceWarning::HighCorrelation {
+                param_a,
+                param_b,
+                correlation,
+            } => {
+                format!(
+                    "{} and {} are highly correlated (r={:.3})",
+                    param_a, param_b, correlation
+                )
             }
-            ConfidenceWarning::WideInterval { param, relative_width } => {
-                format!("{} has wide uncertainty ({:.0}% of estimate)", param, relative_width * 100.0)
+            ConfidenceWarning::WideInterval {
+                param,
+                relative_width,
+            } => {
+                format!(
+                    "{} has wide uncertainty ({:.0}% of estimate)",
+                    param,
+                    relative_width * 100.0
+                )
             }
             ConfidenceWarning::IllConditioned { condition_number } => {
-                format!("Covariance matrix is ill-conditioned (κ={:.2e})", condition_number)
+                format!(
+                    "Covariance matrix is ill-conditioned (κ={:.2e})",
+                    condition_number
+                )
             }
             ConfidenceWarning::AtBoundary { param, bound } => {
                 format!("{} is at {} bound", param, bound)
@@ -213,7 +248,11 @@ impl ParameterUncertainty {
             self.name,
             self.estimate,
             self.std_error,
-            if self.is_well_determined() { "OK" } else { "uncertain" }
+            if self.is_well_determined() {
+                "OK"
+            } else {
+                "uncertain"
+            }
         )
     }
 }
@@ -269,12 +308,8 @@ impl TwinConfidenceReport {
         // Build parameter uncertainties
         let mut parameters = Vec::with_capacity(n);
         for i in 0..n {
-            let mut param = ParameterUncertainty::new(
-                &param_names[i],
-                estimates[i],
-                standard_errors[i],
-                level,
-            );
+            let mut param =
+                ParameterUncertainty::new(&param_names[i], estimates[i], standard_errors[i], level);
 
             // Add correlations
             let corrs: Vec<(String, f64)> = (0..n)
@@ -337,7 +372,10 @@ impl TwinConfidenceReport {
     }
 
     /// Compute overall confidence score.
-    fn compute_overall_confidence(params: &[ParameterUncertainty], warnings: &[ConfidenceWarning]) -> f64 {
+    fn compute_overall_confidence(
+        params: &[ParameterUncertainty],
+        warnings: &[ConfidenceWarning],
+    ) -> f64 {
         // Start with perfect confidence
         let mut confidence: f64 = 1.0;
 
@@ -380,7 +418,10 @@ impl TwinConfidenceReport {
 
     /// Get number of well-determined parameters.
     pub fn n_well_determined(&self) -> usize {
-        self.parameters.iter().filter(|p| p.is_well_determined()).count()
+        self.parameters
+            .iter()
+            .filter(|p| p.is_well_determined())
+            .count()
     }
 
     /// Get number of critical warnings.
@@ -401,11 +442,21 @@ impl TwinConfidenceReport {
         s.push_str("║              MATERIAL TWIN CONFIDENCE REPORT               ║\n");
         s.push_str("╠════════════════════════════════════════════════════════════╣\n");
 
-        s.push_str(&format!("║ Confidence Level: {:>40} ║\n", self.level.display()));
-        s.push_str(&format!("║ Overall Confidence: {:>38.1}% ║\n", self.overall_confidence * 100.0));
+        s.push_str(&format!(
+            "║ Confidence Level: {:>40} ║\n",
+            self.level.display()
+        ));
+        s.push_str(&format!(
+            "║ Overall Confidence: {:>38.1}% ║\n",
+            self.overall_confidence * 100.0
+        ));
         s.push_str(&format!(
             "║ Parameters: {:>46} ║\n",
-            format!("{}/{} well-determined", self.n_well_determined(), self.parameters.len())
+            format!(
+                "{}/{} well-determined",
+                self.n_well_determined(),
+                self.parameters.len()
+            )
         ));
 
         s.push_str("╠════════════════════════════════════════════════════════════╣\n");
@@ -413,7 +464,11 @@ impl TwinConfidenceReport {
         s.push_str("╟────────────────────────────────────────────────────────────╢\n");
 
         for param in &self.parameters {
-            let status = if param.is_well_determined() { "✓" } else { "?" };
+            let status = if param.is_well_determined() {
+                "✓"
+            } else {
+                "?"
+            };
             s.push_str(&format!(
                 "║ {} {}: {:>10.4} ± {:>8.4} {:>18} ║\n",
                 status,
@@ -463,7 +518,12 @@ impl std::fmt::Display for TwinConfidenceReport {
 
 /// Format uncertainty as string.
 pub fn format_uncertainty(estimate: f64, std_error: f64, decimals: usize) -> String {
-    format!("{:.prec$} ± {:.prec$}", estimate, std_error, prec = decimals)
+    format!(
+        "{:.prec$} ± {:.prec$}",
+        estimate,
+        std_error,
+        prec = decimals
+    )
 }
 
 // ============================================================================
@@ -483,10 +543,16 @@ mod tests {
 
     #[test]
     fn test_confidence_warning_severity() {
-        let critical = ConfidenceWarning::InsufficientData { n_observations: 5, minimum: 10 };
+        let critical = ConfidenceWarning::InsufficientData {
+            n_observations: 5,
+            minimum: 10,
+        };
         assert_eq!(critical.severity(), 3);
 
-        let info = ConfidenceWarning::AtBoundary { param: "ior".to_string(), bound: "lower".to_string() };
+        let info = ConfidenceWarning::AtBoundary {
+            param: "ior".to_string(),
+            bound: "lower".to_string(),
+        };
         assert_eq!(info.severity(), 1);
     }
 
@@ -509,8 +575,11 @@ mod tests {
 
     #[test]
     fn test_twin_confidence_report() {
-        let cov = ParameterCovarianceMatrix::diagonal(&[0.01, 0.04, 0.09])
-            .with_names(vec!["ior".to_string(), "roughness".to_string(), "k".to_string()]);
+        let cov = ParameterCovarianceMatrix::diagonal(&[0.01, 0.04, 0.09]).with_names(vec![
+            "ior".to_string(),
+            "roughness".to_string(),
+            "k".to_string(),
+        ]);
 
         let estimates = vec![1.5, 0.1, 0.0];
         let report = TwinConfidenceReport::from_covariance(&cov, &estimates, ConfidenceLevel::P95);
@@ -530,7 +599,10 @@ mod tests {
 
         let report = TwinConfidenceReport::from_covariance(&cov, &[1.0, 1.0], ConfidenceLevel::P95);
 
-        assert!(report.warnings.iter().any(|w| matches!(w, ConfidenceWarning::HighCorrelation { .. })));
+        assert!(report
+            .warnings
+            .iter()
+            .any(|w| matches!(w, ConfidenceWarning::HighCorrelation { .. })));
     }
 
     #[test]
@@ -547,7 +619,10 @@ mod tests {
         let report = TwinConfidenceReport::from_covariance(&cov, &[1.0], ConfidenceLevel::P95)
             .with_observations(5);
 
-        assert!(report.warnings.iter().any(|w| matches!(w, ConfidenceWarning::InsufficientData { .. })));
+        assert!(report
+            .warnings
+            .iter()
+            .any(|w| matches!(w, ConfidenceWarning::InsufficientData { .. })));
         assert!(!report.is_acceptable());
     }
 

@@ -41,35 +41,32 @@
 //! println!("Recovered IOR: {}", result.params.ior);
 //! ```
 
-pub mod optimizer;
 pub mod bounds;
+pub mod optimizer;
 pub mod solver;
 pub mod temporal_fitting;
 
 // Re-exports
 pub use optimizer::{
-    DifferentiableOptimizer, AdamOptimizer, LBFGSOptimizer,
-    AdamConfig, LBFGSConfig, OptimizerState,
+    AdamConfig, AdamOptimizer, DifferentiableOptimizer, LBFGSConfig, LBFGSOptimizer, OptimizerState,
 };
 
-pub use bounds::{
-    BoundsEnforcer, BoundsConfig, ProjectionMethod,
-};
+pub use bounds::{BoundsConfig, BoundsEnforcer, ProjectionMethod};
 
 pub use solver::{
-    InverseMaterialSolver, InverseSolverConfig, InverseResult,
-    ReferenceData, ReferenceObservation, LossFunction, ConvergenceReason,
-    recover_ior_from_normal_reflectance, recover_roughness_from_glossiness,
+    recover_ior_from_normal_reflectance, recover_roughness_from_glossiness, ConvergenceReason,
+    InverseMaterialSolver, InverseResult, InverseSolverConfig, LossFunction, ReferenceData,
+    ReferenceObservation,
 };
 
 pub use temporal_fitting::{
-    TemporalFitter, TemporalFitterConfig, TemporalSequence, TemporalFitResult,
+    TemporalFitResult, TemporalFitter, TemporalFitterConfig, TemporalSequence,
 };
 
 /// Prelude for convenient imports.
 pub mod prelude {
-    pub use super::optimizer::{DifferentiableOptimizer, AdamOptimizer, LBFGSOptimizer};
-    pub use super::solver::{InverseMaterialSolver, ReferenceData, InverseResult};
+    pub use super::optimizer::{AdamOptimizer, DifferentiableOptimizer, LBFGSOptimizer};
+    pub use super::solver::{InverseMaterialSolver, InverseResult, ReferenceData};
     pub use super::temporal_fitting::{TemporalFitter, TemporalSequence};
 }
 

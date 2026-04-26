@@ -8,8 +8,8 @@
 //! These presets demonstrate the improved physics models and
 //! serve as validation test cases.
 
-use super::dispersion::{CauchyDispersion, SellmeierDispersion, DispersionModel};
-use super::scattering::{ScatteringParams, presets as scatter_presets};
+use super::dispersion::{CauchyDispersion, DispersionModel, SellmeierDispersion};
+use super::scattering::{presets as scatter_presets, ScatteringParams};
 
 // ============================================================================
 // ENHANCED GLASS MATERIAL
@@ -93,7 +93,8 @@ impl EnhancedGlassMaterial {
 
     /// Get scattering radius in mm
     pub fn scattering_radius(&self) -> f64 {
-        self.scattering.scattering_radius_mm(self.roughness, self.thickness)
+        self.scattering
+            .scattering_radius_mm(self.roughness, self.thickness)
     }
 
     /// Builder pattern methods
@@ -166,7 +167,7 @@ pub fn flint_glass() -> EnhancedGlassMaterial {
         absorption: 0.02,
         dispersion: DispersionModel::Cauchy(CauchyDispersion::flint_glass()),
         scattering: ScatteringParams::forward(0.0),
-        quality_hint: QualityTier::High,  // Chromatic effects worth showing
+        quality_hint: QualityTier::High, // Chromatic effects worth showing
     }
 }
 
@@ -403,10 +404,26 @@ mod tests {
         for preset in all_presets() {
             assert!(preset.ior > 1.0, "{} IOR should be > 1", preset.name);
             assert!(preset.ior < 3.0, "{} IOR should be < 3", preset.name);
-            assert!(preset.roughness >= 0.0, "{} roughness should be >= 0", preset.name);
-            assert!(preset.roughness <= 1.0, "{} roughness should be <= 1", preset.name);
-            assert!(preset.thickness > 0.0, "{} thickness should be > 0", preset.name);
-            assert!(preset.absorption >= 0.0, "{} absorption should be >= 0", preset.name);
+            assert!(
+                preset.roughness >= 0.0,
+                "{} roughness should be >= 0",
+                preset.name
+            );
+            assert!(
+                preset.roughness <= 1.0,
+                "{} roughness should be <= 1",
+                preset.name
+            );
+            assert!(
+                preset.thickness > 0.0,
+                "{} thickness should be > 0",
+                preset.name
+            );
+            assert!(
+                preset.absorption >= 0.0,
+                "{} absorption should be >= 0",
+                preset.name
+            );
         }
     }
 

@@ -3,7 +3,9 @@
 //! Forward and inverse uncertainty propagation for metrological measurements.
 //! Implements GUM-compliant uncertainty analysis methods.
 
-use super::measurement::{Measurement, MeasurementId, MeasurementQuality, MeasurementSource, Uncertainty};
+use super::measurement::{
+    Measurement, MeasurementId, MeasurementQuality, MeasurementSource, Uncertainty,
+};
 use super::units::Unit;
 
 // ============================================================================
@@ -156,10 +158,7 @@ impl UncertaintyPropagator {
         let n = inputs.len();
 
         // Get standard uncertainties
-        let std_uncertainties: Vec<f64> = inputs
-            .iter()
-            .map(|m| m.uncertainty.standard())
-            .collect();
+        let std_uncertainties: Vec<f64> = inputs.iter().map(|m| m.uncertainty.standard()).collect();
 
         // Combined variance: sum(cᵢ² * uᵢ²) + 2 * sum(cᵢ * cⱼ * r_ij * uᵢ * uⱼ)
         let mut variance = 0.0;
@@ -174,8 +173,12 @@ impl UncertaintyPropagator {
             for i in 0..n {
                 for j in (i + 1)..n {
                     let r_ij = corr[i][j];
-                    variance +=
-                        2.0 * jacobian[i] * jacobian[j] * r_ij * std_uncertainties[i] * std_uncertainties[j];
+                    variance += 2.0
+                        * jacobian[i]
+                        * jacobian[j]
+                        * r_ij
+                        * std_uncertainties[i]
+                        * std_uncertainties[j];
                 }
             }
         }
@@ -309,11 +312,7 @@ impl UncertaintyPropagator {
     /// Inverse propagation: estimate input uncertainties from output.
     ///
     /// Given output uncertainty and Jacobian, estimate required input uncertainties.
-    pub fn propagate_inverse(
-        &self,
-        output: &Measurement<f64>,
-        jacobian: &[f64],
-    ) -> Vec<f64> {
+    pub fn propagate_inverse(&self, output: &Measurement<f64>, jacobian: &[f64]) -> Vec<f64> {
         let output_var = output.uncertainty.standard().powi(2);
         let n = jacobian.len();
 
@@ -354,11 +353,7 @@ pub struct SensitivityAnalysis {
 
 impl SensitivityAnalysis {
     /// Perform sensitivity analysis.
-    pub fn analyze(
-        inputs: &[Measurement<f64>],
-        input_names: &[&str],
-        jacobian: &[f64],
-    ) -> Self {
+    pub fn analyze(inputs: &[Measurement<f64>], input_names: &[&str], jacobian: &[f64]) -> Self {
         let n = inputs.len();
         assert_eq!(n, input_names.len());
         assert_eq!(n, jacobian.len());
@@ -374,7 +369,13 @@ impl SensitivityAnalysis {
 
         let percentages: Vec<f64> = contributions
             .iter()
-            .map(|&c| if total_var > 0.0 { c / total_var * 100.0 } else { 0.0 })
+            .map(|&c| {
+                if total_var > 0.0 {
+                    c / total_var * 100.0
+                } else {
+                    0.0
+                }
+            })
             .collect();
 
         Self {
@@ -506,10 +507,7 @@ mod tests {
 
     #[test]
     fn test_linear_propagation_sum() {
-        let inputs = vec![
-            make_measurement(10.0, 0.1),
-            make_measurement(20.0, 0.2),
-        ];
+        let inputs = vec![make_measurement(10.0, 0.1), make_measurement(20.0, 0.2)];
         let jacobian = vec![1.0, 1.0]; // y = x1 + x2
 
         let prop = UncertaintyPropagator::linear();
@@ -523,10 +521,7 @@ mod tests {
 
     #[test]
     fn test_linear_propagation_weighted() {
-        let inputs = vec![
-            make_measurement(10.0, 0.1),
-            make_measurement(20.0, 0.1),
-        ];
+        let inputs = vec![make_measurement(10.0, 0.1), make_measurement(20.0, 0.1)];
         let jacobian = vec![2.0, 3.0]; // y = 2*x1 + 3*x2
 
         let prop = UncertaintyPropagator::linear();
@@ -540,10 +535,7 @@ mod tests {
 
     #[test]
     fn test_monte_carlo_propagation() {
-        let inputs = vec![
-            make_measurement(10.0, 0.1),
-            make_measurement(20.0, 0.2),
-        ];
+        let inputs = vec![make_measurement(10.0, 0.1), make_measurement(20.0, 0.2)];
         let jacobian = vec![1.0, 1.0];
 
         let prop = UncertaintyPropagator::monte_carlo(50000);
@@ -571,10 +563,7 @@ mod tests {
 
     #[test]
     fn test_sensitivity_analysis() {
-        let inputs = vec![
-            make_measurement(10.0, 0.5),
-            make_measurement(20.0, 0.1),
-        ];
+        let inputs = vec![make_measurement(10.0, 0.5), make_measurement(20.0, 0.1)];
         let names = vec!["Large uncertainty", "Small uncertainty"];
         let jacobian = vec![1.0, 1.0];
 
@@ -603,10 +592,7 @@ mod tests {
 
     #[test]
     fn test_correlated_propagation() {
-        let inputs = vec![
-            make_measurement(10.0, 0.1),
-            make_measurement(20.0, 0.1),
-        ];
+        let inputs = vec![make_measurement(10.0, 0.1), make_measurement(20.0, 0.1)];
         let jacobian = vec![1.0, 1.0];
 
         // Highly correlated
@@ -623,7 +609,9 @@ mod tests {
     #[test]
     fn test_propagation_method_name() {
         assert!(PropagationMethod::Linear.name().contains("Linear"));
-        assert!(PropagationMethod::monte_carlo().name().contains("Monte Carlo"));
+        assert!(PropagationMethod::monte_carlo()
+            .name()
+            .contains("Monte Carlo"));
     }
 
     #[test]

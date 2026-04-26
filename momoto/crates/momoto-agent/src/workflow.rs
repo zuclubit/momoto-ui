@@ -62,7 +62,10 @@ pub struct WorkflowBuilder {
 impl WorkflowBuilder {
     pub fn new(name: &str) -> Self {
         Self {
-            config: WorkflowConfig { name: name.to_string(), ..Default::default() },
+            config: WorkflowConfig {
+                name: name.to_string(),
+                ..Default::default()
+            },
             steps: Vec::new(),
         }
     }
@@ -73,7 +76,10 @@ impl WorkflowBuilder {
     }
 
     pub fn build(self) -> Workflow {
-        Workflow { config: self.config, steps: self.steps }
+        Workflow {
+            config: self.config,
+            steps: self.steps,
+        }
     }
 }
 
@@ -81,7 +87,9 @@ impl WorkflowBuilder {
 pub struct WorkflowExecutor;
 
 impl WorkflowExecutor {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
 
     pub fn execute(&self, _workflow: &Workflow, _input: WorkflowInput) -> WorkflowReport {
         WorkflowReport {
@@ -98,16 +106,26 @@ impl WorkflowExecutor {
 pub fn get_preset_workflow(name: &str) -> Option<Workflow> {
     match name {
         "accessibility_audit" => Some(Workflow {
-            config: WorkflowConfig { name: "accessibility_audit".to_string(), ..Default::default() },
-            steps: vec![
-                WorkflowStep { id: "1".to_string(), action: "validate_contrast".to_string(), params: serde_json::json!({}) },
-            ],
+            config: WorkflowConfig {
+                name: "accessibility_audit".to_string(),
+                ..Default::default()
+            },
+            steps: vec![WorkflowStep {
+                id: "1".to_string(),
+                action: "validate_contrast".to_string(),
+                params: serde_json::json!({}),
+            }],
         }),
         "palette_generation" => Some(Workflow {
-            config: WorkflowConfig { name: "palette_generation".to_string(), ..Default::default() },
-            steps: vec![
-                WorkflowStep { id: "1".to_string(), action: "generate_palette".to_string(), params: serde_json::json!({}) },
-            ],
+            config: WorkflowConfig {
+                name: "palette_generation".to_string(),
+                ..Default::default()
+            },
+            steps: vec![WorkflowStep {
+                id: "1".to_string(),
+                action: "generate_palette".to_string(),
+                params: serde_json::json!({}),
+            }],
         }),
         _ => None,
     }
@@ -115,5 +133,8 @@ pub fn get_preset_workflow(name: &str) -> Option<Workflow> {
 
 /// List all preset workflow names.
 pub fn list_preset_workflows() -> Vec<String> {
-    vec!["accessibility_audit".to_string(), "palette_generation".to_string()]
+    vec![
+        "accessibility_audit".to_string(),
+        "palette_generation".to_string(),
+    ]
 }

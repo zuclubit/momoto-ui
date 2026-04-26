@@ -8,9 +8,9 @@ use serde::{Deserialize, Serialize};
 use std::time::Instant;
 
 use momoto_core::color::Color;
-use momoto_core::space::oklch::OKLCH;
 use momoto_core::perception::ContrastMetric;
-use momoto_metrics::{WCAGMetric, APCAMetric};
+use momoto_core::space::oklch::OKLCH;
+use momoto_metrics::{APCAMetric, WCAGMetric};
 
 // ============================================================================
 // PipelineConfig
@@ -60,11 +60,11 @@ impl PipelineStage {
     /// Human-readable label used in output messages.
     pub fn label(&self) -> &'static str {
         match self {
-            Self::ColorAnalysis      => "Color Analysis",
+            Self::ColorAnalysis => "Color Analysis",
             Self::AccessibilityCheck => "Accessibility Check",
             Self::MaterialEvaluation => "Material Evaluation",
-            Self::TokenGeneration    => "Token Generation",
-            Self::Export             => "Export",
+            Self::TokenGeneration => "Token Generation",
+            Self::Export => "Export",
         }
     }
 }
@@ -93,7 +93,9 @@ pub struct PipelineResult {
 impl PipelineResult {
     /// Returns the fraction of stages that completed successfully.
     pub fn completion_ratio(&self) -> f64 {
-        if self.total_stages == 0 { return 1.0; }
+        if self.total_stages == 0 {
+            return 1.0;
+        }
         self.stages_completed as f64 / self.total_stages as f64
     }
 
@@ -162,11 +164,11 @@ impl Pipeline {
         let mut completed: u32 = 0;
 
         // Parse colors upfront — failures are logged but execution continues.
-        let parsed: Vec<Option<Color>> = colors.iter()
-            .map(|hex| Color::from_hex(hex).ok())
-            .collect();
+        let parsed: Vec<Option<Color>> =
+            colors.iter().map(|hex| Color::from_hex(hex).ok()).collect();
 
-        let valid_colors: Vec<(&str, Color)> = colors.iter()
+        let valid_colors: Vec<(&str, Color)> = colors
+            .iter()
             .zip(parsed.iter())
             .filter_map(|(hex, opt)| opt.map(|c| (*hex, c)))
             .collect();
@@ -211,17 +213,13 @@ impl Pipeline {
     // Internal stage runners
     // -------------------------------------------------------------------------
 
-    fn run_stage(
-        &self,
-        stage: &PipelineStage,
-        colors: &[(&str, Color)],
-    ) -> Result<String, String> {
+    fn run_stage(&self, stage: &PipelineStage, colors: &[(&str, Color)]) -> Result<String, String> {
         match stage {
-            PipelineStage::ColorAnalysis      => self.stage_color_analysis(colors),
+            PipelineStage::ColorAnalysis => self.stage_color_analysis(colors),
             PipelineStage::AccessibilityCheck => self.stage_accessibility(colors),
             PipelineStage::MaterialEvaluation => self.stage_material(colors),
-            PipelineStage::TokenGeneration    => self.stage_tokens(colors),
-            PipelineStage::Export             => self.stage_export(colors),
+            PipelineStage::TokenGeneration => self.stage_tokens(colors),
+            PipelineStage::Export => self.stage_export(colors),
         }
     }
 
@@ -235,8 +233,7 @@ impl Pipeline {
             let [r, g, b] = color.to_srgb8();
             lines.push(format!(
                 "  {} → sRGB({},{},{}) OKLCH(L={:.3} C={:.3} H={:.1}°)",
-                hex, r, g, b,
-                oklch.l, oklch.c, oklch.h,
+                hex, r, g, b, oklch.l, oklch.c, oklch.h,
             ));
         }
         Ok(lines.join("\n"))
@@ -255,11 +252,20 @@ impl Pipeline {
             let ratio_white = wcag_ratio(color, &white);
             let ratio_black = wcag_ratio(color, &black);
             let best_ratio = ratio_white.max(ratio_black);
-            let best_bg = if ratio_white > ratio_black { "white" } else { "black" };
-            let level = if best_ratio >= 7.0 { "AAA" }
-                        else if best_ratio >= 4.5 { "AA" }
-                        else if best_ratio >= 3.0 { "AA Large" }
-                        else { "FAIL" };
+            let best_bg = if ratio_white > ratio_black {
+                "white"
+            } else {
+                "black"
+            };
+            let level = if best_ratio >= 7.0 {
+                "AAA"
+            } else if best_ratio >= 4.5 {
+                "AA"
+            } else if best_ratio >= 3.0 {
+                "AA Large"
+            } else {
+                "FAIL"
+            };
 
             // APCA against white
             let apca_w = apca_lc(color, &white).abs();
@@ -285,9 +291,13 @@ impl Pipeline {
 
             // Heuristic material classification based on OKLCH coordinates
             let category = if c < 0.02 {
-                if l > 0.85 { "white/near-white" }
-                else if l < 0.15 { "black/near-black" }
-                else { "neutral gray" }
+                if l > 0.85 {
+                    "white/near-white"
+                } else if l < 0.15 {
+                    "black/near-black"
+                } else {
+                    "neutral gray"
+                }
             } else if l > 0.75 && c > 0.15 {
                 "vibrant / saturated"
             } else if l < 0.30 {

@@ -4,33 +4,31 @@
 
 #[cfg(test)]
 mod tests {
-    use crate::glass_physics::material_twin::{
-        TwinId, MaterialTwin, TwinBuilder, CalibrationMetadata, CalibrationQuality,
-        TwinVariant, StaticTwinData, TemporalTwinData, LayeredTwinData, MeasuredTwinData,
-        SpectralIdentity, SpectralSignature,
-    };
     use crate::glass_physics::calibration::{
-        LossWeights, LossComponents, LossAggregator,
-        ImputationStrategy, PartialDataHandler, DataQuality,
+        DataQuality, ImputationStrategy, LossAggregator, LossComponents, LossWeights,
+        PartialDataHandler,
     };
-    use crate::glass_physics::uncertainty::{
-        ParameterCovarianceMatrix, CovarianceEstimator,
-        FisherInformationMatrix,
-        BootstrapConfig, BootstrapResampler, ConfidenceInterval,
-        TwinConfidenceReport, ConfidenceWarning,
-    };
+    use crate::glass_physics::differentiable::DifferentiableDielectric;
     use crate::glass_physics::identifiability::{
-        JacobianRankAnalyzer, IdentifiabilityResult,
-        ParameterCorrelationMatrix, CorrelationAnalysis,
-        FreezingRecommendation, FreezingReason, ParameterFreezingRecommender,
-        FreezingStrategy,
-    };
-    use crate::glass_physics::twin_validation::{
-        TwinValidator, ValidationResult, ValidationIssue, IssueCategory,
-        ValidationConfig, DriftMonitor,
+        CorrelationAnalysis, FreezingReason, FreezingRecommendation, FreezingStrategy,
+        IdentifiabilityResult, JacobianRankAnalyzer, ParameterCorrelationMatrix,
+        ParameterFreezingRecommender,
     };
     use crate::glass_physics::material_fingerprint::MaterialFingerprint;
-    use crate::glass_physics::differentiable::DifferentiableDielectric;
+    use crate::glass_physics::material_twin::{
+        CalibrationMetadata, CalibrationQuality, LayeredTwinData, MaterialTwin, MeasuredTwinData,
+        SpectralIdentity, SpectralSignature, StaticTwinData, TemporalTwinData, TwinBuilder, TwinId,
+        TwinVariant,
+    };
+    use crate::glass_physics::twin_validation::{
+        DriftMonitor, IssueCategory, TwinValidator, ValidationConfig, ValidationIssue,
+        ValidationResult,
+    };
+    use crate::glass_physics::uncertainty::{
+        BootstrapConfig, BootstrapResampler, ConfidenceInterval, ConfidenceWarning,
+        CovarianceEstimator, FisherInformationMatrix, ParameterCovarianceMatrix,
+        TwinConfidenceReport,
+    };
 
     // ========================================================================
     // CATEGORY 1: MATERIAL TWIN CORE
@@ -60,9 +58,7 @@ mod tests {
     #[test]
     fn test_twin_builder_with_name() {
         let model = DifferentiableDielectric::glass();
-        let twin = TwinBuilder::new(model)
-            .with_name("Test Glass")
-            .build();
+        let twin = TwinBuilder::new(model).with_name("Test Glass").build();
         assert_eq!(twin.name, Some("Test Glass".to_string()));
     }
 
@@ -70,7 +66,13 @@ mod tests {
     fn test_twin_builder_with_calibration() {
         let model = DifferentiableDielectric::glass();
         let calibration = CalibrationMetadata::from_calibration(
-            "MERL", "gold", 100, 0.01, Some(1.5), "Adam", 500,
+            "MERL",
+            "gold",
+            100,
+            0.01,
+            Some(1.5),
+            "Adam",
+            500,
         );
         let twin = TwinBuilder::new(model)
             .with_calibration(calibration)
@@ -164,10 +166,7 @@ mod tests {
 
     #[test]
     fn test_covariance_matrix_creation() {
-        let data = vec![
-            vec![1.0, 0.5],
-            vec![0.5, 1.0],
-        ];
+        let data = vec![vec![1.0, 0.5], vec![0.5, 1.0]];
         let cov = ParameterCovarianceMatrix::from_full(&data);
         assert_eq!(cov.n, 2);
     }
@@ -202,11 +201,7 @@ mod tests {
 
     #[test]
     fn test_fisher_information_matrix() {
-        let gradients = vec![
-            vec![1.0, 0.0],
-            vec![0.0, 1.0],
-            vec![1.0, 1.0],
-        ];
+        let gradients = vec![vec![1.0, 0.0], vec![0.0, 1.0], vec![1.0, 1.0]];
         let fisher = FisherInformationMatrix::from_gradients(&gradients, 1.0);
         assert_eq!(fisher.n, 2);
     }
@@ -270,11 +265,7 @@ mod tests {
 
     #[test]
     fn test_jacobian_analyzer_full_rank() {
-        let jacobian = vec![
-            vec![1.0, 0.0],
-            vec![0.0, 1.0],
-            vec![1.0, 1.0],
-        ];
+        let jacobian = vec![vec![1.0, 0.0], vec![0.0, 1.0], vec![1.0, 1.0]];
         let analyzer = JacobianRankAnalyzer::new(jacobian);
         let result = analyzer.analyze();
         assert!(result.all_identifiable());
@@ -282,11 +273,7 @@ mod tests {
 
     #[test]
     fn test_jacobian_analyzer_rank_deficient() {
-        let jacobian = vec![
-            vec![1.0, 2.0],
-            vec![2.0, 4.0],
-            vec![3.0, 6.0],
-        ];
+        let jacobian = vec![vec![1.0, 2.0], vec![2.0, 4.0], vec![3.0, 6.0]];
         let analyzer = JacobianRankAnalyzer::new(jacobian);
         let result = analyzer.analyze();
         assert!(result.rank < 2);
@@ -334,10 +321,7 @@ mod tests {
 
     #[test]
     fn test_correlation_analysis() {
-        let data = vec![
-            vec![1.0, 0.9],
-            vec![0.9, 1.0],
-        ];
+        let data = vec![vec![1.0, 0.9], vec![0.9, 1.0]];
         let matrix = ParameterCorrelationMatrix::from_raw(data);
         let analysis = CorrelationAnalysis::from_correlation_matrix(matrix, 0.8);
         assert!(analysis.has_severe_multicollinearity());
@@ -358,8 +342,8 @@ mod tests {
 
     #[test]
     fn test_freezing_recommender() {
-        let recommender = ParameterFreezingRecommender::new(2)
-            .with_strategy(FreezingStrategy::Aggressive);
+        let recommender =
+            ParameterFreezingRecommender::new(2).with_strategy(FreezingStrategy::Aggressive);
         let result = IdentifiabilityResult {
             n_params: 2,
             rank: 1,
@@ -441,7 +425,13 @@ mod tests {
     fn test_full_twin_pipeline() {
         let model = DifferentiableDielectric::glass();
         let calibration = CalibrationMetadata::from_calibration(
-            "MERL", "glass", 1000, 0.005, Some(0.8), "Adam", 500,
+            "MERL",
+            "glass",
+            1000,
+            0.005,
+            Some(0.8),
+            "Adam",
+            500,
         );
         let twin = TwinBuilder::new(model)
             .with_name("Integration Test Glass")
@@ -492,12 +482,18 @@ mod tests {
         let material_twin = crate::glass_physics::material_twin::estimate_material_twin_memory();
         let calibration = crate::glass_physics::calibration::estimate_calibration_memory();
         let uncertainty = crate::glass_physics::uncertainty::estimate_uncertainty_memory();
-        let identifiability = crate::glass_physics::identifiability::estimate_identifiability_memory();
+        let identifiability =
+            crate::glass_physics::identifiability::estimate_identifiability_memory();
         let validation = crate::glass_physics::twin_validation::estimate_validation_memory();
 
-        let total_phase14 = material_twin + calibration + uncertainty + identifiability + validation;
+        let total_phase14 =
+            material_twin + calibration + uncertainty + identifiability + validation;
         // Phase 14 modules are lightweight; combined with all prior phases we stay under 700KB
-        assert!(total_phase14 < 700_000, "Phase 14 memory {} exceeds budget", total_phase14);
+        assert!(
+            total_phase14 < 700_000,
+            "Phase 14 memory {} exceeds budget",
+            total_phase14
+        );
     }
 
     // ========================================================================
@@ -508,7 +504,13 @@ mod tests {
     fn demo_gold_twin() {
         let model = DifferentiableDielectric::new(1.5, 0.0);
         let calibration = CalibrationMetadata::from_calibration(
-            "MERL", "gold", 10000, 0.002, Some(0.5), "Adam", 1000,
+            "MERL",
+            "gold",
+            10000,
+            0.002,
+            Some(0.5),
+            "Adam",
+            1000,
         );
         let twin = TwinBuilder::new(model)
             .with_name("Gold")
@@ -549,11 +551,7 @@ mod tests {
 
     #[test]
     fn demo_identifiability_failure() {
-        let jacobian = vec![
-            vec![1.0, 1.0],
-            vec![2.0, 2.0],
-            vec![3.0, 3.0],
-        ];
+        let jacobian = vec![vec![1.0, 1.0], vec![2.0, 2.0], vec![3.0, 3.0]];
         let analyzer = JacobianRankAnalyzer::new(jacobian).with_threshold(1e-6);
         let result = analyzer.analyze();
         assert!(result.rank < 2, "Expected rank deficiency");

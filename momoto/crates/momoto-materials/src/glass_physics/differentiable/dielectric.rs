@@ -2,11 +2,11 @@
 //!
 //! Dielectric material with analytical gradient computation.
 
-use super::traits::{
-    DifferentiableBSDF, DifferentiableResponse, ParameterGradients, ParameterBounds,
-};
+use super::super::unified_bsdf::{BSDFContext, BSDFResponse, BSDFSample, EnergyValidation, BSDF};
 use super::gradients::fresnel_schlick_gradient;
-use super::super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse, BSDFSample, EnergyValidation};
+use super::traits::{
+    DifferentiableBSDF, DifferentiableResponse, ParameterBounds, ParameterGradients,
+};
 
 // ============================================================================
 // DIFFERENTIABLE DIELECTRIC
@@ -110,7 +110,11 @@ impl BSDF for DifferentiableDielectric {
         let (fresnel, _) = fresnel_schlick_gradient(cos_theta_i, self.ior);
 
         let is_reflection = u1 < fresnel;
-        let pdf = if is_reflection { fresnel } else { 1.0 - fresnel };
+        let pdf = if is_reflection {
+            fresnel
+        } else {
+            1.0 - fresnel
+        };
 
         // Perfect specular directions
         let wo = if is_reflection {
@@ -220,8 +224,8 @@ impl DifferentiableBSDF for DifferentiableDielectric {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::super::unified_bsdf::Vector3;
+    use super::*;
 
     fn create_ctx(cos_theta: f64) -> BSDFContext {
         let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
@@ -288,11 +292,7 @@ mod tests {
 
         let verification = glass.verify_gradients(&ctx, 1e-5);
 
-        assert!(
-            verification.passed,
-            "Max error: {}",
-            verification.max_error
-        );
+        assert!(verification.passed, "Max error: {}", verification.max_error);
     }
 
     #[test]

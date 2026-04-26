@@ -33,7 +33,7 @@ impl Default for BlendConfig {
     fn default() -> Self {
         Self {
             alpha: 0.3,
-            max_gradient: 0.1,        // Max 10% change per nm
+            max_gradient: 0.1, // Max 10% change per nm
             min_alpha: 0.1,
             max_alpha: 1.0,
             adaptive: true,
@@ -139,7 +139,12 @@ impl SpectralInterpolator {
     }
 
     /// Blend two packets.
-    fn blend_packets(&self, prev: &SpectralPacket, current: &SpectralPacket, alpha: f64) -> SpectralPacket {
+    fn blend_packets(
+        &self,
+        prev: &SpectralPacket,
+        current: &SpectralPacket,
+        alpha: f64,
+    ) -> SpectralPacket {
         let mut result = current.clone();
         let max_gradient = self.config.max_gradient;
 
@@ -161,7 +166,8 @@ impl SpectralInterpolator {
                     if dw > 0.0 {
                         let prev_result = result.values[i - 1];
                         let max_change = max_gradient * dw;
-                        let limited = prev_result + (blended - prev_result).clamp(-max_change, max_change);
+                        let limited =
+                            prev_result + (blended - prev_result).clamp(-max_change, max_change);
                         result.values[i] = limited;
                     } else {
                         result.values[i] = blended;
@@ -230,7 +236,11 @@ impl SpectralInterpolator {
                 count += 1;
             }
         }
-        let avg_change = if count > 0 { total_change / count as f64 } else { 0.0 };
+        let avg_change = if count > 0 {
+            total_change / count as f64
+        } else {
+            0.0
+        };
 
         // Track accumulated error for long-term adaptation
         self.accumulated_error = self.accumulated_error * 0.99 + avg_change;
@@ -269,9 +279,7 @@ pub struct GradientLimiter {
 
 impl Default for GradientLimiter {
     fn default() -> Self {
-        Self {
-            max_gradient: 0.1,
-        }
+        Self { max_gradient: 0.1 }
     }
 }
 
@@ -426,10 +434,8 @@ impl SpectralHistory {
         }
 
         let first = &self.history[0];
-        let mut avg = SpectralPacket::from_data(
-            first.wavelengths.clone(),
-            vec![0.0; first.values.len()],
-        );
+        let mut avg =
+            SpectralPacket::from_data(first.wavelengths.clone(), vec![0.0; first.values.len()]);
 
         let count = self.len() as f64;
         for packet in &self.history {

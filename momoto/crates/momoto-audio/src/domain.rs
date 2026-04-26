@@ -41,13 +41,17 @@ impl AudioDomain {
         if LufsAnalyzer::new(sample_rate, 1).is_none() {
             return None;
         }
-        Some(Self { default_sample_rate: sample_rate })
+        Some(Self {
+            default_sample_rate: sample_rate,
+        })
     }
 
     /// Create an audio domain with 48 000 Hz default (broadcast standard).
     #[must_use]
     pub fn at_48khz() -> Self {
-        Self { default_sample_rate: 48_000 }
+        Self {
+            default_sample_rate: 48_000,
+        }
     }
 
     /// Create a LUFS analyzer for this domain's sample rate.
@@ -74,20 +78,30 @@ impl AudioDomain {
 
 impl Domain for AudioDomain {
     #[inline]
-    fn id(&self) -> DomainId { DomainId::Audio }
+    fn id(&self) -> DomainId {
+        DomainId::Audio
+    }
 
     #[inline]
-    fn name(&self) -> &'static str { "momoto-audio" }
+    fn name(&self) -> &'static str {
+        "momoto-audio"
+    }
 
     #[inline]
-    fn version(&self) -> &'static str { env!("CARGO_PKG_VERSION") }
+    fn version(&self) -> &'static str {
+        env!("CARGO_PKG_VERSION")
+    }
 
     #[inline]
-    fn is_deterministic(&self) -> bool { true }
+    fn is_deterministic(&self) -> bool {
+        true
+    }
 
     /// Maximum inplace samples: 4 096 (matches FFT plan default and scratch buffer).
     #[inline]
-    fn max_inplace_samples(&self) -> Option<usize> { Some(4_096) }
+    fn max_inplace_samples(&self) -> Option<usize> {
+        Some(4_096)
+    }
 }
 
 impl EnergyConserving for AudioDomain {

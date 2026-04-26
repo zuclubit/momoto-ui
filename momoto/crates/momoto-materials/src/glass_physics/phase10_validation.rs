@@ -10,17 +10,14 @@
 // - ML can be disabled without breaking anything
 // ============================================================================
 
-use super::neural_correction::{
-    NeuralCorrectionMLP,
-    total_neural_correction_memory,
-};
 use super::neural_constraints::{
-    ConstraintValidator, ConstraintViolationReport, total_neural_constraints_memory,
+    total_neural_constraints_memory, ConstraintValidator, ConstraintViolationReport,
 };
-use super::training_dataset::{TrainingDataset, estimate_dataset_memory};
+use super::neural_correction::{total_neural_correction_memory, NeuralCorrectionMLP};
+use super::perceptual_loss::{delta_e_2000, rgb_to_lab, Illuminant};
+use super::training_dataset::{estimate_dataset_memory, TrainingDataset};
 use super::training_pipeline::total_training_pipeline_memory;
 use super::unified_bsdf::BSDFResponse;
-use super::perceptual_loss::{rgb_to_lab, delta_e_2000, Illuminant};
 
 // ============================================================================
 // VALIDATION REPORT STRUCTURES
@@ -278,7 +275,7 @@ pub fn compute_network_stats(
 
     // Time forward passes
     let start = std::time::Instant::now();
-    let num_samples = dataset.len().min(100);  // Sample up to 100 for timing
+    let num_samples = dataset.len().min(100); // Sample up to 100 for timing
 
     for sample in dataset.samples.iter().take(num_samples) {
         let correction = network.forward(&sample.input);
@@ -371,7 +368,11 @@ pub fn generate_report(report: &Phase10ValidationReport) -> String {
     md.push_str("# Phase 10 Validation Report: Neural Correction Layers\n\n");
     md.push_str(&format!(
         "**Overall Status:** {}\n\n",
-        if report.overall_passed { "PASS" } else { "FAIL" }
+        if report.overall_passed {
+            "PASS"
+        } else {
+            "FAIL"
+        }
     ));
 
     md.push_str("---\n\n");
@@ -411,8 +412,7 @@ pub fn generate_report(report: &Phase10ValidationReport) -> String {
     ));
     md.push_str(&format!(
         "- **Imperceptible (ΔE < 1):** {} / {}\n\n",
-        report.delta_e_improvement.samples_imperceptible,
-        report.delta_e_improvement.samples_total,
+        report.delta_e_improvement.samples_imperceptible, report.delta_e_improvement.samples_total,
     ));
 
     // 3. Energy Conservation
@@ -431,7 +431,11 @@ pub fn generate_report(report: &Phase10ValidationReport) -> String {
     ));
     md.push_str(&format!(
         "- **Status:** {}\n\n",
-        if report.energy_conservation.passed { "PASS" } else { "FAIL" }
+        if report.energy_conservation.passed {
+            "PASS"
+        } else {
+            "FAIL"
+        }
     ));
 
     // 4. Network Statistics
@@ -479,7 +483,11 @@ pub fn generate_report(report: &Phase10ValidationReport) -> String {
     ));
     md.push_str(&format!(
         "Within 100KB Budget: {}\n\n",
-        if report.memory_analysis.within_100kb_budget { "YES" } else { "NO" }
+        if report.memory_analysis.within_100kb_budget {
+            "YES"
+        } else {
+            "NO"
+        }
     ));
 
     md.push_str("---\n\n");
@@ -556,7 +564,7 @@ mod tests {
 
         assert_eq!(stats.param_count, 1474);
         assert!(stats.memory_bytes < 15000);
-        assert!(stats.avg_forward_time_us < 1000.0);  // Should be < 1ms
+        assert!(stats.avg_forward_time_us < 1000.0); // Should be < 1ms
     }
 
     #[test]

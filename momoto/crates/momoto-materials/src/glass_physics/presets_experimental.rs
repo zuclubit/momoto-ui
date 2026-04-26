@@ -24,17 +24,16 @@
 //! let rgb = morpho.evaluate_rgb(0.7);
 //! ```
 
-use super::combined_effects_advanced::{
-    AdvancedCombinedMaterial,
-    DispersionModel, SizeDistribution,
-};
 use super::combined_effects::BlendMode;
+use super::combined_effects_advanced::{
+    AdvancedCombinedMaterial, DispersionModel, SizeDistribution,
+};
 use super::enhanced_presets::QualityTier;
+use super::metal_oxidation_dynamic::{
+    AlloyComposition, DynamicOxidizedMetal, Element, OxidationSimulation,
+};
 use super::thin_film_dynamic::{
     DynamicFilmLayer, DynamicThinFilmStack, HeightMap, SubstrateProperties,
-};
-use super::metal_oxidation_dynamic::{
-    DynamicOxidizedMetal, AlloyComposition, Element, OxidationSimulation,
 };
 
 // ============================================================================
@@ -56,7 +55,7 @@ use super::metal_oxidation_dynamic::{
 /// - Strong blue iridescence at normal temperature
 pub fn morpho_dynamic(temp_k: f64) -> AdvancedCombinedMaterial {
     let substrate = SubstrateProperties {
-        n: 1.56,  // Chitin
+        n: 1.56, // Chitin
         k: 0.0,
         alpha: 1e-5,
     };
@@ -66,13 +65,13 @@ pub fn morpho_dynamic(temp_k: f64) -> AdvancedCombinedMaterial {
     // Add alternating chitin/air layers (5 layers)
     for i in 0..5 {
         let (n, d) = if i % 2 == 0 {
-            (1.56, 85.0)  // Chitin layer
+            (1.56, 85.0) // Chitin layer
         } else {
-            (1.0, 95.0)   // Air gap
+            (1.0, 95.0) // Air gap
         };
 
         let mut layer = DynamicFilmLayer::new(n, d)
-            .with_dn_dt(if n > 1.0 { 1e-5 } else { 0.0 })  // Only chitin has dn/dT
+            .with_dn_dt(if n > 1.0 { 1e-5 } else { 0.0 }) // Only chitin has dn/dT
             .with_thermal_expansion(1e-5);
 
         layer.set_temperature(temp_k);
@@ -83,7 +82,7 @@ pub fn morpho_dynamic(temp_k: f64) -> AdvancedCombinedMaterial {
 
     AdvancedCombinedMaterial::builder()
         .add_dynamic_thin_film_stack(stack)
-        .add_roughness(0.03)  // Slight surface texture
+        .add_roughness(0.03) // Slight surface texture
         .with_temperature(temp_k)
         .quality_tier(QualityTier::High)
         .build()
@@ -148,7 +147,7 @@ pub fn stressed_crystal(stress_mpa: f64) -> AdvancedCombinedMaterial {
 
     AdvancedCombinedMaterial::builder()
         .add_spectral_dispersion(dispersion)
-        .add_fresnel(2.417 * stress_effect)  // Diamond base IOR, stress-modified
+        .add_fresnel(2.417 * stress_effect) // Diamond base IOR, stress-modified
         .with_stress([stress_mpa, 0.0, 0.0, 0.0, 0.0, 0.0])
         .blend_mode(BlendMode::PhysicallyBased)
         .quality_tier(QualityTier::High)
@@ -176,16 +175,16 @@ pub fn opalescent_suspension(concentration: f64) -> AdvancedCombinedMaterial {
 
     // Particle distribution similar to milk
     let distribution = SizeDistribution::LogNormal {
-        r_mode: 0.3,         // ~300nm particles
-        sigma_g: 1.4,        // Moderate spread
+        r_mode: 0.3,  // ~300nm particles
+        sigma_g: 1.4, // Moderate spread
     };
 
     // Extinction scales with concentration
     let extinction = 0.1 + concentration * 0.8;
-    let g_mean = 0.7 - concentration * 0.3;  // More isotropic at high concentration
+    let g_mean = 0.7 - concentration * 0.3; // More isotropic at high concentration
 
     AdvancedCombinedMaterial::builder()
-        .add_fresnel(1.52)  // Glass base
+        .add_fresnel(1.52) // Glass base
         .add_mie_polydisperse_custom(distribution, g_mean, extinction)
         .add_roughness(0.05)
         .blend_mode(BlendMode::PhysicallyBased)
@@ -213,14 +212,14 @@ pub fn titanium_heated(temp_k: f64) -> AdvancedCombinedMaterial {
     // Oxide thickness increases with temperature
     // Empirical formula for thermal oxidation
     let temp_excess = (temp_k - 400.0).max(0.0);
-    let oxide_thickness = 20.0 + temp_excess * 0.5;  // nm
+    let oxide_thickness = 20.0 + temp_excess * 0.5; // nm
 
     // TiO2 properties
     let tio2_n = 2.5;
     let tio2_k = 0.01;
 
     let substrate = SubstrateProperties {
-        n: 2.73,  // Titanium
+        n: 2.73, // Titanium
         k: 3.82,
         alpha: 8.6e-6,
     };
@@ -277,7 +276,7 @@ pub fn dynamic_soap_bubble(age_ms: f64, curvature: f64) -> AdvancedCombinedMater
     };
 
     let substrate = SubstrateProperties {
-        n: 1.0,  // Air on other side
+        n: 1.0, // Air on other side
         k: 0.0,
         alpha: 0.0,
     };
@@ -286,8 +285,8 @@ pub fn dynamic_soap_bubble(age_ms: f64, curvature: f64) -> AdvancedCombinedMater
 
     // Water-based soap film
     let layer = DynamicFilmLayer::new(1.33, base_thickness)
-        .with_dn_dt(1e-4)  // Water has high dn/dT
-        .with_thermal_expansion(2e-4);  // Water film expands significantly
+        .with_dn_dt(1e-4) // Water has high dn/dT
+        .with_thermal_expansion(2e-4); // Water film expands significantly
 
     stack.add_layer(layer);
     stack.set_environment(293.0, 101325.0, 0.9);
@@ -296,7 +295,7 @@ pub fn dynamic_soap_bubble(age_ms: f64, curvature: f64) -> AdvancedCombinedMater
 
     AdvancedCombinedMaterial::builder()
         .add_dynamic_thin_film_stack(stack_with_height)
-        .add_mie(0.8, 0.05)  // Light scattering from micro-bubbles
+        .add_mie(0.8, 0.05) // Light scattering from micro-bubbles
         .with_humidity(0.9)
         .blend_mode(BlendMode::PhysicallyBased)
         .quality_tier(QualityTier::High)
@@ -371,11 +370,16 @@ pub fn oil_on_water_dynamic(temp_k: f64, wind_speed: f64) -> AdvancedCombinedMat
     let base_thickness = 400.0 * thickness_factor.clamp(0.5, 2.0);
 
     // Create ripple height map based on wind
-    let ripple_amplitude = wind_speed * 0.1;  // mm
+    let ripple_amplitude = wind_speed * 0.1; // mm
     let ripple_period = 5.0 - wind_speed * 0.3; // mm (shorter wavelength at higher wind)
 
     let height_map = if wind_speed > 0.1 {
-        HeightMap::sinusoidal((64, 64), (20.0, 20.0), ripple_amplitude, ripple_period.max(1.0))
+        HeightMap::sinusoidal(
+            (64, 64),
+            (20.0, 20.0),
+            ripple_amplitude,
+            ripple_period.max(1.0),
+        )
     } else {
         HeightMap::flat((64, 64), (20.0, 20.0))
     };
@@ -384,16 +388,16 @@ pub fn oil_on_water_dynamic(temp_k: f64, wind_speed: f64) -> AdvancedCombinedMat
     let substrate = SubstrateProperties {
         n: 1.33,
         k: 0.0,
-        alpha: 2e-4,  // Water thermal expansion
+        alpha: 2e-4, // Water thermal expansion
     };
 
     let mut stack = DynamicThinFilmStack::new(1.0, substrate);
 
     // Oil layer (light petroleum)
-    let oil_n = 1.47 + (293.0 - temp_k) * 1e-4;  // n decreases with temperature
+    let oil_n = 1.47 + (293.0 - temp_k) * 1e-4; // n decreases with temperature
     let layer = DynamicFilmLayer::new(oil_n, base_thickness)
-        .with_dn_dt(-1e-4)  // Negative dn/dT for organic liquids
-        .with_thermal_expansion(1e-3);  // Oil expands significantly
+        .with_dn_dt(-1e-4) // Negative dn/dT for organic liquids
+        .with_thermal_expansion(1e-3); // Oil expands significantly
 
     stack.add_layer(layer);
     stack.set_environment(temp_k, 101325.0, 0.8);
@@ -403,7 +407,7 @@ pub fn oil_on_water_dynamic(temp_k: f64, wind_speed: f64) -> AdvancedCombinedMat
     // Add spectral dispersion for oil
     let oil_dispersion = DispersionModel::Cauchy {
         a: oil_n,
-        b: 5000.0,  // nm²
+        b: 5000.0, // nm²
         c: 0.0,
     };
 

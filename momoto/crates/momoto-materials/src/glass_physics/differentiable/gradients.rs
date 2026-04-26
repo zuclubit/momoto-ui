@@ -290,8 +290,8 @@ pub fn thin_film_gradient(
     // ∂R/∂δ (via cos_delta)
     let d_num_d_delta = -2.0 * r01_r12 * sin_delta;
     let d_denom_d_delta = -2.0 * r01_r12 * sin_delta;
-    let d_r_d_delta = (d_num_d_delta * denominator - numerator * d_denom_d_delta)
-        / (denominator * denominator);
+    let d_r_d_delta =
+        (d_num_d_delta * denominator - numerator * d_denom_d_delta) / (denominator * denominator);
 
     // ∂R/∂thickness = ∂R/∂δ × ∂δ/∂thickness
     let d_r_d_thickness = d_r_d_delta * d_delta_d_thickness;
@@ -418,11 +418,8 @@ mod tests {
         assert!(f >= 0.0 && f <= 1.0);
 
         // Numerical gradient
-        let numeric = numerical_gradient(
-            |n_| fresnel_schlick_gradient(cos_theta, n_).0,
-            n,
-            EPSILON,
-        );
+        let numeric =
+            numerical_gradient(|n_| fresnel_schlick_gradient(cos_theta, n_).0, n, EPSILON);
 
         assert!(
             (df_dn - numeric).abs() < 1e-4,
@@ -503,11 +500,7 @@ mod tests {
 
         assert!(g1 >= 0.0 && g1 <= 1.0);
 
-        let numeric = numerical_gradient(
-            |a| smith_g1_gradient(cos_theta, a).0,
-            alpha,
-            EPSILON,
-        );
+        let numeric = numerical_gradient(|a| smith_g1_gradient(cos_theta, a).0, alpha, EPSILON);
 
         assert!(
             (dg1_dalpha - numeric).abs() < 1e-4,
@@ -565,7 +558,12 @@ mod tests {
         let cos_theta = 0.8;
 
         let (r, dr_dt, dr_dn) = thin_film_gradient(
-            wavelength, n_ambient, n_film, n_substrate, thickness, cos_theta,
+            wavelength,
+            n_ambient,
+            n_film,
+            n_substrate,
+            thickness,
+            cos_theta,
         );
 
         assert!(r >= 0.0 && r <= 1.0);
@@ -594,11 +592,8 @@ mod tests {
 
         assert!(p >= 0.0);
 
-        let numeric = numerical_gradient(
-            |g_| henyey_greenstein_gradient(cos_theta, g_).0,
-            g,
-            EPSILON,
-        );
+        let numeric =
+            numerical_gradient(|g_| henyey_greenstein_gradient(cos_theta, g_).0, g, EPSILON);
 
         assert!(
             (dp_dg - numeric).abs() < 1e-4,

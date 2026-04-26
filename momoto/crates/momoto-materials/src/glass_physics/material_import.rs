@@ -45,10 +45,7 @@ pub enum ImportSource {
     /// Generic JSON parameters
     JsonString(String),
     /// Custom adapter
-    Custom {
-        adapter_name: String,
-        data: Vec<u8>,
-    },
+    Custom { adapter_name: String, data: Vec<u8> },
 }
 
 // ============================================================================
@@ -361,10 +358,7 @@ fn parse_color3(s: &str) -> Result<[f64; 3], ImportError> {
     if parts.len() >= 3 {
         Ok([parts[0], parts[1], parts[2]])
     } else {
-        Err(ImportError::ParseError(format!(
-            "Invalid color3: '{}'",
-            s
-        )))
+        Err(ImportError::ParseError(format!("Invalid color3: '{}'", s)))
     }
 }
 

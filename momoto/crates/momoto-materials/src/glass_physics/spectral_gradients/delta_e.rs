@@ -58,7 +58,11 @@ impl Lab {
     /// Hue angle in degrees (0-360).
     pub fn hue_degrees(&self) -> f64 {
         let h = self.hue() * 180.0 / PI;
-        if h < 0.0 { h + 360.0 } else { h }
+        if h < 0.0 {
+            h + 360.0
+        } else {
+            h
+        }
     }
 
     /// Convert from XYZ (D65 illuminant).
@@ -180,13 +184,7 @@ pub fn delta_e_2000(lab1: &Lab, lab2: &Lab) -> f64 {
 }
 
 /// Compute ΔE2000 with full results.
-pub fn delta_e_2000_full(
-    lab1: &Lab,
-    lab2: &Lab,
-    kl: f64,
-    kc: f64,
-    kh: f64,
-) -> DeltaE2000Result {
+pub fn delta_e_2000_full(lab1: &Lab, lab2: &Lab, kl: f64, kc: f64, kh: f64) -> DeltaE2000Result {
     // Step 1: Calculate C'i and h'i
     let c1 = lab1.chroma();
     let c2 = lab2.chroma();
@@ -205,14 +203,22 @@ pub fn delta_e_2000_full(
         0.0
     } else {
         let h = lab1.b.atan2(a1_prime) * 180.0 / PI;
-        if h < 0.0 { h + 360.0 } else { h }
+        if h < 0.0 {
+            h + 360.0
+        } else {
+            h
+        }
     };
 
     let h2_prime = if c2_prime.abs() < 1e-10 {
         0.0
     } else {
         let h = lab2.b.atan2(a2_prime) * 180.0 / PI;
-        if h < 0.0 { h + 360.0 } else { h }
+        if h < 0.0 {
+            h + 360.0
+        } else {
+            h
+        }
     };
 
     // Step 2: Calculate ΔL', ΔC', ΔH'
@@ -250,8 +256,7 @@ pub fn delta_e_2000_full(
         }
     };
 
-    let t = 1.0
-        - 0.17 * ((h_bar_prime - 30.0) * PI / 180.0).cos()
+    let t = 1.0 - 0.17 * ((h_bar_prime - 30.0) * PI / 180.0).cos()
         + 0.24 * ((2.0 * h_bar_prime) * PI / 180.0).cos()
         + 0.32 * ((3.0 * h_bar_prime + 6.0) * PI / 180.0).cos()
         - 0.20 * ((4.0 * h_bar_prime - 63.0) * PI / 180.0).cos();
@@ -266,12 +271,11 @@ pub fn delta_e_2000_full(
     let delta_theta = 30.0 * (-((h_bar_prime - 275.0) / 25.0).powi(2)).exp();
     let rt = -rc * (2.0 * delta_theta * PI / 180.0).sin();
 
-    let delta_e = (
-        (delta_l / (kl * sl)).powi(2)
+    let delta_e = ((delta_l / (kl * sl)).powi(2)
         + (delta_c / (kc * sc)).powi(2)
         + (delta_h / (kh * sh)).powi(2)
-        + rt * (delta_c / (kc * sc)) * (delta_h / (kh * sh))
-    ).sqrt();
+        + rt * (delta_c / (kc * sc)) * (delta_h / (kh * sh)))
+        .sqrt();
 
     DeltaE2000Result {
         delta_e,
@@ -306,28 +310,34 @@ impl DeltaE2000Gradient {
         // Gradient w.r.t. lab1
         let lab1_l_plus = Lab::new(lab1.l + epsilon, lab1.a, lab1.b);
         let lab1_l_minus = Lab::new(lab1.l - epsilon, lab1.a, lab1.b);
-        let d_l1 = (delta_e_2000(&lab1_l_plus, lab2) - delta_e_2000(&lab1_l_minus, lab2)) / (2.0 * epsilon);
+        let d_l1 = (delta_e_2000(&lab1_l_plus, lab2) - delta_e_2000(&lab1_l_minus, lab2))
+            / (2.0 * epsilon);
 
         let lab1_a_plus = Lab::new(lab1.l, lab1.a + epsilon, lab1.b);
         let lab1_a_minus = Lab::new(lab1.l, lab1.a - epsilon, lab1.b);
-        let d_a1 = (delta_e_2000(&lab1_a_plus, lab2) - delta_e_2000(&lab1_a_minus, lab2)) / (2.0 * epsilon);
+        let d_a1 = (delta_e_2000(&lab1_a_plus, lab2) - delta_e_2000(&lab1_a_minus, lab2))
+            / (2.0 * epsilon);
 
         let lab1_b_plus = Lab::new(lab1.l, lab1.a, lab1.b + epsilon);
         let lab1_b_minus = Lab::new(lab1.l, lab1.a, lab1.b - epsilon);
-        let d_b1 = (delta_e_2000(&lab1_b_plus, lab2) - delta_e_2000(&lab1_b_minus, lab2)) / (2.0 * epsilon);
+        let d_b1 = (delta_e_2000(&lab1_b_plus, lab2) - delta_e_2000(&lab1_b_minus, lab2))
+            / (2.0 * epsilon);
 
         // Gradient w.r.t. lab2
         let lab2_l_plus = Lab::new(lab2.l + epsilon, lab2.a, lab2.b);
         let lab2_l_minus = Lab::new(lab2.l - epsilon, lab2.a, lab2.b);
-        let d_l2 = (delta_e_2000(lab1, &lab2_l_plus) - delta_e_2000(lab1, &lab2_l_minus)) / (2.0 * epsilon);
+        let d_l2 = (delta_e_2000(lab1, &lab2_l_plus) - delta_e_2000(lab1, &lab2_l_minus))
+            / (2.0 * epsilon);
 
         let lab2_a_plus = Lab::new(lab2.l, lab2.a + epsilon, lab2.b);
         let lab2_a_minus = Lab::new(lab2.l, lab2.a - epsilon, lab2.b);
-        let d_a2 = (delta_e_2000(lab1, &lab2_a_plus) - delta_e_2000(lab1, &lab2_a_minus)) / (2.0 * epsilon);
+        let d_a2 = (delta_e_2000(lab1, &lab2_a_plus) - delta_e_2000(lab1, &lab2_a_minus))
+            / (2.0 * epsilon);
 
         let lab2_b_plus = Lab::new(lab2.l, lab2.a, lab2.b + epsilon);
         let lab2_b_minus = Lab::new(lab2.l, lab2.a, lab2.b - epsilon);
-        let d_b2 = (delta_e_2000(lab1, &lab2_b_plus) - delta_e_2000(lab1, &lab2_b_minus)) / (2.0 * epsilon);
+        let d_b2 = (delta_e_2000(lab1, &lab2_b_plus) - delta_e_2000(lab1, &lab2_b_minus))
+            / (2.0 * epsilon);
 
         Self {
             grad_lab1: LabGradient::new(d_l1, d_a1, d_b1),
@@ -367,7 +377,10 @@ pub struct PerceptualLoss {
 impl PerceptualLoss {
     /// Create new perceptual loss.
     pub fn new(target: Lab) -> Self {
-        Self { target, weight: 1.0 }
+        Self {
+            target,
+            weight: 1.0,
+        }
     }
 
     /// Create with weight.

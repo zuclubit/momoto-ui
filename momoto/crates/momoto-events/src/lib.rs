@@ -5,10 +5,12 @@
 // momoto-wasm/src/events.rs WASM bindings.
 // =============================================================================
 
-pub mod event;
 pub mod broadcaster;
+pub mod event;
 pub mod stream;
 
+pub use broadcaster::{
+    BroadcasterConfig, EventBroadcaster, EventFilter, EventHandler, Subscription,
+};
 pub use event::{Event, EventCategory};
-pub use broadcaster::{EventBroadcaster, EventFilter, BroadcasterConfig, EventHandler, Subscription};
 pub use stream::{EventStream, StreamConfig, StreamState};

@@ -1,7 +1,7 @@
 //! Query types for the agent protocol.
 
-use serde::{Deserialize, Serialize};
 use crate::contract::Contract;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[allow(dead_code)]

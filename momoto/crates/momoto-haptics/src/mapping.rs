@@ -91,27 +91,27 @@ impl FrequencyForceMapper {
         match model {
             ActuatorModel::Lra => Self {
                 model,
-                f_min_hz:    150.0,
-                f_max_hz:    200.0,
-                force_max_n:   0.5, // typical LRA peak force
+                f_min_hz: 150.0,
+                f_max_hz: 200.0,
+                force_max_n: 0.5, // typical LRA peak force
             },
             ActuatorModel::Erm => Self {
                 model,
-                f_min_hz:     50.0,
-                f_max_hz:    300.0,
-                force_max_n:   1.2, // ERM higher force, less precise
+                f_min_hz: 50.0,
+                f_max_hz: 300.0,
+                force_max_n: 1.2, // ERM higher force, less precise
             },
             ActuatorModel::Piezo => Self {
                 model,
-                f_min_hz:    200.0,
-                f_max_hz:    400.0,
-                force_max_n:   0.2, // piezo low force, high precision
+                f_min_hz: 200.0,
+                f_max_hz: 400.0,
+                force_max_n: 0.2, // piezo low force, high precision
             },
             ActuatorModel::Custom => Self {
                 model,
-                f_min_hz:    100.0,
-                f_max_hz:    300.0,
-                force_max_n:   1.0,
+                f_min_hz: 100.0,
+                f_max_hz: 300.0,
+                force_max_n: 1.0,
             },
         }
     }
@@ -137,20 +137,31 @@ impl FrequencyForceMapper {
         // Square-root mapping for perceptual linearity (Weber's law)
         let freq_hz = self.f_min_hz + (self.f_max_hz - self.f_min_hz) * i.sqrt();
         let force_n = self.force_max_n * i;
-        VibrationSpec { freq_hz, force_n, duration_ms: duration_ms.max(0.0), intensity: i }
+        VibrationSpec {
+            freq_hz,
+            force_n,
+            duration_ms: duration_ms.max(0.0),
+            intensity: i,
+        }
     }
 
     /// Returns the minimum output frequency (Hz).
     #[must_use]
-    pub fn f_min_hz(&self) -> f32 { self.f_min_hz }
+    pub fn f_min_hz(&self) -> f32 {
+        self.f_min_hz
+    }
 
     /// Returns the maximum output frequency (Hz).
     #[must_use]
-    pub fn f_max_hz(&self) -> f32 { self.f_max_hz }
+    pub fn f_max_hz(&self) -> f32 {
+        self.f_max_hz
+    }
 
     /// Returns the peak force output (Newtons).
     #[must_use]
-    pub fn force_max_n(&self) -> f32 { self.force_max_n }
+    pub fn force_max_n(&self) -> f32 {
+        self.force_max_n
+    }
 }
 
 #[cfg(test)]

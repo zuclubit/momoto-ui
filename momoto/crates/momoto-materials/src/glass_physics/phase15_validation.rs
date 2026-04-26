@@ -26,13 +26,22 @@ mod metrology_tests {
 
     #[test]
     fn test_uncertainty_types() {
-        let type_a = Uncertainty::TypeA { std_error: 0.1, n_samples: 100 };
+        let type_a = Uncertainty::TypeA {
+            std_error: 0.1,
+            n_samples: 100,
+        };
         assert!((type_a.standard() - 0.1).abs() < 1e-10);
 
-        let type_b = Uncertainty::TypeB { systematic: 0.05, source: "Calibration".to_string() };
+        let type_b = Uncertainty::TypeB {
+            systematic: 0.05,
+            source: "Calibration".to_string(),
+        };
         assert!((type_b.standard() - 0.05).abs() < 1e-10);
 
-        let combined = Uncertainty::Combined { type_a: 0.1, type_b: 0.05 };
+        let combined = Uncertainty::Combined {
+            type_a: 0.1,
+            type_b: 0.05,
+        };
         let expected = (0.1f64.powi(2) + 0.05f64.powi(2)).sqrt();
         assert!((combined.standard() - expected).abs() < 1e-10);
     }
@@ -65,7 +74,12 @@ mod metrology_tests {
     #[test]
     fn test_traceability_neural_share() {
         let mut chain = TraceabilityChain::new();
-        chain.record_neural_correction(0.05, 0.03, MeasurementId::generate(), MeasurementId::generate());
+        chain.record_neural_correction(
+            0.05,
+            0.03,
+            MeasurementId::generate(),
+            MeasurementId::generate(),
+        );
 
         assert!((chain.total_neural_share() - 0.03).abs() < 1e-10);
     }
@@ -83,7 +97,7 @@ mod metrology_tests {
     fn test_tolerance_validation() {
         let mut budget = ToleranceBudget::new("Test", 1.0);
         budget.add_component(
-            ToleranceComponent::new("Model", ToleranceCategory::Model, 0.5).with_actual(0.3)
+            ToleranceComponent::new("Model", ToleranceCategory::Model, 0.5).with_actual(0.3),
         );
 
         let validation = budget.validate();
@@ -149,7 +163,10 @@ mod metrology_tests {
     #[test]
     fn test_metrology_memory_budget() {
         let estimate = estimate_memory_footprint();
-        assert!(estimate.typical_usage() < 15_000, "Metrology exceeds 15KB budget");
+        assert!(
+            estimate.typical_usage() < 15_000,
+            "Metrology exceeds 15KB budget"
+        );
     }
 }
 
@@ -222,8 +239,7 @@ mod instrument_tests {
 
     #[test]
     fn test_ellipsometer_thin_film() {
-        let mut ellip = VirtualEllipsometer::ideal()
-            .with_wavelength_range(400.0, 800.0);
+        let mut ellip = VirtualEllipsometer::ideal().with_wavelength_range(400.0, 800.0);
 
         let film = constant_optical_constants(1.46, 0.0);
         let substrate = silicon_optical_constants();
@@ -261,15 +277,27 @@ mod instrument_tests {
     fn test_instrument_suite() {
         let suite = InstrumentFactory::ideal_suite();
 
-        assert!(matches!(suite.gonioreflectometer.config.noise_model, NoiseModel::None));
-        assert!(matches!(suite.spectrophotometer.config.noise_model, NoiseModel::None));
-        assert!(matches!(suite.ellipsometer.config.noise_model, NoiseModel::None));
+        assert!(matches!(
+            suite.gonioreflectometer.config.noise_model,
+            NoiseModel::None
+        ));
+        assert!(matches!(
+            suite.spectrophotometer.config.noise_model,
+            NoiseModel::None
+        ));
+        assert!(matches!(
+            suite.ellipsometer.config.noise_model,
+            NoiseModel::None
+        ));
     }
 
     #[test]
     fn test_instruments_memory_budget() {
         let estimate = estimate_memory_footprint();
-        assert!(estimate.typical_session() < 20_000, "Instruments exceed 20KB budget");
+        assert!(
+            estimate.typical_session() < 20_000,
+            "Instruments exceed 20KB budget"
+        );
     }
 }
 
@@ -286,8 +314,14 @@ mod certification_tests {
 
     #[test]
     fn test_certification_level_thresholds() {
-        assert!(CertificationLevel::Reference.max_delta_e() < CertificationLevel::Industrial.max_delta_e());
-        assert!(CertificationLevel::Reference.max_neural_share() < CertificationLevel::Industrial.max_neural_share());
+        assert!(
+            CertificationLevel::Reference.max_delta_e()
+                < CertificationLevel::Industrial.max_delta_e()
+        );
+        assert!(
+            CertificationLevel::Reference.max_neural_share()
+                < CertificationLevel::Industrial.max_neural_share()
+        );
     }
 
     #[test]
@@ -340,11 +374,8 @@ mod certification_tests {
             0.02,
         )];
 
-        let profile = CertifiedTwinProfile::new(
-            "Test Gold",
-            CertificationLevel::Industrial,
-            results,
-        );
+        let profile =
+            CertifiedTwinProfile::new("Test Gold", CertificationLevel::Industrial, results);
 
         assert!(profile.is_valid());
         assert!(profile.all_tests_passed());
@@ -399,14 +430,17 @@ mod certification_tests {
     #[test]
     fn test_certification_memory_budget() {
         let estimate = super::super::certification::estimate_memory_footprint();
-        assert!(estimate.typical_certification() < 12_000, "Certification exceeds 12KB budget");
+        assert!(
+            estimate.typical_certification() < 12_000,
+            "Certification exceeds 12KB budget"
+        );
     }
 }
 
 #[cfg(test)]
 mod compliance_tests {
-    use crate::glass_physics::compliance::*;
     use crate::glass_physics::certification::NeuralCorrectionStats;
+    use crate::glass_physics::compliance::*;
 
     #[test]
     fn test_ground_truth_validator() {
@@ -500,8 +534,8 @@ mod compliance_tests {
 
     #[test]
     fn test_export_json() {
-        use crate::glass_physics::certification::{CertificationLevel, CertifiedTwinProfile};
         use crate::glass_physics::certification::requirements::{MandatoryTest, TestResult};
+        use crate::glass_physics::certification::{CertificationLevel, CertifiedTwinProfile};
 
         let results = vec![TestResult::pass(
             MandatoryTest::EnergyConservation { max_error: 0.05 },
@@ -518,8 +552,8 @@ mod compliance_tests {
 
     #[test]
     fn test_export_materialx() {
-        use crate::glass_physics::certification::{CertificationLevel, CertifiedTwinProfile};
         use crate::glass_physics::certification::requirements::{MandatoryTest, TestResult};
+        use crate::glass_physics::certification::{CertificationLevel, CertifiedTwinProfile};
 
         let results = vec![TestResult::pass(
             MandatoryTest::EnergyConservation { max_error: 0.05 },
@@ -536,15 +570,16 @@ mod compliance_tests {
 
     #[test]
     fn test_export_compliance_report() {
-        use crate::glass_physics::certification::{CertificationLevel, CertifiedTwinProfile};
         use crate::glass_physics::certification::requirements::{MandatoryTest, TestResult};
+        use crate::glass_physics::certification::{CertificationLevel, CertifiedTwinProfile};
 
         let results = vec![TestResult::pass(
             MandatoryTest::EnergyConservation { max_error: 0.05 },
             0.02,
         )];
 
-        let profile = CertifiedTwinProfile::new("Gold Twin", CertificationLevel::Reference, results);
+        let profile =
+            CertifiedTwinProfile::new("Gold Twin", CertificationLevel::Reference, results);
         let exporter = MetrologicalExporter::compliance_report();
         let report = exporter.export(&profile);
 
@@ -564,7 +599,10 @@ mod compliance_tests {
     #[test]
     fn test_compliance_memory_budget() {
         let estimate = super::super::compliance::estimate_memory_footprint();
-        assert!(estimate.typical_check() < 15_000, "Compliance exceeds 15KB budget");
+        assert!(
+            estimate.typical_check() < 15_000,
+            "Compliance exceeds 15KB budget"
+        );
     }
 }
 
@@ -617,7 +655,11 @@ mod integration_tests {
 
         // Approximate gold BRDF (specular dominant)
         let gold_brdf = |theta_i: f64, theta_o: f64, wavelength: f64| {
-            let specular = if (theta_o - theta_i).abs() < 0.1 { 0.8 } else { 0.0 };
+            let specular = if (theta_o - theta_i).abs() < 0.1 {
+                0.8
+            } else {
+                0.0
+            };
             let diffuse = 0.02 / std::f64::consts::PI;
 
             // Wavelength effect (gold is yellow/red)
@@ -667,7 +709,7 @@ mod integration_tests {
             .with_metrics(CertificationMetrics {
                 delta_e: 3.0, // Too high for Reference (max 0.5)
                 observations: 100,
-                neural_share: 0.15, // Too high (max 2%)
+                neural_share: 0.15,    // Too high (max 2%)
                 reproducibility: 0.95, // Too low (min 99.9%)
                 energy_violation: 0.02,
                 spectral_rmse: 0.02,
@@ -711,10 +753,10 @@ mod integration_tests {
 
 #[cfg(test)]
 mod memory_tests {
-    use crate::glass_physics::metrology;
-    use crate::glass_physics::instruments;
     use crate::glass_physics::certification;
     use crate::glass_physics::compliance;
+    use crate::glass_physics::instruments;
+    use crate::glass_physics::metrology;
 
     #[test]
     fn test_phase15_memory_budget() {
@@ -741,7 +783,11 @@ mod memory_tests {
         use crate::glass_physics::metrology::Measurement;
 
         let size = std::mem::size_of::<Measurement<f64>>();
-        assert!(size < 256, "Measurement<f64> size {} exceeds 256 bytes", size);
+        assert!(
+            size < 256,
+            "Measurement<f64> size {} exceeds 256 bytes",
+            size
+        );
     }
 
     #[test]
@@ -749,7 +795,11 @@ mod memory_tests {
         use crate::glass_physics::certification::CertifiedTwinProfile;
 
         let size = std::mem::size_of::<CertifiedTwinProfile>();
-        assert!(size < 2048, "CertifiedTwinProfile size {} exceeds 2KB", size);
+        assert!(
+            size < 2048,
+            "CertifiedTwinProfile size {} exceeds 2KB",
+            size
+        );
     }
 
     #[test]
@@ -760,16 +810,24 @@ mod memory_tests {
         let spectro = std::mem::size_of::<VirtualSpectrophotometer>();
         let ellip = std::mem::size_of::<VirtualEllipsometer>();
 
-        assert!(gonio < 1024, "Gonioreflectometer size {} exceeds 1KB", gonio);
-        assert!(spectro < 1024, "Spectrophotometer size {} exceeds 1KB", spectro);
+        assert!(
+            gonio < 1024,
+            "Gonioreflectometer size {} exceeds 1KB",
+            gonio
+        );
+        assert!(
+            spectro < 1024,
+            "Spectrophotometer size {} exceeds 1KB",
+            spectro
+        );
         assert!(ellip < 1024, "Ellipsometer size {} exceeds 1KB", ellip);
     }
 
     #[test]
     fn test_result_sizes() {
-        use crate::glass_physics::instruments::*;
         use crate::glass_physics::certification::CertificationResult;
         use crate::glass_physics::compliance::ValidationReport;
+        use crate::glass_physics::instruments::*;
 
         let gonio_result = std::mem::size_of::<GoniometerResult>();
         let spectro_result = std::mem::size_of::<SpectroResult>();
@@ -777,10 +835,26 @@ mod memory_tests {
         let val_report = std::mem::size_of::<ValidationReport>();
 
         // Results can be larger due to vectors but base size should be reasonable
-        assert!(gonio_result < 512, "GoniometerResult base size {} exceeds 512 bytes", gonio_result);
-        assert!(spectro_result < 512, "SpectroResult base size {} exceeds 512 bytes", spectro_result);
-        assert!(cert_result < 512, "CertificationResult base size {} exceeds 512 bytes", cert_result);
-        assert!(val_report < 256, "ValidationReport base size {} exceeds 256 bytes", val_report);
+        assert!(
+            gonio_result < 512,
+            "GoniometerResult base size {} exceeds 512 bytes",
+            gonio_result
+        );
+        assert!(
+            spectro_result < 512,
+            "SpectroResult base size {} exceeds 512 bytes",
+            spectro_result
+        );
+        assert!(
+            cert_result < 512,
+            "CertificationResult base size {} exceeds 512 bytes",
+            cert_result
+        );
+        assert!(
+            val_report < 256,
+            "ValidationReport base size {} exceeds 256 bytes",
+            val_report
+        );
     }
 }
 
@@ -797,7 +871,10 @@ pub fn run_phase15_validation() -> Phase15ValidationResult {
         details.push("Metrology module: PASS".to_string());
     } else {
         failed += 1;
-        details.push(format!("Metrology module: FAIL - {:?}", metrology_valid.issues));
+        details.push(format!(
+            "Metrology module: FAIL - {:?}",
+            metrology_valid.issues
+        ));
     }
 
     let instruments_valid = crate::glass_physics::instruments::validate_module();
@@ -806,7 +883,10 @@ pub fn run_phase15_validation() -> Phase15ValidationResult {
         details.push("Instruments module: PASS".to_string());
     } else {
         failed += 1;
-        details.push(format!("Instruments module: FAIL - {:?}", instruments_valid.issues));
+        details.push(format!(
+            "Instruments module: FAIL - {:?}",
+            instruments_valid.issues
+        ));
     }
 
     let cert_valid = crate::glass_physics::certification::validate_module();
@@ -815,7 +895,10 @@ pub fn run_phase15_validation() -> Phase15ValidationResult {
         details.push("Certification module: PASS".to_string());
     } else {
         failed += 1;
-        details.push(format!("Certification module: FAIL - {:?}", cert_valid.issues));
+        details.push(format!(
+            "Certification module: FAIL - {:?}",
+            cert_valid.issues
+        ));
     }
 
     let comp_valid = crate::glass_physics::compliance::validate_module();

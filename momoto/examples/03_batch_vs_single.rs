@@ -36,16 +36,16 @@ fn main() {
 
     // Single evaluation approach
     let start = Instant::now();
-    let results_single: Vec<_> = materials
-        .iter()
-        .map(|m| m.evaluate(&context))
-        .collect();
+    let results_single: Vec<_> = materials.iter().map(|m| m.evaluate(&context)).collect();
     let duration_single = start.elapsed();
 
     println!("Single Evaluation:");
     println!("  Materials:    {}", N);
     println!("  Duration:     {:?}", duration_single);
-    println!("  Per material: {:.2} µs", duration_single.as_micros() as f64 / N as f64);
+    println!(
+        "  Per material: {:.2} µs",
+        duration_single.as_micros() as f64 / N as f64
+    );
     println!();
 
     // Verify results

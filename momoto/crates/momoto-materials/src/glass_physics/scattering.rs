@@ -336,12 +336,7 @@ impl ScatteringParams {
     #[inline]
     pub fn phase(&self, cos_theta: f64) -> f64 {
         if self.double_lobe {
-            double_henyey_greenstein(
-                cos_theta,
-                self.g,
-                self.g_backward,
-                self.forward_weight,
-            )
+            double_henyey_greenstein(cos_theta, self.g, self.g_backward, self.forward_weight)
         } else {
             hg_fast(cos_theta, self.g)
         }
@@ -350,10 +345,10 @@ impl ScatteringParams {
     /// Calculate total scattering radius in mm
     pub fn scattering_radius_mm(&self, roughness: f64, thickness: f64) -> f64 {
         // Surface scattering from roughness
-        let surface = roughness * 10.0;  // mm
+        let surface = roughness * 10.0; // mm
 
         // Volume scattering from thickness (capped)
-        let volume = (thickness * 0.1).min(2.0);  // mm
+        let volume = (thickness * 0.1).min(2.0); // mm
 
         // Asymmetry affects effective radius (forward scatter = less blur)
         let asymmetry_factor = 1.0 - self.g.abs() * 0.5;
@@ -569,10 +564,7 @@ mod tests {
         let direct = henyey_greenstein(cos_theta, g);
         let fast = hg_fast(cos_theta, g);
 
-        assert!(
-            (direct - fast).abs() < 0.01,
-            "Fast should match direct"
-        );
+        assert!((direct - fast).abs() < 0.01, "Fast should match direct");
     }
 
     #[test]
@@ -604,7 +596,11 @@ mod tests {
         let size = lut.memory_size();
 
         // Should be ~66KB
-        assert!(size > 60_000 && size < 70_000, "LUT size should be ~66KB, got {}", size);
+        assert!(
+            size > 60_000 && size < 70_000,
+            "LUT size should be ~66KB, got {}",
+            size
+        );
     }
 
     #[test]

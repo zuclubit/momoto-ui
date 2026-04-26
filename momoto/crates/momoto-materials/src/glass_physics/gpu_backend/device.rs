@@ -120,7 +120,11 @@ impl std::fmt::Display for GpuContextError {
                 write!(f, "Required GPU feature not supported: {}", feature)
             }
             Self::BackendUnavailable(backend) => {
-                write!(f, "GPU backend {:?} not available on this platform", backend)
+                write!(
+                    f,
+                    "GPU backend {:?} not available on this platform",
+                    backend
+                )
             }
         }
     }
@@ -208,9 +212,7 @@ impl GpuContext {
             max_workgroups_per_dimension: limits.max_compute_workgroups_per_dimension,
             max_storage_buffer_size: limits.max_storage_buffer_binding_size as u64,
             supports_f16: adapter.features().contains(wgpu::Features::SHADER_F16),
-            supports_timestamps: adapter
-                .features()
-                .contains(wgpu::Features::TIMESTAMP_QUERY),
+            supports_timestamps: adapter.features().contains(wgpu::Features::TIMESTAMP_QUERY),
         };
 
         // Request device with required features
@@ -248,8 +250,7 @@ impl GpuContext {
     pub fn max_batch_size(&self) -> usize {
         // Calculate based on buffer limits and material struct size
         let material_size = 64; // ~64 bytes per material input
-        let max_materials =
-            self.capabilities.max_storage_buffer_size as usize / material_size;
+        let max_materials = self.capabilities.max_storage_buffer_size as usize / material_size;
         max_materials.min(self.config.max_buffer_size as usize / material_size)
     }
 }

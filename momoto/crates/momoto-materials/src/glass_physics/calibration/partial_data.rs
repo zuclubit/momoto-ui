@@ -50,7 +50,10 @@ impl DataQuality {
 
     /// Check if quality is acceptable for calibration.
     pub fn is_acceptable(&self) -> bool {
-        matches!(self, DataQuality::Reference | DataQuality::High | DataQuality::Standard)
+        matches!(
+            self,
+            DataQuality::Reference | DataQuality::High | DataQuality::Standard
+        )
     }
 }
 

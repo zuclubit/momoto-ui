@@ -23,7 +23,7 @@
 //!                 (chain rule through evolution)
 //! ```
 
-use super::evolution_gradients::{EvolutionGradients, EvolutionType, compute_evolution_gradient};
+use super::evolution_gradients::{compute_evolution_gradient, EvolutionGradients, EvolutionType};
 
 // ============================================================================
 // BPTT CONFIGURATION
@@ -135,7 +135,8 @@ impl BPTTState {
 
     /// Get gradient norm.
     pub fn gradient_norm(&self) -> f64 {
-        self.accumulated_grads.iter()
+        self.accumulated_grads
+            .iter()
             .map(|g| g * g)
             .sum::<f64>()
             .sqrt()
@@ -263,7 +264,8 @@ impl BPTT {
             }
         }
 
-        self.stabilizer.record_gradient_norm(self.state.gradient_norm());
+        self.stabilizer
+            .record_gradient_norm(self.state.gradient_norm());
 
         self.state.accumulated_grads.clone()
     }
@@ -334,7 +336,8 @@ impl TemporalGradientAccumulator {
         if self.sequence_count == 0 {
             return self.gradients.clone();
         }
-        self.gradients.iter()
+        self.gradients
+            .iter()
             .map(|&g| g / self.sequence_count as f64)
             .collect()
     }
@@ -344,7 +347,8 @@ impl TemporalGradientAccumulator {
         if self.total_frames == 0 {
             return self.gradients.clone();
         }
-        self.gradients.iter()
+        self.gradients
+            .iter()
             .map(|&g| g / self.total_frames as f64)
             .collect()
     }
@@ -436,9 +440,7 @@ impl GradientStabilizer {
         if count == 0 {
             return 0.0;
         }
-        self.norm_history.iter()
-            .take(count)
-            .sum::<f64>() / count as f64
+        self.norm_history.iter().take(count).sum::<f64>() / count as f64
     }
 
     /// Get variance of norm.
@@ -717,7 +719,10 @@ mod tests {
             bptt.forward_frame(
                 i as f64,
                 vec![1.5; 8],
-                EvolutionType::Exponential { rate: 0.5, asymptote: 1.0 },
+                EvolutionType::Exponential {
+                    rate: 0.5,
+                    asymptote: 1.0,
+                },
                 0.1,
                 1.0,
             );

@@ -30,16 +30,8 @@
 use wasm_bindgen::prelude::*;
 
 use momoto_audio::{
-    AudioDomain,
-    FftPlan,
-    LufsAnalyzer,
-    MelFilterbank,
-    EbuR128Limits,
-    spectral_centroid,
-    spectral_brightness,
-    spectral_flux,
-    spectral_rolloff,
-    spectral_flatness,
+    spectral_brightness, spectral_centroid, spectral_flatness, spectral_flux, spectral_rolloff,
+    AudioDomain, EbuR128Limits, FftPlan, LufsAnalyzer, MelFilterbank,
 };
 use momoto_core::traits::domain::Domain;
 
@@ -66,7 +58,11 @@ pub fn audio_lufs(samples: &[f32], sample_rate: u32) -> f32 {
     };
     analyzer.add_mono_block(samples);
     let lufs = analyzer.integrated();
-    if lufs.is_finite() { lufs as f32 } else { f32::NEG_INFINITY }
+    if lufs.is_finite() {
+        lufs as f32
+    } else {
+        f32::NEG_INFINITY
+    }
 }
 
 /// Compute momentary LUFS for the most recent 400 ms block.
@@ -79,7 +75,11 @@ pub fn audio_momentary_lufs(samples: &[f32], sample_rate: u32) -> f32 {
     };
     analyzer.add_mono_block(samples);
     let m = analyzer.momentary();
-    if m.is_finite() { m as f32 } else { f32::NEG_INFINITY }
+    if m.is_finite() {
+        m as f32
+    } else {
+        f32::NEG_INFINITY
+    }
 }
 
 // =============================================================================
@@ -206,8 +206,8 @@ pub fn audio_spectral_flatness(power_spectrum: &[f32]) -> f32 {
 pub fn audio_validate_ebur128(integrated_lufs: f64, profile: &str) -> bool {
     let limits = match profile.to_ascii_lowercase().as_str() {
         "streaming" => EbuR128Limits::STREAMING,
-        "podcast"   => EbuR128Limits::PODCAST,
-        _           => EbuR128Limits::BROADCAST, // "broadcast" or default
+        "podcast" => EbuR128Limits::PODCAST,
+        _ => EbuR128Limits::BROADCAST, // "broadcast" or default
     };
     limits.validate(integrated_lufs, None, None).passes
 }
@@ -255,7 +255,8 @@ pub fn domain_perceptual_distance(a: &[f32], b: &[f32], sample_rate: u32) -> f32
     if mel_a.is_empty() || mel_b.is_empty() {
         return -1.0;
     }
-    mel_a.iter()
+    mel_a
+        .iter()
         .zip(mel_b.iter())
         .map(|(&x, &y)| (x - y) * (x - y))
         .sum::<f32>()

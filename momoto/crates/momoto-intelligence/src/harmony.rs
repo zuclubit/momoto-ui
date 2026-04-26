@@ -93,10 +93,7 @@ pub struct Palette {
 pub fn generate_palette(seed: OKLCH, harmony: HarmonyType) -> Palette {
     let colors = match &harmony {
         HarmonyType::Complementary => {
-            vec![
-                gamut_safe(seed),
-                gamut_safe(rotate_hue(seed, 180.0)),
-            ]
+            vec![gamut_safe(seed), gamut_safe(rotate_hue(seed, 180.0))]
         }
 
         HarmonyType::SplitComplementary => {
@@ -141,9 +138,7 @@ pub fn generate_palette(seed: OKLCH, harmony: HarmonyType) -> Palette {
             shades(seed, n as u8)
         }
 
-        HarmonyType::Temperature { warm } => {
-            temperature_palette(*warm, 5)
-        }
+        HarmonyType::Temperature { warm } => temperature_palette(*warm, 5),
 
         HarmonyType::Custom(offsets) => {
             let mut colors = vec![gamut_safe(seed)];
@@ -155,7 +150,11 @@ pub fn generate_palette(seed: OKLCH, harmony: HarmonyType) -> Palette {
     };
 
     let score = harmony_score(&colors);
-    Palette { colors, harmony, score }
+    Palette {
+        colors,
+        harmony,
+        score,
+    }
 }
 
 /// Compute a harmony quality score for an existing palette.
@@ -221,7 +220,7 @@ pub fn temperature_palette(warm: bool, count: u8) -> Vec<OKLCH> {
     let n = (count as usize).clamp(2, 8);
 
     let (h_start, h_end) = if warm {
-        (0.0f64, 60.0f64)   // red → yellow
+        (0.0f64, 60.0f64) // red → yellow
     } else {
         (180.0f64, 270.0f64) // cyan → violet
     };
@@ -415,7 +414,8 @@ mod tests {
         let delta = (h1 - h0).rem_euclid(360.0);
         assert!(
             (delta - 180.0).abs() < 0.01,
-            "Complementary delta: {}", delta
+            "Complementary delta: {}",
+            delta
         );
     }
 
@@ -448,7 +448,10 @@ mod tests {
             let expected = 90.0 * i as f64;
             assert!(
                 (delta - expected).abs() < 0.01,
-                "Tetradic color {}: delta {} vs expected {}", i, delta, expected
+                "Tetradic color {}: delta {} vs expected {}",
+                i,
+                delta,
+                expected
             );
         }
     }
@@ -468,7 +471,8 @@ mod tests {
         assert!(
             triadic.score >= harmony_score(&random),
             "Triadic score {} should be >= random score {}",
-            triadic.score, harmony_score(&random)
+            triadic.score,
+            harmony_score(&random)
         );
     }
 
@@ -483,7 +487,9 @@ mod tests {
             assert!(
                 shds[i].l <= shds[i - 1].l + 1e-10,
                 "Shade lightness not monotone at index {}: {} > {}",
-                i, shds[i].l, shds[i - 1].l
+                i,
+                shds[i].l,
+                shds[i - 1].l
             );
         }
     }
@@ -503,7 +509,8 @@ mod tests {
                 for ch in &color.srgb {
                     assert!(
                         *ch >= -0.01 && *ch <= 1.01,
-                        "Color out of sRGB gamut: {:?}", color.srgb
+                        "Color out of sRGB gamut: {:?}",
+                        color.srgb
                     );
                 }
             }
@@ -520,7 +527,9 @@ mod tests {
         let r2 = u8::from_str_radix(&back[1..3], 16).unwrap();
         assert!(
             (r1 as i32 - r2 as i32).abs() <= 1,
-            "Hex roundtrip error: {} vs {}", hex, back
+            "Hex roundtrip error: {} vs {}",
+            hex,
+            back
         );
     }
 }

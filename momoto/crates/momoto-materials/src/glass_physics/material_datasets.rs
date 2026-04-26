@@ -113,9 +113,9 @@ impl SpectralMeasurement {
 
     /// Get transmittance at specific wavelength (if available)
     pub fn transmittance_at(&self, wavelength_nm: f64) -> Option<f64> {
-        self.transmittance.as_ref().map(|t| {
-            interpolate(&self.wavelengths, t, wavelength_nm)
-        })
+        self.transmittance
+            .as_ref()
+            .map(|t| interpolate(&self.wavelengths, t, wavelength_nm))
     }
 
     /// Get RGB reflectance (at 650, 550, 450 nm)
@@ -135,16 +135,27 @@ impl SpectralMeasurement {
     /// Calculate reflectance standard deviation
     pub fn reflectance_std(&self) -> f64 {
         let mean = self.mean_reflectance();
-        let variance = self.reflectance.iter()
+        let variance = self
+            .reflectance
+            .iter()
             .map(|r| (r - mean).powi(2))
-            .sum::<f64>() / self.reflectance.len() as f64;
+            .sum::<f64>()
+            / self.reflectance.len() as f64;
         variance.sqrt()
     }
 
     /// Get wavelength range
     pub fn wavelength_range(&self) -> (f64, f64) {
-        let min = self.wavelengths.iter().cloned().fold(f64::INFINITY, f64::min);
-        let max = self.wavelengths.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+        let min = self
+            .wavelengths
+            .iter()
+            .cloned()
+            .fold(f64::INFINITY, f64::min);
+        let max = self
+            .wavelengths
+            .iter()
+            .cloned()
+            .fold(f64::NEG_INFINITY, f64::max);
         (min, max)
     }
 }
@@ -223,7 +234,8 @@ impl MaterialDatabase {
 
     /// Get material by name (case-insensitive)
     pub fn get(&self, name: &str) -> Option<&SpectralMeasurement> {
-        self.name_index.get(&name.to_lowercase())
+        self.name_index
+            .get(&name.to_lowercase())
             .map(|&i| &self.materials[i])
     }
 
@@ -234,14 +246,21 @@ impl MaterialDatabase {
 
     /// Get materials by category
     pub fn by_category(&self, category: MaterialCategory) -> Vec<&SpectralMeasurement> {
-        self.materials.iter()
+        self.materials
+            .iter()
             .filter(|m| m.category == category)
             .collect()
     }
 
     /// Find materials with similar reflectance
-    pub fn find_similar(&self, target: &SpectralMeasurement, count: usize) -> Vec<(&SpectralMeasurement, f64)> {
-        let mut scored: Vec<_> = self.materials.iter()
+    pub fn find_similar(
+        &self,
+        target: &SpectralMeasurement,
+        count: usize,
+    ) -> Vec<(&SpectralMeasurement, f64)> {
+        let mut scored: Vec<_> = self
+            .materials
+            .iter()
             .map(|m| {
                 let error = self.compute_fitting_error(m, target);
                 (m, error)
@@ -321,19 +340,27 @@ pub mod builtin {
 
         // Fresnel reflectance at normal incidence: R = ((n-1)/(n+1))^2
         // BK7: n varies from ~1.527 (400nm) to ~1.511 (700nm)
-        let reflectance: Vec<f64> = wavelengths.iter().map(|&w| {
-            let n = sellmeier_bk7(w);
-            ((n - 1.0) / (n + 1.0)).powi(2)
-        }).collect();
-
-        SpectralMeasurement::new("BK7 Glass", MaterialCategory::Glass, wavelengths, reflectance)
-            .with_metadata(MeasurementMetadata {
-                source: "Schott Glass Catalog".to_string(),
-                temperature_k: 293.0,
-                humidity: 0.5,
-                notes: "Crown glass, optical applications".to_string(),
-                ..Default::default()
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|&w| {
+                let n = sellmeier_bk7(w);
+                ((n - 1.0) / (n + 1.0)).powi(2)
             })
+            .collect();
+
+        SpectralMeasurement::new(
+            "BK7 Glass",
+            MaterialCategory::Glass,
+            wavelengths,
+            reflectance,
+        )
+        .with_metadata(MeasurementMetadata {
+            source: "Schott Glass Catalog".to_string(),
+            temperature_k: 293.0,
+            humidity: 0.5,
+            notes: "Crown glass, optical applications".to_string(),
+            ..Default::default()
+        })
     }
 
     /// Fused silica (SiO2)
@@ -341,19 +368,27 @@ pub mod builtin {
     pub fn fused_silica() -> SpectralMeasurement {
         let wavelengths = visible_wavelengths();
 
-        let reflectance: Vec<f64> = wavelengths.iter().map(|&w| {
-            let n = sellmeier_fused_silica(w);
-            ((n - 1.0) / (n + 1.0)).powi(2)
-        }).collect();
-
-        SpectralMeasurement::new("Fused Silica", MaterialCategory::Glass, wavelengths, reflectance)
-            .with_metadata(MeasurementMetadata {
-                source: "Malitson (1965)".to_string(),
-                temperature_k: 293.0,
-                humidity: 0.5,
-                notes: "High-purity SiO2, UV-grade".to_string(),
-                ..Default::default()
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|&w| {
+                let n = sellmeier_fused_silica(w);
+                ((n - 1.0) / (n + 1.0)).powi(2)
             })
+            .collect();
+
+        SpectralMeasurement::new(
+            "Fused Silica",
+            MaterialCategory::Glass,
+            wavelengths,
+            reflectance,
+        )
+        .with_metadata(MeasurementMetadata {
+            source: "Malitson (1965)".to_string(),
+            temperature_k: 293.0,
+            humidity: 0.5,
+            notes: "High-purity SiO2, UV-grade".to_string(),
+            ..Default::default()
+        })
     }
 
     /// Gold (Au) - Johnson & Christy data
@@ -361,14 +396,17 @@ pub mod builtin {
         let wavelengths = visible_wavelengths();
 
         // Simplified gold reflectance (high in red, lower in blue)
-        let reflectance: Vec<f64> = wavelengths.iter().map(|&w| {
-            // Gold has strong absorption below ~500nm
-            if w < 500.0 {
-                0.35 + 0.2 * (w - 400.0) / 100.0
-            } else {
-                0.95 - 0.1 * (700.0 - w) / 200.0
-            }
-        }).collect();
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|&w| {
+                // Gold has strong absorption below ~500nm
+                if w < 500.0 {
+                    0.35 + 0.2 * (w - 400.0) / 100.0
+                } else {
+                    0.95 - 0.1 * (700.0 - w) / 200.0
+                }
+            })
+            .collect();
 
         SpectralMeasurement::new("Gold", MaterialCategory::Metal, wavelengths, reflectance)
             .with_metadata(MeasurementMetadata {
@@ -385,10 +423,13 @@ pub mod builtin {
         let wavelengths = visible_wavelengths();
 
         // Silver has highest reflectance across visible spectrum
-        let reflectance: Vec<f64> = wavelengths.iter().map(|&w| {
-            // Plasma edge around 320nm, high reflectance in visible
-            0.97 - 0.02 * (400.0 - w.min(400.0)) / 100.0
-        }).collect();
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|&w| {
+                // Plasma edge around 320nm, high reflectance in visible
+                0.97 - 0.02 * (400.0 - w.min(400.0)) / 100.0
+            })
+            .collect();
 
         SpectralMeasurement::new("Silver", MaterialCategory::Metal, wavelengths, reflectance)
             .with_metadata(MeasurementMetadata {
@@ -405,13 +446,16 @@ pub mod builtin {
         let wavelengths = visible_wavelengths();
 
         // Copper: reddish color, lower reflectance in blue
-        let reflectance: Vec<f64> = wavelengths.iter().map(|&w| {
-            if w < 580.0 {
-                0.5 + 0.3 * (w - 400.0) / 180.0
-            } else {
-                0.95 - 0.05 * (700.0 - w) / 120.0
-            }
-        }).collect();
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|&w| {
+                if w < 580.0 {
+                    0.5 + 0.3 * (w - 400.0) / 180.0
+                } else {
+                    0.95 - 0.05 * (700.0 - w) / 120.0
+                }
+            })
+            .collect();
 
         SpectralMeasurement::new("Copper", MaterialCategory::Metal, wavelengths, reflectance)
             .with_metadata(MeasurementMetadata {
@@ -428,18 +472,26 @@ pub mod builtin {
         let wavelengths = visible_wavelengths();
 
         // Aluminum: high reflectance, slight dip around 800nm
-        let reflectance: Vec<f64> = wavelengths.iter().map(|&_w| {
-            0.91 // Nearly constant in visible
-        }).collect();
-
-        SpectralMeasurement::new("Aluminum", MaterialCategory::Metal, wavelengths, reflectance)
-            .with_metadata(MeasurementMetadata {
-                source: "Rakic et al. (1998)".to_string(),
-                temperature_k: 293.0,
-                humidity: 0.5,
-                notes: "Evaporated thin film with native oxide".to_string(),
-                ..Default::default()
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|&_w| {
+                0.91 // Nearly constant in visible
             })
+            .collect();
+
+        SpectralMeasurement::new(
+            "Aluminum",
+            MaterialCategory::Metal,
+            wavelengths,
+            reflectance,
+        )
+        .with_metadata(MeasurementMetadata {
+            source: "Rakic et al. (1998)".to_string(),
+            temperature_k: 293.0,
+            humidity: 0.5,
+            notes: "Evaporated thin film with native oxide".to_string(),
+            ..Default::default()
+        })
     }
 
     /// Titanium Dioxide (TiO2) - Rutile
@@ -448,19 +500,27 @@ pub mod builtin {
         let wavelengths = visible_wavelengths();
 
         // High-index dielectric
-        let reflectance: Vec<f64> = wavelengths.iter().map(|&w| {
-            let n = 2.7 - 0.2 * (w - 400.0) / 300.0; // Approximate dispersion
-            ((n - 1.0) / (n + 1.0)).powi(2)
-        }).collect();
-
-        SpectralMeasurement::new("Titanium Dioxide", MaterialCategory::Dielectric, wavelengths, reflectance)
-            .with_metadata(MeasurementMetadata {
-                source: "DeVore (1951)".to_string(),
-                temperature_k: 293.0,
-                humidity: 0.5,
-                notes: "Rutile crystal".to_string(),
-                ..Default::default()
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|&w| {
+                let n = 2.7 - 0.2 * (w - 400.0) / 300.0; // Approximate dispersion
+                ((n - 1.0) / (n + 1.0)).powi(2)
             })
+            .collect();
+
+        SpectralMeasurement::new(
+            "Titanium Dioxide",
+            MaterialCategory::Dielectric,
+            wavelengths,
+            reflectance,
+        )
+        .with_metadata(MeasurementMetadata {
+            source: "DeVore (1951)".to_string(),
+            temperature_k: 293.0,
+            humidity: 0.5,
+            notes: "Rutile crystal".to_string(),
+            ..Default::default()
+        })
     }
 
     /// Silicon (Si) - Crystalline
@@ -468,23 +528,31 @@ pub mod builtin {
         let wavelengths = visible_wavelengths();
 
         // Silicon: high reflectance due to high n (~3.5) and k
-        let reflectance: Vec<f64> = wavelengths.iter().map(|&w| {
-            // Approximate reflectance curve
-            let base = 0.35;
-            let peak = 0.55;
-            let center = 500.0;
-            let width = 100.0;
-            base + (peak - base) * (-(w - center).powi(2) / (2.0 * width * width)).exp()
-        }).collect();
-
-        SpectralMeasurement::new("Silicon", MaterialCategory::Semiconductor, wavelengths, reflectance)
-            .with_metadata(MeasurementMetadata {
-                source: "Green & Keevers (1995)".to_string(),
-                temperature_k: 293.0,
-                humidity: 0.5,
-                notes: "Crystalline silicon".to_string(),
-                ..Default::default()
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|&w| {
+                // Approximate reflectance curve
+                let base = 0.35;
+                let peak = 0.55;
+                let center = 500.0;
+                let width = 100.0;
+                base + (peak - base) * (-(w - center).powi(2) / (2.0 * width * width)).exp()
             })
+            .collect();
+
+        SpectralMeasurement::new(
+            "Silicon",
+            MaterialCategory::Semiconductor,
+            wavelengths,
+            reflectance,
+        )
+        .with_metadata(MeasurementMetadata {
+            source: "Green & Keevers (1995)".to_string(),
+            temperature_k: 293.0,
+            humidity: 0.5,
+            notes: "Crystalline silicon".to_string(),
+            ..Default::default()
+        })
     }
 
     /// Water (H2O)
@@ -493,10 +561,13 @@ pub mod builtin {
         let wavelengths = visible_wavelengths();
 
         // Water: very low Fresnel reflectance
-        let reflectance: Vec<f64> = wavelengths.iter().map(|&w| {
-            let n = 1.34 - 0.01 * (w - 400.0) / 300.0; // Slight dispersion
-            ((n - 1.0) / (n + 1.0)).powi(2)
-        }).collect();
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|&w| {
+                let n = 1.34 - 0.01 * (w - 400.0) / 300.0; // Slight dispersion
+                ((n - 1.0) / (n + 1.0)).powi(2)
+            })
+            .collect();
 
         SpectralMeasurement::new("Water", MaterialCategory::Water, wavelengths, reflectance)
             .with_metadata(MeasurementMetadata {
@@ -514,19 +585,27 @@ pub mod builtin {
         let wavelengths = visible_wavelengths();
 
         // Diamond: high dispersion (fire)
-        let reflectance: Vec<f64> = wavelengths.iter().map(|&w| {
-            let n = sellmeier_diamond(w);
-            ((n - 1.0) / (n + 1.0)).powi(2)
-        }).collect();
-
-        SpectralMeasurement::new("Diamond", MaterialCategory::Dielectric, wavelengths, reflectance)
-            .with_metadata(MeasurementMetadata {
-                source: "Peter (1923)".to_string(),
-                temperature_k: 293.0,
-                humidity: 0.5,
-                notes: "Type IIa diamond".to_string(),
-                ..Default::default()
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|&w| {
+                let n = sellmeier_diamond(w);
+                ((n - 1.0) / (n + 1.0)).powi(2)
             })
+            .collect();
+
+        SpectralMeasurement::new(
+            "Diamond",
+            MaterialCategory::Dielectric,
+            wavelengths,
+            reflectance,
+        )
+        .with_metadata(MeasurementMetadata {
+            source: "Peter (1923)".to_string(),
+            temperature_k: 293.0,
+            humidity: 0.5,
+            notes: "Type IIa diamond".to_string(),
+            ..Default::default()
+        })
     }
 
     // Sellmeier equations for accurate dispersion
@@ -563,9 +642,7 @@ pub mod builtin {
         let w2 = w * w;
 
         // Simplified for diamond
-        let n2 = 1.0
-            + 4.3356 * w2 / (w2 - 0.1060 * 0.1060)
-            + 0.3306 * w2 / (w2 - 0.1750 * 0.1750);
+        let n2 = 1.0 + 4.3356 * w2 / (w2 - 0.1060 * 0.1060) + 0.3306 * w2 / (w2 - 0.1750 * 0.1750);
 
         n2.sqrt()
     }
@@ -581,10 +658,12 @@ pub fn reflectance_rmse(predicted: &[f64], measured: &[f64]) -> f64 {
         return f64::MAX;
     }
 
-    let mse: f64 = predicted.iter()
+    let mse: f64 = predicted
+        .iter()
         .zip(measured.iter())
         .map(|(p, m)| (p - m).powi(2))
-        .sum::<f64>() / predicted.len() as f64;
+        .sum::<f64>()
+        / predicted.len() as f64;
 
     mse.sqrt()
 }
@@ -595,7 +674,8 @@ pub fn reflectance_max_error(predicted: &[f64], measured: &[f64]) -> f64 {
         return f64::MAX;
     }
 
-    predicted.iter()
+    predicted
+        .iter()
         .zip(measured.iter())
         .map(|(p, m)| (p - m).abs())
         .fold(0.0, f64::max)

@@ -8,8 +8,8 @@
 //!   cargo run --example 05_audio_lufs --package momoto-audio
 
 use momoto_audio::{
-    AudioDomain, FftPlan, MelFilterbank,
-    spectral_centroid, spectral_brightness, spectral_flatness, spectral_rolloff,
+    spectral_brightness, spectral_centroid, spectral_flatness, spectral_rolloff, AudioDomain,
+    FftPlan, MelFilterbank,
 };
 
 fn main() {
@@ -23,21 +23,22 @@ fn main() {
     let freq = 1_000.0_f32;
     let n_samples = sample_rate as usize;
     let sine: Vec<f32> = (0..n_samples)
-        .map(|i| {
-            (2.0 * std::f32::consts::PI * freq * i as f32 / sample_rate as f32).sin()
-        })
+        .map(|i| (2.0 * std::f32::consts::PI * freq * i as f32 / sample_rate as f32).sin())
         .collect();
 
-    println!("Signal: {:.0} Hz sine, {:.3} s, {} samples", freq, 1.0, n_samples);
+    println!(
+        "Signal: {:.0} Hz sine, {:.3} s, {} samples",
+        freq, 1.0, n_samples
+    );
     println!();
 
     // ── 2. LUFS measurement ──────────────────────────────────────────────────
     let mut analyzer = domain.lufs_analyzer(1).unwrap(); // mono, 48 kHz
     analyzer.add_mono_block(&sine);
 
-    let momentary  = analyzer.momentary();   // f64, 400 ms window
-    let short_term = analyzer.short_term();  // f64, 3 s window
-    let integrated = analyzer.integrated();  // f64, gated program loudness
+    let momentary = analyzer.momentary(); // f64, 400 ms window
+    let short_term = analyzer.short_term(); // f64, 3 s window
+    let integrated = analyzer.integrated(); // f64, gated program loudness
 
     println!("LUFS Loudness (ITU-R BS.1770-4):");
     println!("  Momentary:    {:>8.2} LUFS", momentary);
@@ -51,11 +52,16 @@ fn main() {
     println!("  Standard:     {}", report.standard);
     println!("  Measured:     {:>8.2} LUFS", integrated);
     println!("  Violations:   {}", report.violations.len());
-    println!("  Passes:       {}", if report.passes { "✓ YES" } else { "✗ NO" });
+    println!(
+        "  Passes:       {}",
+        if report.passes { "✓ YES" } else { "✗ NO" }
+    );
     if !report.passes {
         for v in &report.violations {
-            println!("    ✗ {} — measured={:.2} threshold={:.2} ({})",
-                v.rule, v.measured, v.threshold, v.severity);
+            println!(
+                "    ✗ {} — measured={:.2} threshold={:.2} ({})",
+                v.rule, v.measured, v.threshold, v.severity
+            );
         }
     }
     println!();
@@ -81,18 +87,30 @@ fn main() {
     // Convert to dB for display
     let peak_db = 10.0 * (power[peak_bin] + 1e-30_f32).log10();
 
-    println!("FFT Power Spectrum ({} bins, {:.1} Hz/bin):", n_bins, bin_hz);
+    println!(
+        "FFT Power Spectrum ({} bins, {:.1} Hz/bin):",
+        n_bins, bin_hz
+    );
     println!("  FFT size:     {} samples", fft_size);
-    println!("  Peak bin:     {} → {:.0} Hz  ({:.1} dB)", peak_bin, peak_freq, peak_db);
+    println!(
+        "  Peak bin:     {} → {:.0} Hz  ({:.1} dB)",
+        peak_bin, peak_freq, peak_db
+    );
     println!("  Expected peak: 1000 Hz (1 kHz sine)");
-    println!("  Match: {}",
-        if (peak_freq - freq).abs() < bin_hz * 2.0 { "✓" } else { "✗" });
+    println!(
+        "  Match: {}",
+        if (peak_freq - freq).abs() < bin_hz * 2.0 {
+            "✓"
+        } else {
+            "✗"
+        }
+    );
     println!();
 
     // ── 5. Mel Filterbank ────────────────────────────────────────────────────
     let n_mels = 40;
-    let f_min  = 80.0_f32;
-    let f_max  = 8_000.0_f32;
+    let f_min = 80.0_f32;
+    let f_max = 8_000.0_f32;
     let filterbank = MelFilterbank::new(n_mels, fft_size, sample_rate, f_min, f_max);
 
     // filterbank.apply_into expects n_bins = fft_size/2+1 elements
@@ -106,23 +124,35 @@ fn main() {
         .map(|(i, _)| i)
         .unwrap_or(0);
 
-    println!("Mel Filterbank ({} bands, {:.0}–{:.0} Hz):", n_mels, f_min, f_max);
+    println!(
+        "Mel Filterbank ({} bands, {:.0}–{:.0} Hz):",
+        n_mels, f_min, f_max
+    );
     println!("  Peak Mel band: {}", mel_peak_bin);
     println!("  Peak energy:   {:.6}", mel_output[mel_peak_bin]);
     println!();
 
     // ── 6. Spectral Features ─────────────────────────────────────────────────
     // Spectral functions take the one-sided power spectrum (N/2+1 bins)
-    let centroid   = spectral_centroid(&power, sample_rate);
+    let centroid = spectral_centroid(&power, sample_rate);
     let brightness = spectral_brightness(&power, sample_rate, 2_000.0);
-    let rolloff    = spectral_rolloff(&power, sample_rate, 0.85);
-    let flatness   = spectral_flatness(&power);
+    let rolloff = spectral_rolloff(&power, sample_rate, 0.85);
+    let flatness = spectral_flatness(&power);
 
     println!("Spectral Features:");
-    println!("  Centroid:     {:.1} Hz  (expected ≈ 1000 Hz for 1 kHz sine)", centroid);
-    println!("  Brightness:   {:.4}  (energy above 2 kHz / total)", brightness);
+    println!(
+        "  Centroid:     {:.1} Hz  (expected ≈ 1000 Hz for 1 kHz sine)",
+        centroid
+    );
+    println!(
+        "  Brightness:   {:.4}  (energy above 2 kHz / total)",
+        brightness
+    );
     println!("  Rolloff@85%%:  {:.1} Hz", rolloff);
-    println!("  Flatness:     {:.6}  (0 ≈ pure tone, 1 = white noise)", flatness);
+    println!(
+        "  Flatness:     {:.6}  (0 ≈ pure tone, 1 = white noise)",
+        flatness
+    );
     println!();
 
     // ── Summary ──────────────────────────────────────────────────────────────
@@ -131,5 +161,8 @@ fn main() {
     println!("  EBU R128 passes:  {}", report.passes);
     println!("  FFT peak:         {:.0} Hz (expected 1000 Hz)", peak_freq);
     println!("  Spectral centroid:{:.0} Hz", centroid);
-    println!("  Mel bands:        {} (peak at band {})", n_mels, mel_peak_bin);
+    println!(
+        "  Mel bands:        {} (peak at band {})",
+        n_mels, mel_peak_bin
+    );
 }

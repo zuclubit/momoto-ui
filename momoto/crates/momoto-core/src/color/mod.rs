@@ -3,8 +3,8 @@
 //! This module provides the core `Color` type which represents colors
 //! in both sRGB (gamma-corrected) and linear RGB spaces, with alpha channel support.
 
-mod operations;
 pub mod cvd;
+mod operations;
 
 /// sRGB gamma correction transfer functions.
 ///
@@ -341,7 +341,6 @@ impl Color {
         format!("#{:02X}{:02X}{:02X}", r, g, b)
     }
 }
-
 
 impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

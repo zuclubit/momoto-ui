@@ -3,9 +3,9 @@
 //! Generates coherent visual design experiences (themes) based on perceptual
 //! color science using OKLCH color space for perceptually uniform manipulation.
 
-use serde::{Deserialize, Serialize};
 use momoto_core::color::Color;
 use momoto_core::space::oklch::OKLCH;
+use serde::{Deserialize, Serialize};
 
 // ============================================================================
 // ThemePreset
@@ -40,33 +40,33 @@ impl ThemePreset {
     /// Return the canonical display name of this preset.
     pub fn name(&self) -> &'static str {
         match self {
-            Self::Ocean    => "Ocean",
-            Self::Forest   => "Forest",
-            Self::Sunset   => "Sunset",
+            Self::Ocean => "Ocean",
+            Self::Forest => "Forest",
+            Self::Sunset => "Sunset",
             Self::Midnight => "Midnight",
-            Self::Arctic   => "Arctic",
-            Self::Desert   => "Desert",
-            Self::Cosmic   => "Cosmic",
-            Self::Sakura   => "Sakura",
-            Self::Urban    => "Urban",
-            Self::Minimal  => "Minimal",
+            Self::Arctic => "Arctic",
+            Self::Desert => "Desert",
+            Self::Cosmic => "Cosmic",
+            Self::Sakura => "Sakura",
+            Self::Urban => "Urban",
+            Self::Minimal => "Minimal",
         }
     }
 
     /// Parse a preset from a lowercase string identifier.
     pub fn from_str(s: &str) -> Option<Self> {
         match s.to_lowercase().trim() {
-            "ocean"    => Some(Self::Ocean),
-            "forest"   => Some(Self::Forest),
-            "sunset"   => Some(Self::Sunset),
+            "ocean" => Some(Self::Ocean),
+            "forest" => Some(Self::Forest),
+            "sunset" => Some(Self::Sunset),
             "midnight" => Some(Self::Midnight),
-            "arctic"   => Some(Self::Arctic),
-            "desert"   => Some(Self::Desert),
-            "cosmic"   => Some(Self::Cosmic),
-            "sakura"   => Some(Self::Sakura),
-            "urban"    => Some(Self::Urban),
-            "minimal"  => Some(Self::Minimal),
-            _          => None,
+            "arctic" => Some(Self::Arctic),
+            "desert" => Some(Self::Desert),
+            "cosmic" => Some(Self::Cosmic),
+            "sakura" => Some(Self::Sakura),
+            "urban" => Some(Self::Urban),
+            "minimal" => Some(Self::Minimal),
+            _ => None,
         }
     }
 
@@ -93,94 +93,94 @@ impl ThemePreset {
 
 /// Seed palette: (primary, secondary, accent, surface, text) as OKLCH tuples.
 struct PaletteSeed {
-    primary:   (f64, f64, f64),
+    primary: (f64, f64, f64),
     secondary: (f64, f64, f64),
-    accent:    (f64, f64, f64),
-    surface:   (f64, f64, f64),
-    text:      (f64, f64, f64),
+    accent: (f64, f64, f64),
+    surface: (f64, f64, f64),
+    text: (f64, f64, f64),
     description: &'static str,
 }
 
 fn seed_for(preset: ThemePreset) -> PaletteSeed {
     match preset {
         ThemePreset::Ocean => PaletteSeed {
-            primary:     (0.40, 0.18, 240.0),
-            secondary:   (0.55, 0.15, 192.0),
-            accent:      (0.70, 0.12, 200.0),
-            surface:     (0.97, 0.02, 220.0),
-            text:        (0.18, 0.05, 240.0),
+            primary: (0.40, 0.18, 240.0),
+            secondary: (0.55, 0.15, 192.0),
+            accent: (0.70, 0.12, 200.0),
+            surface: (0.97, 0.02, 220.0),
+            text: (0.18, 0.05, 240.0),
             description: "Deep ocean depths with crystalline teal highlights",
         },
         ThemePreset::Forest => PaletteSeed {
-            primary:     (0.40, 0.15, 145.0),
-            secondary:   (0.55, 0.12, 110.0),
-            accent:      (0.65, 0.18, 80.0),
-            surface:     (0.96, 0.02, 130.0),
-            text:        (0.17, 0.04, 145.0),
+            primary: (0.40, 0.15, 145.0),
+            secondary: (0.55, 0.12, 110.0),
+            accent: (0.65, 0.18, 80.0),
+            surface: (0.96, 0.02, 130.0),
+            text: (0.17, 0.04, 145.0),
             description: "Ancient forest greens rooted in earthy browns",
         },
         ThemePreset::Sunset => PaletteSeed {
-            primary:     (0.55, 0.22, 35.0),
-            secondary:   (0.60, 0.20, 15.0),
-            accent:      (0.72, 0.18, 60.0),
-            surface:     (0.97, 0.03, 40.0),
-            text:        (0.18, 0.06, 30.0),
+            primary: (0.55, 0.22, 35.0),
+            secondary: (0.60, 0.20, 15.0),
+            accent: (0.72, 0.18, 60.0),
+            surface: (0.97, 0.03, 40.0),
+            text: (0.18, 0.06, 30.0),
             description: "Warm horizon fire with golden amber transitions",
         },
         ThemePreset::Midnight => PaletteSeed {
-            primary:     (0.28, 0.16, 265.0),
-            secondary:   (0.38, 0.18, 285.0),
-            accent:      (0.75, 0.20, 310.0),
-            surface:     (0.12, 0.03, 265.0),
-            text:        (0.93, 0.02, 265.0),
+            primary: (0.28, 0.16, 265.0),
+            secondary: (0.38, 0.18, 285.0),
+            accent: (0.75, 0.20, 310.0),
+            surface: (0.12, 0.03, 265.0),
+            text: (0.93, 0.02, 265.0),
             description: "Deep midnight sky with ethereal violet accents",
         },
         ThemePreset::Arctic => PaletteSeed {
-            primary:     (0.72, 0.08, 210.0),
-            secondary:   (0.82, 0.05, 200.0),
-            accent:      (0.50, 0.14, 225.0),
-            surface:     (0.98, 0.01, 210.0),
-            text:        (0.15, 0.04, 215.0),
+            primary: (0.72, 0.08, 210.0),
+            secondary: (0.82, 0.05, 200.0),
+            accent: (0.50, 0.14, 225.0),
+            surface: (0.98, 0.01, 210.0),
+            text: (0.15, 0.04, 215.0),
             description: "Glacial clarity with icy blue-silver luminescence",
         },
         ThemePreset::Desert => PaletteSeed {
-            primary:     (0.58, 0.16, 55.0),
-            secondary:   (0.65, 0.14, 40.0),
-            accent:      (0.50, 0.20, 30.0),
-            surface:     (0.97, 0.03, 60.0),
-            text:        (0.20, 0.06, 45.0),
+            primary: (0.58, 0.16, 55.0),
+            secondary: (0.65, 0.14, 40.0),
+            accent: (0.50, 0.20, 30.0),
+            surface: (0.97, 0.03, 60.0),
+            text: (0.20, 0.06, 45.0),
             description: "Sun-baked terracotta and warm ochre dunes",
         },
         ThemePreset::Cosmic => PaletteSeed {
-            primary:     (0.30, 0.20, 280.0),
-            secondary:   (0.40, 0.22, 260.0),
-            accent:      (0.80, 0.18, 320.0),
-            surface:     (0.08, 0.04, 275.0),
-            text:        (0.92, 0.03, 280.0),
+            primary: (0.30, 0.20, 280.0),
+            secondary: (0.40, 0.22, 260.0),
+            accent: (0.80, 0.18, 320.0),
+            surface: (0.08, 0.04, 275.0),
+            text: (0.92, 0.03, 280.0),
             description: "Infinite cosmos purple with nebula pink highlights",
         },
         ThemePreset::Sakura => PaletteSeed {
-            primary:     (0.72, 0.12, 355.0),
-            secondary:   (0.78, 0.10, 10.0),
-            accent:      (0.55, 0.18, 340.0),
-            surface:     (0.98, 0.02, 5.0),
-            text:        (0.20, 0.05, 350.0),
+            primary: (0.72, 0.12, 355.0),
+            secondary: (0.78, 0.10, 10.0),
+            accent: (0.55, 0.18, 340.0),
+            surface: (0.98, 0.02, 5.0),
+            text: (0.20, 0.05, 350.0),
             description: "Japanese cherry blossom with soft petal softness",
         },
         ThemePreset::Urban => PaletteSeed {
-            primary:     (0.38, 0.06, 220.0),
-            secondary:   (0.52, 0.04, 210.0),
-            accent:      (0.65, 0.24, 195.0),
-            surface:     (0.95, 0.01, 220.0),
-            text:        (0.12, 0.02, 220.0),
+            primary: (0.38, 0.06, 220.0),
+            secondary: (0.52, 0.04, 210.0),
+            accent: (0.65, 0.24, 195.0),
+            surface: (0.95, 0.01, 220.0),
+            text: (0.12, 0.02, 220.0),
             description: "Steel and concrete with electric teal accents",
         },
         ThemePreset::Minimal => PaletteSeed {
-            primary:     (0.20, 0.00, 0.0),
-            secondary:   (0.55, 0.00, 0.0),
-            accent:      (0.55, 0.20, 250.0),
-            surface:     (0.99, 0.00, 0.0),
-            text:        (0.10, 0.00, 0.0),
+            primary: (0.20, 0.00, 0.0),
+            secondary: (0.55, 0.00, 0.0),
+            accent: (0.55, 0.20, 250.0),
+            surface: (0.99, 0.00, 0.0),
+            text: (0.10, 0.00, 0.0),
             description: "Surgical minimal with a single resonant accent",
         },
     }
@@ -200,7 +200,9 @@ fn oklch_to_hex(l: f64, c: f64, h: f64) -> String {
 
 /// Adjust OKLCH seed toward a target color (hex string). Blends L/C/H.
 fn blend_oklch_toward_hex(
-    seed_l: f64, seed_c: f64, seed_h: f64,
+    seed_l: f64,
+    seed_c: f64,
+    seed_h: f64,
     target_hex: &str,
     weight: f64, // 0.0 = pure seed, 1.0 = pure target
 ) -> (f64, f64, f64) {
@@ -213,9 +215,13 @@ fn blend_oklch_toward_hex(
         let th = t.h as f64;
         let dh = {
             let diff = th - seed_h;
-            if diff > 180.0 { diff - 360.0 }
-            else if diff < -180.0 { diff + 360.0 }
-            else { diff }
+            if diff > 180.0 {
+                diff - 360.0
+            } else if diff < -180.0 {
+                diff + 360.0
+            } else {
+                diff
+            }
         };
         (
             seed_l * (1.0 - w) + tl * w,
@@ -230,11 +236,11 @@ fn blend_oklch_toward_hex(
 /// Generate CSS custom properties block from the five hex colors.
 fn generate_css_variables(
     theme_name: &str,
-    primary:   &str,
+    primary: &str,
     secondary: &str,
-    accent:    &str,
-    surface:   &str,
-    text:      &str,
+    accent: &str,
+    surface: &str,
+    text: &str,
 ) -> String {
     // Also derive muted surface variants
     let primary_color = Color::from_hex(primary).unwrap_or_else(|_| Color::from_srgb8(0, 0, 255));
@@ -269,13 +275,13 @@ fn generate_css_variables(
   --color-muted:          {primary_muted};
 }}"#,
         theme_name = theme_name,
-        primary    = primary,
+        primary = primary,
         primary_muted = primary_muted,
-        primary_dark  = primary_dark,
-        secondary  = secondary,
-        accent     = accent,
-        surface    = surface,
-        text       = text,
+        primary_dark = primary_dark,
+        secondary = secondary,
+        accent = accent,
+        surface = surface,
+        text = text,
     )
 }
 
@@ -382,16 +388,19 @@ impl ExperienceGenerator {
         let (sul, suc, suh) = seed.surface;
         let (tl, tc, th) = seed.text;
 
-        let primary_hex   = oklch_to_hex(pl, pc, ph);
+        let primary_hex = oklch_to_hex(pl, pc, ph);
         let secondary_hex = oklch_to_hex(sl, sc, sh);
-        let accent_hex    = oklch_to_hex(al, ac, ah);
-        let surface_hex   = oklch_to_hex(sul, suc, suh);
-        let text_hex      = oklch_to_hex(tl, tc, th);
-        let theme_name    = preset.name().to_string();
+        let accent_hex = oklch_to_hex(al, ac, ah);
+        let surface_hex = oklch_to_hex(sul, suc, suh);
+        let text_hex = oklch_to_hex(tl, tc, th);
+        let theme_name = preset.name().to_string();
         let css_variables = generate_css_variables(
             &theme_name,
-            &primary_hex, &secondary_hex, &accent_hex,
-            &surface_hex, &text_hex,
+            &primary_hex,
+            &secondary_hex,
+            &accent_hex,
+            &surface_hex,
+            &text_hex,
         );
 
         VisualExperience {
@@ -427,24 +436,33 @@ impl ExperienceGenerator {
         // Rotate secondary & accent by the same hue delta
         let hue_delta = {
             let raw = nph - ph;
-            if raw > 180.0 { raw - 360.0 } else if raw < -180.0 { raw + 360.0 } else { raw }
+            if raw > 180.0 {
+                raw - 360.0
+            } else if raw < -180.0 {
+                raw + 360.0
+            } else {
+                raw
+            }
         };
         let (nsl, nsc, nsh) = (sl, sc, (sh + hue_delta).rem_euclid(360.0));
         let (nal, nac, nah) = (al, ac, (ah + hue_delta).rem_euclid(360.0));
         // Surface and text get a very subtle hue shift
         let (nsul, nsuc, nsuh) = (sul, suc, (suh + hue_delta * 0.2).rem_euclid(360.0));
-        let (ntl,  ntc,  nth)  = (tl,  tc,  (th  + hue_delta * 0.2).rem_euclid(360.0));
+        let (ntl, ntc, nth) = (tl, tc, (th + hue_delta * 0.2).rem_euclid(360.0));
 
-        let primary_hex   = oklch_to_hex(npl, npc, nph);
+        let primary_hex = oklch_to_hex(npl, npc, nph);
         let secondary_hex = oklch_to_hex(nsl, nsc, nsh);
-        let accent_hex    = oklch_to_hex(nal, nac, nah);
-        let surface_hex   = oklch_to_hex(nsul, nsuc, nsuh);
-        let text_hex      = oklch_to_hex(ntl, ntc, nth);
-        let theme_name    = format!("{} (Custom)", preset.name());
+        let accent_hex = oklch_to_hex(nal, nac, nah);
+        let surface_hex = oklch_to_hex(nsul, nsuc, nsuh);
+        let text_hex = oklch_to_hex(ntl, ntc, nth);
+        let theme_name = format!("{} (Custom)", preset.name());
         let css_variables = generate_css_variables(
             &theme_name,
-            &primary_hex, &secondary_hex, &accent_hex,
-            &surface_hex, &text_hex,
+            &primary_hex,
+            &secondary_hex,
+            &accent_hex,
+            &surface_hex,
+            &text_hex,
         );
 
         VisualExperience {
@@ -491,8 +509,8 @@ pub fn generate_experience_with_color(color_hex: &str, preset_name: &str) -> Vis
 /// Return the list of all known preset names in lowercase.
 pub fn list_presets() -> Vec<&'static str> {
     vec![
-        "ocean", "forest", "sunset", "midnight", "arctic",
-        "desert", "cosmic", "sakura", "urban", "minimal",
+        "ocean", "forest", "sunset", "midnight", "arctic", "desert", "cosmic", "sakura", "urban",
+        "minimal",
     ]
 }
 

@@ -70,7 +70,10 @@ impl FftPlan {
     /// Panics if `n` is not a power of two or `n == 0`.
     #[must_use]
     pub fn new(n: usize) -> Self {
-        assert!(n > 0 && n.is_power_of_two(), "FFT length must be a non-zero power of two");
+        assert!(
+            n > 0 && n.is_power_of_two(),
+            "FFT length must be a non-zero power of two"
+        );
         let stages = n.trailing_zeros() as usize;
 
         // Pre-compute twiddle factors W_N^k for k = 0..N/2
@@ -97,20 +100,31 @@ impl FftPlan {
             .collect::<Vec<_>>()
             .into_boxed_slice();
 
-        Self { n, stages, twiddles, bit_rev }
+        Self {
+            n,
+            stages,
+            twiddles,
+            bit_rev,
+        }
     }
 
     /// FFT length this plan was built for.
     #[must_use]
-    pub fn len(&self) -> usize { self.n }
+    pub fn len(&self) -> usize {
+        self.n
+    }
 
     /// Number of FFT stages (log₂(N)).
     #[must_use]
-    pub fn stages(&self) -> usize { self.stages }
+    pub fn stages(&self) -> usize {
+        self.stages
+    }
 
     /// Returns `true` if `n == 1` (trivial transform).
     #[must_use]
-    pub fn is_empty(&self) -> bool { self.n == 1 }
+    pub fn is_empty(&self) -> bool {
+        self.n == 1
+    }
 
     // ── In-place FFT ─────────────────────────────────────────────────────────
 
@@ -140,7 +154,9 @@ impl FftPlan {
     pub fn ifft(&self, buf: &mut [(f32, f32)]) {
         assert_eq!(buf.len(), self.n, "buffer length must equal plan length");
         // Conjugate → forward FFT → conjugate → scale by 1/N
-        for s in buf.iter_mut() { s.1 = -s.1; }
+        for s in buf.iter_mut() {
+            s.1 = -s.1;
+        }
         self.bit_reverse_permute(buf);
         self.butterfly_passes(buf, false);
         let scale = 1.0 / self.n as f32;
@@ -222,7 +238,7 @@ impl FftPlan {
                     let (vr, vi) = buf[k + j + half_size];
                     let tr = wr * vr - wi * vi;
                     let ti = wr * vi + wi * vr;
-                    buf[k + j]             = (ur + tr, ui + ti);
+                    buf[k + j] = (ur + tr, ui + ti);
                     buf[k + j + half_size] = (ur - tr, ui - ti);
                 }
                 k += size;
@@ -267,8 +283,8 @@ mod tests {
             .collect();
         plan.fft(&mut buf);
         // Peaks at k0 and N-k0
-        let mag_k0    = complex_magnitude(buf[k0]);
-        let mag_nmk0  = complex_magnitude(buf[n - k0]);
+        let mag_k0 = complex_magnitude(buf[k0]);
+        let mag_nmk0 = complex_magnitude(buf[n - k0]);
         assert!(mag_k0 > 6.0, "peak at k0, got {}", mag_k0);
         assert!(mag_nmk0 > 6.0, "peak at N-k0, got {}", mag_nmk0);
         // Other bins should be small
@@ -276,7 +292,9 @@ mod tests {
             if k != k0 && k != (n - k0) {
                 assert!(
                     complex_magnitude(buf[k]) < 1.0,
-                    "bin {} should be near zero, got {}", k, complex_magnitude(buf[k])
+                    "bin {} should be near zero, got {}",
+                    k,
+                    complex_magnitude(buf[k])
                 );
             }
         }
@@ -364,7 +382,10 @@ mod tests {
         samples[20] = f32::INFINITY;
         let ps = plan.power_spectrum(&samples);
         for (k, &p) in ps.iter().enumerate() {
-            assert!(p.is_finite(), "bin {k} should be finite even with NaN input, got {p}");
+            assert!(
+                p.is_finite(),
+                "bin {k} should be finite even with NaN input, got {p}"
+            );
             assert!(p >= 0.0, "power spectrum must be non-negative");
         }
     }

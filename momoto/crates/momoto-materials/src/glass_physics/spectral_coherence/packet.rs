@@ -423,9 +423,9 @@ impl SpectralPacketBuilder {
 
     /// Build packet.
     pub fn build(self) -> SpectralPacket {
-        let wavelengths = self.wavelengths.unwrap_or_else(|| {
-            (0..31).map(|i| 400.0 + i as f64 * 10.0).collect()
-        });
+        let wavelengths = self
+            .wavelengths
+            .unwrap_or_else(|| (0..31).map(|i| 400.0 + i as f64 * 10.0).collect());
         let values = self.values.unwrap_or_else(|| vec![0.0; wavelengths.len()]);
 
         SpectralPacket {

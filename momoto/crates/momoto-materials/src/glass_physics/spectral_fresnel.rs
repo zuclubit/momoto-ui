@@ -24,7 +24,7 @@
 //! RGB evaluation is ~3x the cost of single evaluation, but provides
 //! significantly more realistic edge effects.
 
-use super::dispersion::{CauchyDispersion, Dispersion, f0_from_ior};
+use super::dispersion::{f0_from_ior, CauchyDispersion, Dispersion};
 use super::fresnel::fresnel_schlick;
 use super::lut::FresnelLUT;
 
@@ -61,9 +61,9 @@ pub fn fresnel_rgb<D: Dispersion>(dispersion: &D, cos_theta: f64) -> [f64; 3] {
     let n_rgb = dispersion.n_rgb();
 
     [
-        fresnel_schlick(1.0, n_rgb[0], cos_theta),  // Red
-        fresnel_schlick(1.0, n_rgb[1], cos_theta),  // Green
-        fresnel_schlick(1.0, n_rgb[2], cos_theta),  // Blue
+        fresnel_schlick(1.0, n_rgb[0], cos_theta), // Red
+        fresnel_schlick(1.0, n_rgb[1], cos_theta), // Green
+        fresnel_schlick(1.0, n_rgb[2], cos_theta), // Blue
     ]
 }
 
@@ -185,7 +185,7 @@ pub fn to_css_chromatic_fresnel<D: Dispersion>(
     let n_rgb = dispersion.n_rgb();
 
     // Calculate chromatic spread
-    let spread = n_rgb[2] - n_rgb[0];  // Blue - Red
+    let spread = n_rgb[2] - n_rgb[0]; // Blue - Red
 
     // Boost for visibility
     let boost = if light_mode { 1.8 } else { 1.4 };
@@ -220,7 +220,7 @@ pub fn to_css_chromatic_fresnel<D: Dispersion>(
 
     // Chromatic fringe: blue shows first (inner), red last (outer)
     // This creates the characteristic "rainbow" edge
-    let chromatic_offset = (spread * 50.0).min(8.0);  // Max 8% offset
+    let chromatic_offset = (spread * 50.0).min(8.0); // Max 8% offset
 
     format!(
         "radial-gradient(ellipse 100% 100% at center, \
@@ -230,13 +230,13 @@ pub fn to_css_chromatic_fresnel<D: Dispersion>(
          rgba(255, 255, 255, {:.3}) 75%, \
          rgba(255, 200, 150, {:.3}) {}%, \
          rgba(255, 200, 150, {:.3}) 100%)",
-        40.0 - chromatic_offset,           // Blue transparent zone start
-        boosted * 0.2 * b_factor,          // Blue alpha
-        60.0 - chromatic_offset / 2.0,     // Blue zone end
-        boosted * 0.5,                     // White center alpha
-        85.0 + chromatic_offset / 2.0,     // Red zone start
-        boosted * 0.4 * r_factor,          // Red inner alpha
-        boosted * 0.2 * r_factor,          // Red edge alpha (fade out)
+        40.0 - chromatic_offset,       // Blue transparent zone start
+        boosted * 0.2 * b_factor,      // Blue alpha
+        60.0 - chromatic_offset / 2.0, // Blue zone end
+        boosted * 0.5,                 // White center alpha
+        85.0 + chromatic_offset / 2.0, // Red zone start
+        boosted * 0.4 * r_factor,      // Red inner alpha
+        boosted * 0.2 * r_factor,      // Red edge alpha (fade out)
     )
 }
 
@@ -303,7 +303,7 @@ impl SpectralFresnelLUT {
     const IOR_STEP: f64 = (Self::IOR_MAX - Self::IOR_MIN) / (Self::IOR_COUNT - 1) as f64;
 
     const DISP_MIN: f64 = 0.0;
-    const DISP_MAX: f64 = 20000.0;  // Cauchy B coefficient range
+    const DISP_MAX: f64 = 20000.0; // Cauchy B coefficient range
     const DISP_COUNT: usize = 16;
     const DISP_STEP: f64 = (Self::DISP_MAX - Self::DISP_MIN) / (Self::DISP_COUNT - 1) as f64;
 
@@ -403,8 +403,8 @@ pub fn fresnel_rgb_lut(ior_base: f64, dispersion_b: f64, cos_theta: f64) -> [f64
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::dispersion::wavelengths;
+    use super::*;
 
     #[test]
     fn test_fresnel_rgb_ordering() {
@@ -442,8 +442,14 @@ mod tests {
         let rgb = fresnel_rgb(&crown, 0.5);
         let result = SpectralFresnelResult::from_rgb(rgb);
 
-        assert!(result.is_chromatic(), "Crown glass should show chromatic effect");
-        assert!(result.chromatic_spread > 0.0, "Blue should be higher than red");
+        assert!(
+            result.is_chromatic(),
+            "Crown glass should show chromatic effect"
+        );
+        assert!(
+            result.chromatic_spread > 0.0,
+            "Blue should be higher than red"
+        );
     }
 
     #[test]
@@ -488,12 +494,7 @@ mod tests {
 
         for ch in 0..3 {
             let error = (direct[ch] - from_lut[ch]).abs();
-            assert!(
-                error < 0.02,
-                "LUT error {} in channel {}",
-                error,
-                ch
-            );
+            assert!(error < 0.02, "LUT error {} in channel {}", error, ch);
         }
     }
 

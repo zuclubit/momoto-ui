@@ -9,11 +9,8 @@
 use wasm_bindgen::prelude::*;
 
 use momoto_materials::glass_physics::temporal::{
-    TemporalContext,
-    TemporalBSDF,
-    TemporalDielectric, DielectricEvolution,
-    TemporalThinFilm, ThinFilmEvolution,
-    TemporalConductor, ConductorEvolution,
+    ConductorEvolution, DielectricEvolution, TemporalBSDF, TemporalConductor, TemporalContext,
+    TemporalDielectric, TemporalThinFilm, ThinFilmEvolution,
 };
 use momoto_materials::glass_physics::unified_bsdf::BSDFContext;
 
@@ -60,13 +57,17 @@ impl TemporalMaterial {
     /// Preset: drying paint (roughness 0.05→0.4 over ~60s).
     #[wasm_bindgen(js_name = "dryingPaint")]
     pub fn drying_paint() -> Self {
-        Self { inner: TemporalDielectric::drying_paint() }
+        Self {
+            inner: TemporalDielectric::drying_paint(),
+        }
     }
 
     /// Preset: weathering glass (roughness 0.01→0.15 over ~1h).
     #[wasm_bindgen(js_name = "weatheringGlass")]
     pub fn weathering_glass() -> Self {
-        Self { inner: TemporalDielectric::weathering_glass() }
+        Self {
+            inner: TemporalDielectric::weathering_glass(),
+        }
     }
 
     /// Evaluate BSDF at given time and angle.
@@ -143,13 +144,17 @@ impl TemporalThinFilmMaterial {
     /// Preset: soap bubble (300nm base, 100nm amplitude, 2 Hz, damped).
     #[wasm_bindgen(js_name = "soapBubble")]
     pub fn soap_bubble() -> Self {
-        Self { inner: TemporalThinFilm::soap_bubble() }
+        Self {
+            inner: TemporalThinFilm::soap_bubble(),
+        }
     }
 
     /// Preset: oil slick (400nm base, slow oscillation).
     #[wasm_bindgen(js_name = "oilSlick")]
     pub fn oil_slick() -> Self {
-        Self { inner: TemporalThinFilm::oil_slick() }
+        Self {
+            inner: TemporalThinFilm::oil_slick(),
+        }
     }
 
     /// Evaluate BSDF at given time and angle.
@@ -228,13 +233,17 @@ impl TemporalConductorMaterial {
     /// Preset: heated gold (reddish at high T).
     #[wasm_bindgen(js_name = "heatedGold")]
     pub fn heated_gold() -> Self {
-        Self { inner: TemporalConductor::heated_gold() }
+        Self {
+            inner: TemporalConductor::heated_gold(),
+        }
     }
 
     /// Preset: heated copper.
     #[wasm_bindgen(js_name = "heatedCopper")]
     pub fn heated_copper() -> Self {
-        Self { inner: TemporalConductor::heated_copper() }
+        Self {
+            inner: TemporalConductor::heated_copper(),
+        }
     }
 
     /// Evaluate BSDF at given time and temperature.
@@ -302,7 +311,8 @@ mod tests {
         let sum = result[0] + result[1] + result[2];
         assert!(
             (sum - 1.0).abs() < 0.01,
-            "Energy conservation failed: sum = {}", sum
+            "Energy conservation failed: sum = {}",
+            sum
         );
     }
 

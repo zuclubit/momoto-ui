@@ -31,9 +31,9 @@ pub const MAX_VIOLATIONS: usize = 8;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ViolationSeverity {
     /// Advisory: the signal is suboptimal but not non-compliant.
-    Warning  = 0,
+    Warning = 0,
     /// Non-compliant: fails the standard's minimum threshold.
-    Error    = 1,
+    Error = 1,
     /// Dangerous / legally non-compliant: significant safety or legal risk.
     Critical = 2,
 }
@@ -43,8 +43,8 @@ impl ViolationSeverity {
     #[must_use]
     pub fn label(self) -> &'static str {
         match self {
-            ViolationSeverity::Warning  => "warning",
-            ViolationSeverity::Error    => "error",
+            ViolationSeverity::Warning => "warning",
+            ViolationSeverity::Error => "error",
             ViolationSeverity::Critical => "critical",
         }
     }
@@ -80,7 +80,13 @@ impl ComplianceViolation {
         measured: f32,
         threshold: f32,
     ) -> Self {
-        Self { rule, severity, measured, threshold, description: "" }
+        Self {
+            rule,
+            severity,
+            measured,
+            threshold,
+            description: "",
+        }
     }
 
     /// Create a new violation with an explicit description.
@@ -92,7 +98,13 @@ impl ComplianceViolation {
         threshold: f32,
         description: &'static str,
     ) -> Self {
-        Self { rule, severity, measured, threshold, description }
+        Self {
+            rule,
+            severity,
+            measured,
+            threshold,
+            description,
+        }
     }
 
     /// How far below the threshold the measured value falls (positive = gap).
@@ -161,13 +173,17 @@ impl ComplianceReport {
     /// Returns `true` if any stored violation is `Critical`.
     #[must_use]
     pub fn has_critical(&self) -> bool {
-        self.violations.iter().any(|v| v.severity == ViolationSeverity::Critical)
+        self.violations
+            .iter()
+            .any(|v| v.severity == ViolationSeverity::Critical)
     }
 
     /// Returns `true` if any stored violation is `Error` or `Critical`.
     #[must_use]
     pub fn has_error_or_above(&self) -> bool {
-        self.violations.iter().any(|v| v.severity >= ViolationSeverity::Error)
+        self.violations
+            .iter()
+            .any(|v| v.severity >= ViolationSeverity::Error)
     }
 
     /// Returns the worst (highest) severity among stored violations.

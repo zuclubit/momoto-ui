@@ -42,33 +42,33 @@
 // =============================================================================
 // Sub-modules — expose additional crate APIs
 // =============================================================================
-mod intelligence;
 mod agent;
-mod events;
-mod core_ext;
-mod materials_ext;
-mod siren;
-mod temporal;
-mod procedural;
-mod hct;
 #[cfg(feature = "audio")]
 mod audio;
+mod core_ext;
+mod events;
+mod hct;
+mod intelligence;
+mod materials_ext;
+mod procedural;
+mod siren;
+mod temporal;
 
 // ── Haptics module (gated by feature "haptics") ───────────────────────────────
 // #[cfg(feature = "haptics")]
 // mod haptics;
 
-pub use intelligence::*;
 pub use agent::*;
-pub use events::*;
-pub use core_ext::*;
-pub use materials_ext::*;
-pub use siren::*;
-pub use temporal::*;
-pub use procedural::*;
-pub use hct::*;
 #[cfg(feature = "audio")]
 pub use audio::*;
+pub use core_ext::*;
+pub use events::*;
+pub use hct::*;
+pub use intelligence::*;
+pub use materials_ext::*;
+pub use procedural::*;
+pub use siren::*;
+pub use temporal::*;
 
 // const white = Color.from_rgb(255, 255, 255);
 // const ratio = wcag.evaluate(black, white);
@@ -106,141 +106,107 @@ use momoto_materials::glass_physics::{
         BatchResult as CoreBatchResult,
     },
     blinn_phong,
+    // NEW: Sprint 2 - Complex IOR for Metals
+    complex_ior::{
+        fresnel_conductor as core_fresnel_conductor,
+        fresnel_conductor_schlick as core_fresnel_conductor_schlick,
+        fresnel_conductor_unpolarized as core_fresnel_conductor_unpolarized,
+        metals as metal_presets, to_css_metallic_gradient as core_to_css_metallic_gradient,
+        to_css_metallic_surface as core_to_css_metallic_surface, Complex as CoreComplex,
+        ComplexIOR as CoreComplexIOR, SpectralComplexIOR as CoreSpectralComplexIOR,
+    },
     // NEW: Context system
     context::{
         BackgroundContext as CoreBackgroundContext, ContextPresets as CoreContextPresets,
         LightingContext as CoreLightingContext, MaterialContext as CoreMaterialContext,
         ViewContext as CoreViewContext,
     },
+    // NEW: Sprint 2 - Chromatic Dispersion
+    dispersion::{
+        chromatic_aberration_strength as core_chromatic_aberration_strength,
+        f0_from_ior as core_f0_from_ior, f0_rgb as core_f0_rgb,
+        wavelengths as dispersion_wavelengths, CauchyDispersion as CoreCauchyDispersion,
+        Dispersion as DispersionTrait, DispersionModel as CoreDispersionModel,
+        SellmeierDispersion as CoreSellmeierDispersion,
+    },
     fresnel,
     light_model::Vec3 as CoreVec3,
     // NEW: LUT functions
     lut::{beer_lambert_fast, fresnel_fast, total_lut_memory},
-    perlin_noise::{presets as noise_presets, PerlinNoise as CorePerlinNoise},
-    transmittance::{
-        calculate_multi_layer_transmittance as core_calc_transmittance,
-        LayerTransmittance as CoreLayerTransmittance, OpticalProperties as CoreOpticalProperties,
-    },
-    // NEW: Sprint 1 - Thin-Film Interference
-    thin_film::{
-        self as thin_film_module,
-        presets as thin_film_presets,
-        ThinFilm as CoreThinFilm,
-        ThinFilmStack as CoreThinFilmStack,
-        thin_film_to_rgb as core_thin_film_to_rgb,
-        to_css_soap_bubble as core_to_css_soap_bubble,
-        to_css_oil_slick as core_to_css_oil_slick,
-        to_css_iridescent_gradient as core_to_css_iridescent_gradient,
-        dominant_wavelength as core_dominant_wavelength,
-        ar_coating_thickness as core_ar_coating_thickness,
-    },
-    // NEW: Sprint 2 - Chromatic Dispersion
-    dispersion::{
-        CauchyDispersion as CoreCauchyDispersion,
-        SellmeierDispersion as CoreSellmeierDispersion,
-        DispersionModel as CoreDispersionModel,
-        Dispersion as DispersionTrait,
-        wavelengths as dispersion_wavelengths,
-        f0_from_ior as core_f0_from_ior,
-        f0_rgb as core_f0_rgb,
-        chromatic_aberration_strength as core_chromatic_aberration_strength,
-    },
-    // NEW: Sprint 2 - Complex IOR for Metals
-    complex_ior::{
-        Complex as CoreComplex,
-        ComplexIOR as CoreComplexIOR,
-        SpectralComplexIOR as CoreSpectralComplexIOR,
-        fresnel_conductor as core_fresnel_conductor,
-        fresnel_conductor_unpolarized as core_fresnel_conductor_unpolarized,
-        fresnel_conductor_schlick as core_fresnel_conductor_schlick,
-        metals as metal_presets,
-        to_css_metallic_gradient as core_to_css_metallic_gradient,
-        to_css_metallic_surface as core_to_css_metallic_surface,
-    },
     // NEW: Sprint 2 - Temperature-Dependent Metals (extended Sprint 5)
     metal_temp::{
-        DrudeParams as CoreDrudeParams,
-        drude_metals as drude_presets,
-        OxideLayer as CoreOxideLayer,
-        oxides as oxide_presets,
-        TempOxidizedMetal as CoreTempOxidizedMetal,
-        oxidized_presets as oxidized_metal_presets,
-        to_css_temp_metal as core_to_css_temp_metal,
-        to_css_patina as core_to_css_patina,
+        drude_metals as drude_presets, oxides as oxide_presets,
+        oxidized_presets as oxidized_metal_presets, temp_metal_memory as core_temp_metal_memory,
         temperature_sensitivity as core_temperature_sensitivity,
-        temp_metal_memory as core_temp_metal_memory,
+        to_css_patina as core_to_css_patina, to_css_temp_metal as core_to_css_temp_metal,
+        DrudeParams as CoreDrudeParams, OxideLayer as CoreOxideLayer,
+        TempOxidizedMetal as CoreTempOxidizedMetal,
+    },
+    mie_dynamic::{
+        anisotropic_phase as core_anisotropic_phase, dynamic_presets as mie_dynamic_presets,
+        effective_asymmetry_g as core_effective_asymmetry_g,
+        extinction_coefficient as core_extinction_coefficient,
+        polydisperse_phase as core_polydisperse_phase,
+        polydisperse_phase_rgb as core_polydisperse_phase_rgb,
+        to_css_fog_effect as core_to_css_fog_effect,
+        to_css_smoke_effect as core_to_css_smoke_effect, DynamicMieParams as CoreDynamicMieParams,
+        SizeDistribution as CoreSizeDistribution,
     },
     // NEW: Sprint 3 - Mie Scattering (Volumetric)
     mie_lut::{
-        MieParams as CoreMieParams,
-        MieLUT as CoreMieLUT,
-        rayleigh_phase as core_rayleigh_phase,
+        mie_asymmetry_g as core_mie_asymmetry_g, mie_efficiencies as core_mie_efficiencies,
+        mie_fast as core_mie_fast, mie_particle as core_mie_particle,
+        mie_particle_rgb as core_mie_particle_rgb, particles as mie_particle_presets,
         rayleigh_efficiency as core_rayleigh_efficiency,
         rayleigh_intensity_rgb as core_rayleigh_intensity_rgb,
-        mie_asymmetry_g as core_mie_asymmetry_g,
-        mie_efficiencies as core_mie_efficiencies,
-        mie_fast as core_mie_fast,
-        mie_particle as core_mie_particle,
-        mie_particle_rgb as core_mie_particle_rgb,
-        particles as mie_particle_presets,
+        rayleigh_phase as core_rayleigh_phase, MieLUT as CoreMieLUT, MieParams as CoreMieParams,
     },
-    mie_dynamic::{
-        SizeDistribution as CoreSizeDistribution,
-        DynamicMieParams as CoreDynamicMieParams,
-        polydisperse_phase as core_polydisperse_phase,
-        polydisperse_phase_rgb as core_polydisperse_phase_rgb,
-        anisotropic_phase as core_anisotropic_phase,
-        effective_asymmetry_g as core_effective_asymmetry_g,
-        extinction_coefficient as core_extinction_coefficient,
-        dynamic_presets as mie_dynamic_presets,
-        to_css_fog_effect as core_to_css_fog_effect,
-        to_css_smoke_effect as core_to_css_smoke_effect,
-    },
+    perlin_noise::{presets as noise_presets, PerlinNoise as CorePerlinNoise},
     scattering::{
-        henyey_greenstein as core_henyey_greenstein,
-        hg_fast as core_hg_fast,
         double_henyey_greenstein as core_double_henyey_greenstein,
-        sample_hg as core_sample_hg,
+        henyey_greenstein as core_henyey_greenstein, hg_fast as core_hg_fast,
+        presets as scattering_presets, sample_hg as core_sample_hg,
         ScatteringParams as CoreScatteringParams,
-        presets as scattering_presets,
-    },
-    // NEW: Sprint 4 - Advanced Thin Film (Multilayer, Structural Color)
-    thin_film_advanced::{
-        FilmLayer as CoreFilmLayer,
-        TransferMatrixFilm as CoreTransferMatrixFilm,
-        Polarization as CorePolarization,
-        advanced_presets as tmm_presets,
-        to_css_structural_color as core_to_css_structural_color,
-        to_css_bragg_mirror as core_to_css_bragg_mirror,
-        find_peak_wavelength as core_find_peak_wavelength,
-        calculate_color_shift as core_calculate_color_shift,
-        transfer_matrix_memory as core_transfer_matrix_memory,
-    },
-    // NEW: Sprint 5 - Dynamic Optics (Thermo-Optic, Stress-Optic)
-    thin_film_dynamic::{
-        DynamicFilmLayer as CoreDynamicFilmLayer,
-        DynamicThinFilmStack as CoreDynamicThinFilmStack,
-        SubstrateProperties as CoreSubstrateProperties,
-        HeightMap as CoreHeightMap,
-        Vec2 as CoreVec2,
-        IridescenceMap as CoreIridescenceMap,
-        compute_iridescence_map as core_compute_iridescence_map,
-        dynamic_presets as dynamic_thin_film_presets,
     },
     // NEW: Sprint 6 - Unified Spectral Pipeline
     spectral_pipeline::{
-        SpectralSignal as CoreSpectralSignal,
-        SpectralSample as CoreSpectralSample,
-        SpectralPipeline as CoreSpectralPipeline,
-        SpectralStage as CoreSpectralStage,
+        wavelengths as spectral_wavelengths, DispersionStage as CoreDispersionStage,
         EvaluationContext as CoreEvaluationContext,
-        PipelineBuilder as CorePipelineBuilder,
-        ThinFilmStage as CoreThinFilmStage,
-        DispersionStage as CoreDispersionStage,
-        MieScatteringStage as CoreMieScatteringStage,
-        ThermoOpticStage as CoreThermoOpticStage,
         MetalReflectanceStage as CoreMetalReflectanceStage,
-        wavelengths as spectral_wavelengths,
+        MieScatteringStage as CoreMieScatteringStage, PipelineBuilder as CorePipelineBuilder,
+        SpectralPipeline as CoreSpectralPipeline, SpectralSample as CoreSpectralSample,
+        SpectralSignal as CoreSpectralSignal, SpectralStage as CoreSpectralStage,
+        ThermoOpticStage as CoreThermoOpticStage, ThinFilmStage as CoreThinFilmStage,
+    },
+    // NEW: Sprint 1 - Thin-Film Interference
+    thin_film::{
+        self as thin_film_module, ar_coating_thickness as core_ar_coating_thickness,
+        dominant_wavelength as core_dominant_wavelength, presets as thin_film_presets,
+        thin_film_to_rgb as core_thin_film_to_rgb,
+        to_css_iridescent_gradient as core_to_css_iridescent_gradient,
+        to_css_oil_slick as core_to_css_oil_slick, to_css_soap_bubble as core_to_css_soap_bubble,
+        ThinFilm as CoreThinFilm, ThinFilmStack as CoreThinFilmStack,
+    },
+    // NEW: Sprint 4 - Advanced Thin Film (Multilayer, Structural Color)
+    thin_film_advanced::{
+        advanced_presets as tmm_presets, calculate_color_shift as core_calculate_color_shift,
+        find_peak_wavelength as core_find_peak_wavelength,
+        to_css_bragg_mirror as core_to_css_bragg_mirror,
+        to_css_structural_color as core_to_css_structural_color,
+        transfer_matrix_memory as core_transfer_matrix_memory, FilmLayer as CoreFilmLayer,
+        Polarization as CorePolarization, TransferMatrixFilm as CoreTransferMatrixFilm,
+    },
+    // NEW: Sprint 5 - Dynamic Optics (Thermo-Optic, Stress-Optic)
+    thin_film_dynamic::{
+        compute_iridescence_map as core_compute_iridescence_map,
+        dynamic_presets as dynamic_thin_film_presets, DynamicFilmLayer as CoreDynamicFilmLayer,
+        DynamicThinFilmStack as CoreDynamicThinFilmStack, HeightMap as CoreHeightMap,
+        IridescenceMap as CoreIridescenceMap, SubstrateProperties as CoreSubstrateProperties,
+        Vec2 as CoreVec2,
+    },
+    transmittance::{
+        calculate_multi_layer_transmittance as core_calc_transmittance,
+        LayerTransmittance as CoreLayerTransmittance, OpticalProperties as CoreOpticalProperties,
     },
 };
 use momoto_materials::shadow_engine::{
@@ -1581,8 +1547,7 @@ impl ElevationPresets {
 
 use momoto_materials::shadow_engine::contact_shadow::{
     calculate_contact_shadow as core_calculate_contact_shadow,
-    to_css as core_contact_shadow_to_css,
-    ContactShadowParams as CoreContactShadowParams,
+    to_css as core_contact_shadow_to_css, ContactShadowParams as CoreContactShadowParams,
     ContactShadowPresets as CoreContactShadowPresets,
 };
 
@@ -3533,9 +3498,7 @@ pub fn evaluate_and_render_css_batch_full(
     // Validate array lengths
     let len = materials.len();
     if material_contexts.len() != len || render_contexts.len() != len {
-        return Err(JsValue::from_str(
-            "All arrays must have the same length",
-        ));
+        return Err(JsValue::from_str("All arrays must have the same length"));
     }
 
     if materials.is_empty() {
@@ -4077,7 +4040,8 @@ impl ThinFilm {
     /// const rAngled = film.reflectance(550.0, 1.0, 0.5);  // cos(60°) = 0.5
     /// ```
     pub fn reflectance(&self, wavelength_nm: f64, n_substrate: f64, cos_theta: f64) -> f64 {
-        self.inner.reflectance(wavelength_nm, n_substrate, cos_theta)
+        self.inner
+            .reflectance(wavelength_nm, n_substrate, cos_theta)
     }
 
     /// Calculate RGB reflectance (R=650nm, G=550nm, B=450nm).
@@ -4325,9 +4289,24 @@ pub fn get_thin_film_presets() -> js_sys::Array {
     for (name, film, substrate) in presets {
         let obj = js_sys::Object::new();
         js_sys::Reflect::set(&obj, &JsValue::from_str("name"), &JsValue::from_str(name)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("nFilm"), &JsValue::from_f64(film.n_film)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("thicknessNm"), &JsValue::from_f64(film.thickness_nm)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("suggestedSubstrate"), &JsValue::from_f64(substrate)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("nFilm"),
+            &JsValue::from_f64(film.n_film),
+        )
+        .unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("thicknessNm"),
+            &JsValue::from_f64(film.thickness_nm),
+        )
+        .unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("suggestedSubstrate"),
+            &JsValue::from_f64(substrate),
+        )
+        .unwrap();
         array.push(&obj);
     }
 
@@ -4919,19 +4898,25 @@ impl SpectralComplexIOR {
     /// Get IOR at red wavelength (~650nm).
     #[wasm_bindgen(getter)]
     pub fn red(&self) -> ComplexIOR {
-        ComplexIOR { inner: self.inner.red }
+        ComplexIOR {
+            inner: self.inner.red,
+        }
     }
 
     /// Get IOR at green wavelength (~550nm).
     #[wasm_bindgen(getter)]
     pub fn green(&self) -> ComplexIOR {
-        ComplexIOR { inner: self.inner.green }
+        ComplexIOR {
+            inner: self.inner.green,
+        }
     }
 
     /// Get IOR at blue wavelength (~450nm).
     #[wasm_bindgen(getter)]
     pub fn blue(&self) -> ComplexIOR {
-        ComplexIOR { inner: self.inner.blue }
+        ComplexIOR {
+            inner: self.inner.blue,
+        }
     }
 
     /// Generate CSS for metallic gradient effect.
@@ -5084,7 +5069,12 @@ impl DrudeParams {
     pub fn at_temperature(&self, temp_k: f64) -> js_sys::Object {
         let (omega_p, gamma) = self.inner.at_temperature(temp_k);
         let obj = js_sys::Object::new();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("omegaP"), &JsValue::from_f64(omega_p)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("omegaP"),
+            &JsValue::from_f64(omega_p),
+        )
+        .unwrap();
         js_sys::Reflect::set(&obj, &JsValue::from_str("gamma"), &JsValue::from_f64(gamma)).unwrap();
         obj
     }
@@ -5137,10 +5127,30 @@ pub fn get_drude_metal_presets() -> js_sys::Array {
     for (name, drude) in presets {
         let obj = js_sys::Object::new();
         js_sys::Reflect::set(&obj, &JsValue::from_str("name"), &JsValue::from_str(name)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("epsInf"), &JsValue::from_f64(drude.eps_inf)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("omegaP"), &JsValue::from_f64(drude.omega_p)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("gamma"), &JsValue::from_f64(drude.gamma)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("tRef"), &JsValue::from_f64(drude.t_ref)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("epsInf"),
+            &JsValue::from_f64(drude.eps_inf),
+        )
+        .unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("omegaP"),
+            &JsValue::from_f64(drude.omega_p),
+        )
+        .unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("gamma"),
+            &JsValue::from_f64(drude.gamma),
+        )
+        .unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("tRef"),
+            &JsValue::from_f64(drude.t_ref),
+        )
+        .unwrap();
         array.push(&obj);
     }
 
@@ -5155,12 +5165,42 @@ pub fn get_drude_metal_presets() -> js_sys::Array {
 #[wasm_bindgen(js_name = getDispersionWavelengths)]
 pub fn get_dispersion_wavelengths() -> js_sys::Object {
     let obj = js_sys::Object::new();
-    js_sys::Reflect::set(&obj, &JsValue::from_str("red"), &JsValue::from_f64(dispersion_wavelengths::RED)).unwrap();
-    js_sys::Reflect::set(&obj, &JsValue::from_str("green"), &JsValue::from_f64(dispersion_wavelengths::GREEN)).unwrap();
-    js_sys::Reflect::set(&obj, &JsValue::from_str("blue"), &JsValue::from_f64(dispersion_wavelengths::BLUE)).unwrap();
-    js_sys::Reflect::set(&obj, &JsValue::from_str("sodiumD"), &JsValue::from_f64(dispersion_wavelengths::SODIUM_D)).unwrap();
-    js_sys::Reflect::set(&obj, &JsValue::from_str("visibleMin"), &JsValue::from_f64(dispersion_wavelengths::VISIBLE_MIN)).unwrap();
-    js_sys::Reflect::set(&obj, &JsValue::from_str("visibleMax"), &JsValue::from_f64(dispersion_wavelengths::VISIBLE_MAX)).unwrap();
+    js_sys::Reflect::set(
+        &obj,
+        &JsValue::from_str("red"),
+        &JsValue::from_f64(dispersion_wavelengths::RED),
+    )
+    .unwrap();
+    js_sys::Reflect::set(
+        &obj,
+        &JsValue::from_str("green"),
+        &JsValue::from_f64(dispersion_wavelengths::GREEN),
+    )
+    .unwrap();
+    js_sys::Reflect::set(
+        &obj,
+        &JsValue::from_str("blue"),
+        &JsValue::from_f64(dispersion_wavelengths::BLUE),
+    )
+    .unwrap();
+    js_sys::Reflect::set(
+        &obj,
+        &JsValue::from_str("sodiumD"),
+        &JsValue::from_f64(dispersion_wavelengths::SODIUM_D),
+    )
+    .unwrap();
+    js_sys::Reflect::set(
+        &obj,
+        &JsValue::from_str("visibleMin"),
+        &JsValue::from_f64(dispersion_wavelengths::VISIBLE_MIN),
+    )
+    .unwrap();
+    js_sys::Reflect::set(
+        &obj,
+        &JsValue::from_str("visibleMax"),
+        &JsValue::from_f64(dispersion_wavelengths::VISIBLE_MAX),
+    )
+    .unwrap();
     obj
 }
 
@@ -5221,51 +5261,69 @@ impl MieParams {
     /// Creates blue-ish scattering, responsible for blue sky.
     #[wasm_bindgen(js_name = fineDust)]
     pub fn fine_dust() -> MieParams {
-        MieParams { inner: mie_particle_presets::FINE_DUST }
+        MieParams {
+            inner: mie_particle_presets::FINE_DUST,
+        }
     }
 
     /// Coarse dust (Mie regime).
     #[wasm_bindgen(js_name = coarseDust)]
     pub fn coarse_dust() -> MieParams {
-        MieParams { inner: mie_particle_presets::COARSE_DUST }
+        MieParams {
+            inner: mie_particle_presets::COARSE_DUST,
+        }
     }
 
     /// Small fog droplet (~2µm water).
     #[wasm_bindgen(js_name = fogSmall)]
     pub fn fog_small() -> MieParams {
-        MieParams { inner: mie_particle_presets::FOG_SMALL }
+        MieParams {
+            inner: mie_particle_presets::FOG_SMALL,
+        }
     }
 
     /// Large fog droplet (~10µm water).
     #[wasm_bindgen(js_name = fogLarge)]
     pub fn fog_large() -> MieParams {
-        MieParams { inner: mie_particle_presets::FOG_LARGE }
+        MieParams {
+            inner: mie_particle_presets::FOG_LARGE,
+        }
     }
 
     /// Cloud droplet (~8µm water).
     pub fn cloud() -> MieParams {
-        MieParams { inner: mie_particle_presets::CLOUD }
+        MieParams {
+            inner: mie_particle_presets::CLOUD,
+        }
     }
 
     /// Fine mist (~3µm water).
     pub fn mist() -> MieParams {
-        MieParams { inner: mie_particle_presets::MIST }
+        MieParams {
+            inner: mie_particle_presets::MIST,
+        }
     }
 
     /// Smoke particle (~0.3µm soot).
     pub fn smoke() -> MieParams {
-        MieParams { inner: mie_particle_presets::SMOKE }
+        MieParams {
+            inner: mie_particle_presets::SMOKE,
+        }
     }
 
     /// Milk fat globule (~2.5µm in water medium).
     #[wasm_bindgen(js_name = milkGlobule)]
     pub fn milk_globule() -> MieParams {
-        MieParams { inner: mie_particle_presets::MILK_GLOBULE }
+        MieParams {
+            inner: mie_particle_presets::MILK_GLOBULE,
+        }
     }
 
     /// Pollen grain (~25µm, geometric regime).
     pub fn pollen() -> MieParams {
-        MieParams { inner: mie_particle_presets::POLLEN }
+        MieParams {
+            inner: mie_particle_presets::POLLEN,
+        }
     }
 
     // ========================================================================
@@ -5447,7 +5505,12 @@ impl DynamicMieParams {
     /// * `n_particle` - Particle refractive index
     /// * `n_medium` - Medium refractive index
     #[wasm_bindgen(js_name = logNormal)]
-    pub fn log_normal(geometric_mean_um: f64, geometric_std: f64, n_particle: f64, n_medium: f64) -> DynamicMieParams {
+    pub fn log_normal(
+        geometric_mean_um: f64,
+        geometric_std: f64,
+        n_particle: f64,
+        n_medium: f64,
+    ) -> DynamicMieParams {
         DynamicMieParams {
             inner: CoreDynamicMieParams::new(
                 n_particle,
@@ -5469,10 +5532,13 @@ impl DynamicMieParams {
     /// * `n_particle`, `n_medium` - Refractive indices
     #[wasm_bindgen]
     pub fn bimodal(
-        mean1_um: f64, std1: f64,
-        mean2_um: f64, std2: f64,
+        mean1_um: f64,
+        std1: f64,
+        mean2_um: f64,
+        std2: f64,
         weight1: f64,
-        n_particle: f64, n_medium: f64,
+        n_particle: f64,
+        n_medium: f64,
     ) -> DynamicMieParams {
         DynamicMieParams {
             inner: CoreDynamicMieParams::new(
@@ -5489,45 +5555,61 @@ impl DynamicMieParams {
 
     /// Stratocumulus cloud droplets (~8µm water, forward scattering).
     pub fn stratocumulus() -> DynamicMieParams {
-        DynamicMieParams { inner: mie_dynamic_presets::stratocumulus() }
+        DynamicMieParams {
+            inner: mie_dynamic_presets::stratocumulus(),
+        }
     }
 
     /// Fog droplets (~4µm water).
     pub fn fog() -> DynamicMieParams {
-        DynamicMieParams { inner: mie_dynamic_presets::fog() }
+        DynamicMieParams {
+            inner: mie_dynamic_presets::fog(),
+        }
     }
 
     /// Smoke particles (bimodal soot distribution).
     pub fn smoke() -> DynamicMieParams {
-        DynamicMieParams { inner: mie_dynamic_presets::smoke() }
+        DynamicMieParams {
+            inner: mie_dynamic_presets::smoke(),
+        }
     }
 
     /// Milk (fat globules in water).
     pub fn milk() -> DynamicMieParams {
-        DynamicMieParams { inner: mie_dynamic_presets::milk() }
+        DynamicMieParams {
+            inner: mie_dynamic_presets::milk(),
+        }
     }
 
     /// Desert dust storm.
     pub fn dust() -> DynamicMieParams {
-        DynamicMieParams { inner: mie_dynamic_presets::dust() }
+        DynamicMieParams {
+            inner: mie_dynamic_presets::dust(),
+        }
     }
 
     /// Ice crystals (cirrus clouds).
     #[wasm_bindgen(js_name = iceCrystals)]
     pub fn ice_crystals() -> DynamicMieParams {
-        DynamicMieParams { inner: mie_dynamic_presets::ice_crystals() }
+        DynamicMieParams {
+            inner: mie_dynamic_presets::ice_crystals(),
+        }
     }
 
     /// Condensing fog (growing droplets).
     #[wasm_bindgen(js_name = condensingFog)]
     pub fn condensing_fog() -> DynamicMieParams {
-        DynamicMieParams { inner: mie_dynamic_presets::condensing_fog() }
+        DynamicMieParams {
+            inner: mie_dynamic_presets::condensing_fog(),
+        }
     }
 
     /// Evaporating mist (shrinking droplets).
     #[wasm_bindgen(js_name = evaporatingMist)]
     pub fn evaporating_mist() -> DynamicMieParams {
-        DynamicMieParams { inner: mie_dynamic_presets::evaporating_mist() }
+        DynamicMieParams {
+            inner: mie_dynamic_presets::evaporating_mist(),
+        }
     }
 
     // ========================================================================
@@ -5631,7 +5713,12 @@ pub fn henyey_greenstein(cos_theta: f64, g: f64) -> f64 {
 /// * `g_backward` - Backward lobe asymmetry (negative)
 /// * `weight` - Forward lobe weight (0-1)
 #[wasm_bindgen(js_name = doubleHenyeyGreenstein)]
-pub fn double_henyey_greenstein(cos_theta: f64, g_forward: f64, g_backward: f64, weight: f64) -> f64 {
+pub fn double_henyey_greenstein(
+    cos_theta: f64,
+    g_forward: f64,
+    g_backward: f64,
+    weight: f64,
+) -> f64 {
     core_double_henyey_greenstein(cos_theta, g_forward, g_backward, weight)
 }
 
@@ -5679,17 +5766,48 @@ pub fn get_mie_particle_presets() -> js_sys::Array {
     for (name, params) in presets {
         let obj = js_sys::Object::new();
         js_sys::Reflect::set(&obj, &JsValue::from_str("name"), &JsValue::from_str(name)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("radiusUm"), &JsValue::from_f64(params.radius_um)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("nParticle"), &JsValue::from_f64(params.n_particle)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("nMedium"), &JsValue::from_f64(params.n_medium)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("radiusUm"),
+            &JsValue::from_f64(params.radius_um),
+        )
+        .unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("nParticle"),
+            &JsValue::from_f64(params.n_particle),
+        )
+        .unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("nMedium"),
+            &JsValue::from_f64(params.n_medium),
+        )
+        .unwrap();
 
         // Size parameter at 550nm
         let x = params.size_parameter(550.0);
-        js_sys::Reflect::set(&obj, &JsValue::from_str("sizeParam550"), &JsValue::from_f64(x)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("sizeParam550"),
+            &JsValue::from_f64(x),
+        )
+        .unwrap();
 
         // Scattering regime
-        let regime = if x < 0.3 { "Rayleigh" } else if x < 30.0 { "Mie" } else { "Geometric" };
-        js_sys::Reflect::set(&obj, &JsValue::from_str("regime"), &JsValue::from_str(regime)).unwrap();
+        let regime = if x < 0.3 {
+            "Rayleigh"
+        } else if x < 30.0 {
+            "Mie"
+        } else {
+            "Geometric"
+        };
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("regime"),
+            &JsValue::from_str(regime),
+        )
+        .unwrap();
 
         array.push(&obj);
     }
@@ -5709,11 +5827,21 @@ pub fn get_mie_dynamic_presets() -> js_sys::Array {
 
         // Effective asymmetry at 550nm
         let g = core_effective_asymmetry_g(&params, 550.0);
-        js_sys::Reflect::set(&obj, &JsValue::from_str("effectiveG"), &JsValue::from_f64(g)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("effectiveG"),
+            &JsValue::from_f64(g),
+        )
+        .unwrap();
 
         // Extinction coefficient
         let ext = core_extinction_coefficient(&params, 550.0);
-        js_sys::Reflect::set(&obj, &JsValue::from_str("extinction550"), &JsValue::from_f64(ext)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("extinction550"),
+            &JsValue::from_f64(ext),
+        )
+        .unwrap();
 
         array.push(&obj);
     }
@@ -5760,7 +5888,10 @@ pub fn scattering_color_from_radius(radius_um: f64, n_particle: f64) -> js_sys::
     } else if x < 10.0 {
         ("Mie", "Complex wavelength dependence, forward scattering")
     } else {
-        ("Geometric", "Large particles scatter all wavelengths equally (white/gray)")
+        (
+            "Geometric",
+            "Large particles scatter all wavelengths equally (white/gray)",
+        )
     };
 
     let obj = js_sys::Object::new();
@@ -5768,8 +5899,18 @@ pub fn scattering_color_from_radius(radius_um: f64, n_particle: f64) -> js_sys::
     js_sys::Reflect::set(&obj, &JsValue::from_str("g"), &JsValue::from_f64(g)).unwrap();
     js_sys::Reflect::set(&obj, &JsValue::from_str("b"), &JsValue::from_f64(b)).unwrap();
     js_sys::Reflect::set(&obj, &JsValue::from_str("sizeParam"), &JsValue::from_f64(x)).unwrap();
-    js_sys::Reflect::set(&obj, &JsValue::from_str("regime"), &JsValue::from_str(regime)).unwrap();
-    js_sys::Reflect::set(&obj, &JsValue::from_str("explanation"), &JsValue::from_str(explanation)).unwrap();
+    js_sys::Reflect::set(
+        &obj,
+        &JsValue::from_str("regime"),
+        &JsValue::from_str(regime),
+    )
+    .unwrap();
+    js_sys::Reflect::set(
+        &obj,
+        &JsValue::from_str("explanation"),
+        &JsValue::from_str(explanation),
+    )
+    .unwrap();
     obj
 }
 
@@ -6013,7 +6154,12 @@ impl TransferMatrixFilm {
     /// console.log(`R @ 550nm: ${mirror.reflectance(550.0, 0.0, Polarization.Average)}`);
     /// ```
     #[wasm_bindgen(js_name = braggMirror)]
-    pub fn bragg_mirror(n_high: f64, n_low: f64, design_lambda: f64, pairs: usize) -> TransferMatrixFilm {
+    pub fn bragg_mirror(
+        n_high: f64,
+        n_low: f64,
+        design_lambda: f64,
+        pairs: usize,
+    ) -> TransferMatrixFilm {
         TransferMatrixFilm {
             inner: tmm_presets::bragg_mirror(n_high, n_low, design_lambda, pairs),
         }
@@ -6182,7 +6328,8 @@ impl TransferMatrixFilm {
     /// # Note
     /// For lossless films: R + T ≈ 1
     pub fn transmittance(&self, wavelength_nm: f64, angle_deg: f64, pol: Polarization) -> f64 {
-        self.inner.transmittance(wavelength_nm, angle_deg, pol.into())
+        self.inner
+            .transmittance(wavelength_nm, angle_deg, pol.into())
     }
 
     /// Calculate RGB reflectance (R=650nm, G=550nm, B=450nm)
@@ -6219,12 +6366,19 @@ impl TransferMatrixFilm {
     /// # Returns
     /// Object { wavelengths: number[], reflectances: number[] }
     #[wasm_bindgen(js_name = reflectanceSpectrum)]
-    pub fn reflectance_spectrum(&self, angle_deg: f64, pol: Polarization, num_points: usize) -> js_sys::Object {
+    pub fn reflectance_spectrum(
+        &self,
+        angle_deg: f64,
+        pol: Polarization,
+        num_points: usize,
+    ) -> js_sys::Object {
         let wavelengths: Vec<f64> = (0..num_points)
             .map(|i| 400.0 + (i as f64 / (num_points - 1) as f64) * 300.0)
             .collect();
 
-        let reflectances = self.inner.reflectance_spectrum(&wavelengths, angle_deg, pol.into());
+        let reflectances = self
+            .inner
+            .reflectance_spectrum(&wavelengths, angle_deg, pol.into());
 
         let obj = js_sys::Object::new();
         let w_array = js_sys::Array::from_iter(wavelengths.iter().map(|v| JsValue::from_f64(*v)));
@@ -6328,11 +6482,21 @@ pub fn get_advanced_thin_film_presets() -> js_sys::Array {
     for (name, film) in presets {
         let obj = js_sys::Object::new();
         js_sys::Reflect::set(&obj, &JsValue::from_str("name"), &JsValue::from_str(name)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("layerCount"), &JsValue::from_f64(film.layer_count() as f64)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("layerCount"),
+            &JsValue::from_f64(film.layer_count() as f64),
+        )
+        .unwrap();
 
         // Sample reflectance at 550nm
         let r = film.reflectance(550.0, 0.0, CorePolarization::Average);
-        js_sys::Reflect::set(&obj, &JsValue::from_str("reflectance550"), &JsValue::from_f64(r)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("reflectance550"),
+            &JsValue::from_f64(r),
+        )
+        .unwrap();
 
         array.push(&obj);
     }
@@ -6369,8 +6533,8 @@ pub fn quarter_wave_thickness(n: f64, design_lambda: f64) -> f64 {
 #[wasm_bindgen(js_name = demonstrateStructuralColor)]
 pub fn demonstrate_structural_color() -> js_sys::Object {
     // Same materials (chitin n=1.56, air n=1.0), different structures
-    let morpho = tmm_presets::morpho_butterfly();  // Blue structure
-    let beetle = tmm_presets::beetle_shell();       // Different structure
+    let morpho = tmm_presets::morpho_butterfly(); // Blue structure
+    let beetle = tmm_presets::beetle_shell(); // Different structure
 
     let rgb_morpho = morpho.reflectance_rgb(0.0, CorePolarization::Average);
     let rgb_beetle = beetle.reflectance_rgb(0.0, CorePolarization::Average);
@@ -6379,16 +6543,36 @@ pub fn demonstrate_structural_color() -> js_sys::Object {
 
     // Morpho butterfly
     let morpho_obj = js_sys::Object::new();
-    js_sys::Reflect::set(&morpho_obj, &JsValue::from_str("name"), &JsValue::from_str("Morpho Butterfly")).unwrap();
-    js_sys::Reflect::set(&morpho_obj, &JsValue::from_str("layers"), &JsValue::from_f64(morpho.layer_count() as f64)).unwrap();
+    js_sys::Reflect::set(
+        &morpho_obj,
+        &JsValue::from_str("name"),
+        &JsValue::from_str("Morpho Butterfly"),
+    )
+    .unwrap();
+    js_sys::Reflect::set(
+        &morpho_obj,
+        &JsValue::from_str("layers"),
+        &JsValue::from_f64(morpho.layer_count() as f64),
+    )
+    .unwrap();
     let morpho_rgb = js_sys::Array::from_iter(rgb_morpho.iter().map(|&v| JsValue::from_f64(v)));
     js_sys::Reflect::set(&morpho_obj, &JsValue::from_str("rgb"), &morpho_rgb).unwrap();
     js_sys::Reflect::set(&result, &JsValue::from_str("morpho"), &morpho_obj).unwrap();
 
     // Beetle shell
     let beetle_obj = js_sys::Object::new();
-    js_sys::Reflect::set(&beetle_obj, &JsValue::from_str("name"), &JsValue::from_str("Beetle Shell")).unwrap();
-    js_sys::Reflect::set(&beetle_obj, &JsValue::from_str("layers"), &JsValue::from_f64(beetle.layer_count() as f64)).unwrap();
+    js_sys::Reflect::set(
+        &beetle_obj,
+        &JsValue::from_str("name"),
+        &JsValue::from_str("Beetle Shell"),
+    )
+    .unwrap();
+    js_sys::Reflect::set(
+        &beetle_obj,
+        &JsValue::from_str("layers"),
+        &JsValue::from_f64(beetle.layer_count() as f64),
+    )
+    .unwrap();
     let beetle_rgb = js_sys::Array::from_iter(rgb_beetle.iter().map(|&v| JsValue::from_f64(v)));
     js_sys::Reflect::set(&beetle_obj, &JsValue::from_str("rgb"), &beetle_rgb).unwrap();
     js_sys::Reflect::set(&result, &JsValue::from_str("beetle"), &beetle_obj).unwrap();
@@ -6397,8 +6581,9 @@ pub fn demonstrate_structural_color() -> js_sys::Object {
     js_sys::Reflect::set(
         &result,
         &JsValue::from_str("principle"),
-        &JsValue::from_str("El color no está en el material. Está en la estructura.")
-    ).unwrap();
+        &JsValue::from_str("El color no está en el material. Está en la estructura."),
+    )
+    .unwrap();
 
     result
 }
@@ -6539,7 +6724,9 @@ impl DynamicFilmLayer {
     #[wasm_bindgen(js_name = setStress)]
     pub fn set_stress(&mut self, stress: &[f64]) {
         if stress.len() >= 6 {
-            self.inner.set_stress([stress[0], stress[1], stress[2], stress[3], stress[4], stress[5]]);
+            self.inner.set_stress([
+                stress[0], stress[1], stress[2], stress[3], stress[4], stress[5],
+            ]);
         }
     }
 
@@ -6568,22 +6755,34 @@ impl DynamicFilmLayer {
 
     // Getters for base properties
     #[wasm_bindgen(getter, js_name = nBase)]
-    pub fn n_base(&self) -> f64 { self.inner.n_base }
+    pub fn n_base(&self) -> f64 {
+        self.inner.n_base
+    }
 
     #[wasm_bindgen(getter, js_name = kBase)]
-    pub fn k_base(&self) -> f64 { self.inner.k_base }
+    pub fn k_base(&self) -> f64 {
+        self.inner.k_base
+    }
 
     #[wasm_bindgen(getter, js_name = baseThickness)]
-    pub fn base_thickness(&self) -> f64 { self.inner.thickness_nm }
+    pub fn base_thickness(&self) -> f64 {
+        self.inner.thickness_nm
+    }
 
     #[wasm_bindgen(getter, js_name = dnDt)]
-    pub fn dn_dt(&self) -> f64 { self.inner.dn_dt }
+    pub fn dn_dt(&self) -> f64 {
+        self.inner.dn_dt
+    }
 
     #[wasm_bindgen(getter, js_name = alphaThermal)]
-    pub fn alpha_thermal(&self) -> f64 { self.inner.alpha_thermal }
+    pub fn alpha_thermal(&self) -> f64 {
+        self.inner.alpha_thermal
+    }
 
     #[wasm_bindgen(getter, js_name = temperature)]
-    pub fn temperature(&self) -> f64 { self.inner.temperature }
+    pub fn temperature(&self) -> f64 {
+        self.inner.temperature
+    }
 }
 
 /// Dynamic thin-film stack with environmental response
@@ -6629,7 +6828,11 @@ impl DynamicThinFilmStack {
         DynamicThinFilmStack {
             inner: CoreDynamicThinFilmStack::new(
                 n_ambient,
-                CoreSubstrateProperties { n: n_substrate, k: 0.0, alpha: 7e-6 },
+                CoreSubstrateProperties {
+                    n: n_substrate,
+                    k: 0.0,
+                    alpha: 7e-6,
+                },
             ),
         }
     }
@@ -6660,7 +6863,9 @@ impl DynamicThinFilmStack {
     #[wasm_bindgen(js_name = applyStress)]
     pub fn apply_stress(&mut self, stress: &[f64]) {
         if stress.len() >= 6 {
-            self.inner.apply_stress([stress[0], stress[1], stress[2], stress[3], stress[4], stress[5]]);
+            self.inner.apply_stress([
+                stress[0], stress[1], stress[2], stress[3], stress[4], stress[5],
+            ]);
         }
     }
 
@@ -6675,8 +6880,15 @@ impl DynamicThinFilmStack {
     /// # Returns
     /// Reflectance (0.0 to 1.0)
     #[wasm_bindgen(js_name = reflectanceAt)]
-    pub fn reflectance_at(&self, pos_x: f64, pos_y: f64, wavelength_nm: f64, angle_deg: f64) -> f64 {
-        self.inner.reflectance_at(CoreVec2::new(pos_x, pos_y), wavelength_nm, angle_deg)
+    pub fn reflectance_at(
+        &self,
+        pos_x: f64,
+        pos_y: f64,
+        wavelength_nm: f64,
+        angle_deg: f64,
+    ) -> f64 {
+        self.inner
+            .reflectance_at(CoreVec2::new(pos_x, pos_y), wavelength_nm, angle_deg)
     }
 
     /// Calculate RGB reflectance at a surface position
@@ -6690,7 +6902,9 @@ impl DynamicThinFilmStack {
     /// [R, G, B] reflectance array (0.0 to 1.0)
     #[wasm_bindgen(js_name = reflectanceRgbAt)]
     pub fn reflectance_rgb_at(&self, pos_x: f64, pos_y: f64, angle_deg: f64) -> Vec<f64> {
-        let rgb = self.inner.reflectance_rgb_at(CoreVec2::new(pos_x, pos_y), angle_deg);
+        let rgb = self
+            .inner
+            .reflectance_rgb_at(CoreVec2::new(pos_x, pos_y), angle_deg);
         rgb.to_vec()
     }
 
@@ -6713,7 +6927,11 @@ impl DynamicThinFilmStack {
     /// Total thickness in nanometers (sum of all layer thicknesses)
     #[wasm_bindgen(js_name = totalThickness)]
     pub fn total_thickness(&self) -> f64 {
-        self.inner.layers.iter().map(|l| l.effective_thickness()).sum()
+        self.inner
+            .layers
+            .iter()
+            .map(|l| l.effective_thickness())
+            .sum()
     }
 
     // ========================================================================
@@ -6758,16 +6976,24 @@ impl DynamicThinFilmStack {
 
     // Getters
     #[wasm_bindgen(getter, js_name = ambientTemp)]
-    pub fn ambient_temp(&self) -> f64 { self.inner.ambient_temp }
+    pub fn ambient_temp(&self) -> f64 {
+        self.inner.ambient_temp
+    }
 
     #[wasm_bindgen(getter, js_name = ambientPressure)]
-    pub fn ambient_pressure(&self) -> f64 { self.inner.ambient_pressure }
+    pub fn ambient_pressure(&self) -> f64 {
+        self.inner.ambient_pressure
+    }
 
     #[wasm_bindgen(getter, js_name = humidity)]
-    pub fn humidity(&self) -> f64 { self.inner.humidity }
+    pub fn humidity(&self) -> f64 {
+        self.inner.humidity
+    }
 
     #[wasm_bindgen(getter, js_name = layerCount)]
-    pub fn layer_count(&self) -> usize { self.inner.layers.len() }
+    pub fn layer_count(&self) -> usize {
+        self.inner.layers.len()
+    }
 }
 
 /// Temperature-dependent metal with oxidation layer
@@ -6841,9 +7067,12 @@ impl TempOxidizedMetal {
     pub fn metal_spectral_ior(&self) -> Vec<f64> {
         let spectral = self.inner.metal_spectral_ior();
         vec![
-            spectral.red.n, spectral.red.k,
-            spectral.green.n, spectral.green.k,
-            spectral.blue.n, spectral.blue.k,
+            spectral.red.n,
+            spectral.red.k,
+            spectral.green.n,
+            spectral.green.k,
+            spectral.blue.n,
+            spectral.blue.k,
         ]
     }
 
@@ -6925,57 +7154,77 @@ impl TempOxidizedMetal {
     /// Fresh copper (no oxidation, room temperature)
     #[wasm_bindgen(js_name = copperFresh)]
     pub fn copper_fresh() -> TempOxidizedMetal {
-        TempOxidizedMetal { inner: oxidized_metal_presets::copper_fresh() }
+        TempOxidizedMetal {
+            inner: oxidized_metal_presets::copper_fresh(),
+        }
     }
 
     /// Tarnished copper (light oxidation)
     #[wasm_bindgen(js_name = copperTarnished)]
     pub fn copper_tarnished() -> TempOxidizedMetal {
-        TempOxidizedMetal { inner: oxidized_metal_presets::copper_tarnished() }
+        TempOxidizedMetal {
+            inner: oxidized_metal_presets::copper_tarnished(),
+        }
     }
 
     /// Copper with patina (heavy oxidation)
     #[wasm_bindgen(js_name = copperPatina)]
     pub fn copper_patina() -> TempOxidizedMetal {
-        TempOxidizedMetal { inner: oxidized_metal_presets::copper_patina() }
+        TempOxidizedMetal {
+            inner: oxidized_metal_presets::copper_patina(),
+        }
     }
 
     /// Fresh silver
     #[wasm_bindgen(js_name = silverFresh)]
     pub fn silver_fresh() -> TempOxidizedMetal {
-        TempOxidizedMetal { inner: oxidized_metal_presets::silver_fresh() }
+        TempOxidizedMetal {
+            inner: oxidized_metal_presets::silver_fresh(),
+        }
     }
 
     /// Tarnished silver
     #[wasm_bindgen(js_name = silverTarnished)]
     pub fn silver_tarnished() -> TempOxidizedMetal {
-        TempOxidizedMetal { inner: oxidized_metal_presets::silver_tarnished() }
+        TempOxidizedMetal {
+            inner: oxidized_metal_presets::silver_tarnished(),
+        }
     }
 
     /// Fresh aluminum (with native oxide)
     #[wasm_bindgen(js_name = aluminumFresh)]
     pub fn aluminum_fresh() -> TempOxidizedMetal {
-        TempOxidizedMetal { inner: oxidized_metal_presets::aluminum_fresh() }
+        TempOxidizedMetal {
+            inner: oxidized_metal_presets::aluminum_fresh(),
+        }
     }
 
     /// Rusty iron
     #[wasm_bindgen(js_name = ironRusty)]
     pub fn iron_rusty() -> TempOxidizedMetal {
-        TempOxidizedMetal { inner: oxidized_metal_presets::iron_rusty() }
+        TempOxidizedMetal {
+            inner: oxidized_metal_presets::iron_rusty(),
+        }
     }
 
     /// Hot gold (elevated temperature)
     #[wasm_bindgen(js_name = goldHot)]
     pub fn gold_hot() -> TempOxidizedMetal {
-        TempOxidizedMetal { inner: oxidized_metal_presets::gold_hot() }
+        TempOxidizedMetal {
+            inner: oxidized_metal_presets::gold_hot(),
+        }
     }
 
     // Getters
     #[wasm_bindgen(getter, js_name = temperatureK)]
-    pub fn temperature_k(&self) -> f64 { self.inner.temperature_k }
+    pub fn temperature_k(&self) -> f64 {
+        self.inner.temperature_k
+    }
 
     #[wasm_bindgen(getter, js_name = oxidationLevel)]
-    pub fn oxidation_level(&self) -> f64 { self.inner.oxidation_level }
+    pub fn oxidation_level(&self) -> f64 {
+        self.inner.oxidation_level
+    }
 }
 
 // ============================================================================
@@ -7011,8 +7260,18 @@ pub fn calculate_temperature_sensitivity(metal: &str, wavelength_nm: f64) -> js_
 
     for (temp, r) in sensitivity {
         let obj = js_sys::Object::new();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("temperatureK"), &JsValue::from_f64(temp)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("reflectance"), &JsValue::from_f64(r)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("temperatureK"),
+            &JsValue::from_f64(temp),
+        )
+        .unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("reflectance"),
+            &JsValue::from_f64(r),
+        )
+        .unwrap();
         array.push(&obj);
     }
 
@@ -7031,9 +7290,9 @@ pub fn demonstrate_thermo_optic_effect() -> js_sys::Object {
     let result = js_sys::Object::new();
 
     // Create a water film (soap bubble) - high dn/dT
-    let cold_bubble = dynamic_thin_film_presets::soap_bubble(273.0);  // 0°C
-    let room_bubble = dynamic_thin_film_presets::soap_bubble(293.0);  // 20°C
-    let warm_bubble = dynamic_thin_film_presets::soap_bubble(313.0);  // 40°C
+    let cold_bubble = dynamic_thin_film_presets::soap_bubble(273.0); // 0°C
+    let room_bubble = dynamic_thin_film_presets::soap_bubble(293.0); // 20°C
+    let warm_bubble = dynamic_thin_film_presets::soap_bubble(313.0); // 40°C
 
     let states = [
         ("cold_273K", cold_bubble),
@@ -7051,7 +7310,12 @@ pub fn demonstrate_thermo_optic_effect() -> js_sys::Object {
         rgb_array.push(&JsValue::from_f64(rgb[2]));
 
         js_sys::Reflect::set(&obj, &JsValue::from_str("rgb"), &rgb_array).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("temperature"), &JsValue::from_str(name)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("temperature"),
+            &JsValue::from_str(name),
+        )
+        .unwrap();
         js_sys::Reflect::set(&result, &JsValue::from_str(name), &obj).unwrap();
     }
 
@@ -7090,7 +7354,12 @@ pub fn demonstrate_stress_optic_effect() -> js_sys::Object {
         rgb_array.push(&JsValue::from_f64(rgb[2]));
 
         js_sys::Reflect::set(&obj, &JsValue::from_str("rgb"), &rgb_array).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("stressMPa"), &JsValue::from_f64(stress)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("stressMPa"),
+            &JsValue::from_f64(stress),
+        )
+        .unwrap();
         js_sys::Reflect::set(&result, &JsValue::from_str(name), &obj).unwrap();
     }
 
@@ -7106,8 +7375,18 @@ pub fn get_oxidized_metal_presets() -> js_sys::Array {
     for (name, metal) in presets {
         let obj = js_sys::Object::new();
         js_sys::Reflect::set(&obj, &JsValue::from_str("name"), &JsValue::from_str(name)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("temperatureK"), &JsValue::from_f64(metal.temperature_k)).unwrap();
-        js_sys::Reflect::set(&obj, &JsValue::from_str("oxidationLevel"), &JsValue::from_f64(metal.oxidation_level)).unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("temperatureK"),
+            &JsValue::from_f64(metal.temperature_k),
+        )
+        .unwrap();
+        js_sys::Reflect::set(
+            &obj,
+            &JsValue::from_str("oxidationLevel"),
+            &JsValue::from_f64(metal.oxidation_level),
+        )
+        .unwrap();
 
         let rgb = metal.effective_reflectance_rgb(0.9);
         let rgb_array = js_sys::Array::new();
@@ -7318,8 +7597,7 @@ impl EvaluationContext {
     pub fn with_stress(mut self, stress: &[f64]) -> EvaluationContext {
         if stress.len() >= 6 {
             self.inner = self.inner.with_stress([
-                stress[0], stress[1], stress[2],
-                stress[3], stress[4], stress[5],
+                stress[0], stress[1], stress[2], stress[3], stress[4], stress[5],
             ]);
         }
         self
@@ -7338,10 +7616,14 @@ impl EvaluationContext {
 
     // Getters
     #[wasm_bindgen(getter, js_name = cosTheta)]
-    pub fn cos_theta(&self) -> f64 { self.inner.cos_theta }
+    pub fn cos_theta(&self) -> f64 {
+        self.inner.cos_theta
+    }
 
     #[wasm_bindgen(getter, js_name = temperatureK)]
-    pub fn temperature_k(&self) -> f64 { self.inner.temperature_k }
+    pub fn temperature_k(&self) -> f64 {
+        self.inner.temperature_k
+    }
 }
 
 /// Unified spectral pipeline
@@ -7393,8 +7675,11 @@ impl SpectralPipeline {
     /// * `n_substrate` - Substrate refractive index
     #[wasm_bindgen(js_name = addThinFilm)]
     pub fn add_thin_film(&mut self, n_film: f64, thickness_nm: f64, n_substrate: f64) {
-        self.inner = std::mem::take(&mut self.inner)
-            .add_stage(CoreThinFilmStage::new(n_film, thickness_nm, n_substrate));
+        self.inner = std::mem::take(&mut self.inner).add_stage(CoreThinFilmStage::new(
+            n_film,
+            thickness_nm,
+            n_substrate,
+        ));
     }
 
     /// Add dispersion stage (Cauchy model)
@@ -7405,15 +7690,13 @@ impl SpectralPipeline {
     /// * `c` - Cauchy C coefficient
     #[wasm_bindgen(js_name = addDispersion)]
     pub fn add_dispersion(&mut self, a: f64, b: f64, c: f64) {
-        self.inner = std::mem::take(&mut self.inner)
-            .add_stage(CoreDispersionStage::new(a, b, c));
+        self.inner = std::mem::take(&mut self.inner).add_stage(CoreDispersionStage::new(a, b, c));
     }
 
     /// Add crown glass dispersion
     #[wasm_bindgen(js_name = addCrownGlassDispersion)]
     pub fn add_crown_glass_dispersion(&mut self) {
-        self.inner = std::mem::take(&mut self.inner)
-            .add_stage(CoreDispersionStage::crown_glass());
+        self.inner = std::mem::take(&mut self.inner).add_stage(CoreDispersionStage::crown_glass());
     }
 
     /// Add Mie scattering stage
@@ -7431,8 +7714,7 @@ impl SpectralPipeline {
     /// Add fog scattering
     #[wasm_bindgen(js_name = addFog)]
     pub fn add_fog(&mut self) {
-        self.inner = std::mem::take(&mut self.inner)
-            .add_stage(CoreMieScatteringStage::fog());
+        self.inner = std::mem::take(&mut self.inner).add_stage(CoreMieScatteringStage::fog());
     }
 
     /// Add thermo-optic stage
@@ -7443,30 +7725,37 @@ impl SpectralPipeline {
     /// * `thickness_nm` - Film thickness in nm
     /// * `alpha_thermal` - Thermal expansion coefficient in K⁻¹
     #[wasm_bindgen(js_name = addThermoOptic)]
-    pub fn add_thermo_optic(&mut self, n_base: f64, dn_dt: f64, thickness_nm: f64, alpha_thermal: f64) {
-        self.inner = std::mem::take(&mut self.inner)
-            .add_stage(CoreThermoOpticStage::new(n_base, dn_dt, thickness_nm, alpha_thermal));
+    pub fn add_thermo_optic(
+        &mut self,
+        n_base: f64,
+        dn_dt: f64,
+        thickness_nm: f64,
+        alpha_thermal: f64,
+    ) {
+        self.inner = std::mem::take(&mut self.inner).add_stage(CoreThermoOpticStage::new(
+            n_base,
+            dn_dt,
+            thickness_nm,
+            alpha_thermal,
+        ));
     }
 
     /// Add gold metal reflectance
     #[wasm_bindgen(js_name = addGold)]
     pub fn add_gold(&mut self) {
-        self.inner = std::mem::take(&mut self.inner)
-            .add_stage(CoreMetalReflectanceStage::gold());
+        self.inner = std::mem::take(&mut self.inner).add_stage(CoreMetalReflectanceStage::gold());
     }
 
     /// Add silver metal reflectance
     #[wasm_bindgen(js_name = addSilver)]
     pub fn add_silver(&mut self) {
-        self.inner = std::mem::take(&mut self.inner)
-            .add_stage(CoreMetalReflectanceStage::silver());
+        self.inner = std::mem::take(&mut self.inner).add_stage(CoreMetalReflectanceStage::silver());
     }
 
     /// Add copper metal reflectance
     #[wasm_bindgen(js_name = addCopper)]
     pub fn add_copper(&mut self) {
-        self.inner = std::mem::take(&mut self.inner)
-            .add_stage(CoreMetalReflectanceStage::copper());
+        self.inner = std::mem::take(&mut self.inner).add_stage(CoreMetalReflectanceStage::copper());
     }
 
     /// Evaluate the complete pipeline
@@ -7477,7 +7766,11 @@ impl SpectralPipeline {
     ///
     /// # Returns
     /// Final spectral signal (use `.toRgb()` to convert to color)
-    pub fn evaluate(&self, incident: &SpectralSignal, context: &EvaluationContext) -> SpectralSignal {
+    pub fn evaluate(
+        &self,
+        incident: &SpectralSignal,
+        context: &EvaluationContext,
+    ) -> SpectralSignal {
         SpectralSignal {
             inner: self.inner.evaluate(&incident.inner, &context.inner),
         }
@@ -7493,13 +7786,16 @@ impl SpectralPipeline {
         incident: &SpectralSignal,
         context: &EvaluationContext,
     ) -> js_sys::Array {
-        let results = self.inner.evaluate_with_intermediates(&incident.inner, &context.inner);
+        let results = self
+            .inner
+            .evaluate_with_intermediates(&incident.inner, &context.inner);
 
         let array = js_sys::Array::new();
         for (name, signal) in results {
             let obj = js_sys::Object::new();
 
-            js_sys::Reflect::set(&obj, &JsValue::from_str("name"), &JsValue::from_str(&name)).unwrap();
+            js_sys::Reflect::set(&obj, &JsValue::from_str("name"), &JsValue::from_str(&name))
+                .unwrap();
 
             let wavelengths = js_sys::Float64Array::from(&signal.wavelengths()[..]);
             js_sys::Reflect::set(&obj, &JsValue::from_str("wavelengths"), &wavelengths).unwrap();
@@ -7536,8 +7832,13 @@ impl SpectralPipeline {
 
     /// Verify energy conservation
     #[wasm_bindgen(js_name = verifyEnergyConservation)]
-    pub fn verify_energy_conservation(&self, incident: &SpectralSignal, context: &EvaluationContext) -> bool {
-        self.inner.verify_energy_conservation(&incident.inner, &context.inner)
+    pub fn verify_energy_conservation(
+        &self,
+        incident: &SpectralSignal,
+        context: &EvaluationContext,
+    ) -> bool {
+        self.inner
+            .verify_energy_conservation(&incident.inner, &context.inner)
     }
 }
 
@@ -7572,9 +7873,7 @@ pub fn demonstrate_spectral_pipeline() -> js_sys::Object {
     let obj = js_sys::Object::new();
 
     // Create pipelines with different configurations
-    let gold_pipeline = CorePipelineBuilder::new()
-        .with_gold()
-        .build();
+    let gold_pipeline = CorePipelineBuilder::new().with_gold().build();
 
     let gold_with_film = CorePipelineBuilder::new()
         .with_thin_film(1.45, 100.0, 1.52)
@@ -7599,23 +7898,58 @@ pub fn demonstrate_spectral_pipeline() -> js_sys::Object {
 
     // Build result object
     let gold_normal_obj = js_sys::Object::new();
-    js_sys::Reflect::set(&gold_normal_obj, &JsValue::from_str("description"), &JsValue::from_str("Gold at normal incidence")).unwrap();
-    js_sys::Reflect::set(&gold_normal_obj, &JsValue::from_str("rgb"), &js_sys::Float64Array::from(&gold_normal_rgb[..])).unwrap();
+    js_sys::Reflect::set(
+        &gold_normal_obj,
+        &JsValue::from_str("description"),
+        &JsValue::from_str("Gold at normal incidence"),
+    )
+    .unwrap();
+    js_sys::Reflect::set(
+        &gold_normal_obj,
+        &JsValue::from_str("rgb"),
+        &js_sys::Float64Array::from(&gold_normal_rgb[..]),
+    )
+    .unwrap();
 
     let gold_grazing_obj = js_sys::Object::new();
-    js_sys::Reflect::set(&gold_grazing_obj, &JsValue::from_str("description"), &JsValue::from_str("Gold at 75° grazing angle")).unwrap();
-    js_sys::Reflect::set(&gold_grazing_obj, &JsValue::from_str("rgb"), &js_sys::Float64Array::from(&gold_grazing_rgb[..])).unwrap();
+    js_sys::Reflect::set(
+        &gold_grazing_obj,
+        &JsValue::from_str("description"),
+        &JsValue::from_str("Gold at 75° grazing angle"),
+    )
+    .unwrap();
+    js_sys::Reflect::set(
+        &gold_grazing_obj,
+        &JsValue::from_str("rgb"),
+        &js_sys::Float64Array::from(&gold_grazing_rgb[..]),
+    )
+    .unwrap();
 
     let gold_coated_obj = js_sys::Object::new();
-    js_sys::Reflect::set(&gold_coated_obj, &JsValue::from_str("description"), &JsValue::from_str("Gold with 100nm thin film coating")).unwrap();
-    js_sys::Reflect::set(&gold_coated_obj, &JsValue::from_str("rgb"), &js_sys::Float64Array::from(&gold_coated_rgb[..])).unwrap();
+    js_sys::Reflect::set(
+        &gold_coated_obj,
+        &JsValue::from_str("description"),
+        &JsValue::from_str("Gold with 100nm thin film coating"),
+    )
+    .unwrap();
+    js_sys::Reflect::set(
+        &gold_coated_obj,
+        &JsValue::from_str("rgb"),
+        &js_sys::Float64Array::from(&gold_coated_rgb[..]),
+    )
+    .unwrap();
 
     js_sys::Reflect::set(&obj, &JsValue::from_str("goldNormal"), &gold_normal_obj).unwrap();
     js_sys::Reflect::set(&obj, &JsValue::from_str("goldGrazing"), &gold_grazing_obj).unwrap();
     js_sys::Reflect::set(&obj, &JsValue::from_str("goldCoated"), &gold_coated_obj).unwrap();
 
     // Add principle
-    js_sys::Reflect::set(&obj, &JsValue::from_str("principle"), &JsValue::from_str("RGB is a projection. Physics lives in the spectrum.")).unwrap();
+    js_sys::Reflect::set(
+        &obj,
+        &JsValue::from_str("principle"),
+        &JsValue::from_str("RGB is a projection. Physics lives in the spectrum."),
+    )
+    .unwrap();
 
     obj
 }
@@ -7829,25 +8163,30 @@ impl LuminanceUtils {
 #[wasm_bindgen(js_name = executeWorkflow)]
 pub fn execute_workflow(workflow_json: &str, input_json: &str) -> String {
     use momoto_agent::{
-        AgentExecutor,
-        Query,
-        query::{WorkflowSpec, WorkflowInputSpec, WorkflowOptions},
+        query::{WorkflowInputSpec, WorkflowOptions, WorkflowSpec},
+        AgentExecutor, Query,
     };
 
     // Parse workflow spec
     let workflow: WorkflowSpec = match serde_json::from_str(workflow_json) {
         Ok(w) => w,
-        Err(e) => return serde_json::json!({
-            "error": format!("Invalid workflow specification: {}", e)
-        }).to_string(),
+        Err(e) => {
+            return serde_json::json!({
+                "error": format!("Invalid workflow specification: {}", e)
+            })
+            .to_string()
+        }
     };
 
     // Parse input
     let input: WorkflowInputSpec = match serde_json::from_str(input_json) {
         Ok(i) => i,
-        Err(e) => return serde_json::json!({
-            "error": format!("Invalid input specification: {}", e)
-        }).to_string(),
+        Err(e) => {
+            return serde_json::json!({
+                "error": format!("Invalid input specification: {}", e)
+            })
+            .to_string()
+        }
     };
 
     // Execute
@@ -7862,7 +8201,8 @@ pub fn execute_workflow(workflow_json: &str, input_json: &str) -> String {
         momoto_agent::Response::Json(v) => v.to_string(),
         momoto_agent::Response::Error(e) => serde_json::json!({
             "error": e.message
-        }).to_string(),
+        })
+        .to_string(),
         other => serde_json::to_string(&other).unwrap_or_default(),
     }
 }
@@ -7876,20 +8216,19 @@ pub fn execute_workflow(workflow_json: &str, input_json: &str) -> String {
 /// JSON string with session ID and status
 #[wasm_bindgen(js_name = createSession)]
 pub fn create_session(context_json: Option<String>) -> String {
-    use momoto_agent::{SessionManager, SessionContext};
+    use momoto_agent::{SessionContext, SessionManager};
 
     let manager = SessionManager::default_manager();
 
-    let context = context_json.and_then(|json| {
-        serde_json::from_str::<SessionContext>(&json).ok()
-    });
+    let context = context_json.and_then(|json| serde_json::from_str::<SessionContext>(&json).ok());
 
     let session_id = manager.create_session(context);
 
     serde_json::json!({
         "session_id": session_id,
         "status": "created"
-    }).to_string()
+    })
+    .to_string()
 }
 
 /// Execute a query within a session context.
@@ -7907,9 +8246,12 @@ pub fn execute_with_session(session_id: &str, query_json: &str) -> String {
     // Parse query
     let query: Query = match serde_json::from_str(query_json) {
         Ok(q) => q,
-        Err(e) => return serde_json::json!({
-            "error": format!("Invalid query: {}", e)
-        }).to_string(),
+        Err(e) => {
+            return serde_json::json!({
+                "error": format!("Invalid query: {}", e)
+            })
+            .to_string()
+        }
     };
 
     // Execute (session context would be loaded from manager in full impl)
@@ -7923,7 +8265,8 @@ pub fn execute_with_session(session_id: &str, query_json: &str) -> String {
         momoto_agent::Response::Json(v) => v.to_string(),
         momoto_agent::Response::Error(e) => serde_json::json!({
             "error": e.message
-        }).to_string(),
+        })
+        .to_string(),
         other => serde_json::to_string(&other).unwrap_or_default(),
     }
 }
@@ -7939,18 +8282,17 @@ pub fn execute_with_session(session_id: &str, query_json: &str) -> String {
 /// Generated report content
 #[wasm_bindgen(js_name = generateReport)]
 pub fn generate_report(report_type: &str, input_json: &str, format: &str) -> String {
-    use momoto_agent::{
-        AgentExecutor,
-        Query,
-        query::ReportInputSpec,
-    };
+    use momoto_agent::{query::ReportInputSpec, AgentExecutor, Query};
 
     // Parse input
     let input: ReportInputSpec = match serde_json::from_str(input_json) {
         Ok(i) => i,
-        Err(e) => return serde_json::json!({
-            "error": format!("Invalid input specification: {}", e)
-        }).to_string(),
+        Err(e) => {
+            return serde_json::json!({
+                "error": format!("Invalid input specification: {}", e)
+            })
+            .to_string()
+        }
     };
 
     // Execute
@@ -7972,7 +8314,8 @@ pub fn generate_report(report_type: &str, input_json: &str, format: &str) -> Str
         }
         momoto_agent::Response::Error(e) => serde_json::json!({
             "error": e.message
-        }).to_string(),
+        })
+        .to_string(),
         other => serde_json::to_string(&other).unwrap_or_default(),
     }
 }

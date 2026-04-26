@@ -81,7 +81,10 @@ impl Complex {
     /// Complex conjugate: (a + bi)* = a - bi
     #[inline]
     pub fn conj(&self) -> Self {
-        Self { re: self.re, im: -self.im }
+        Self {
+            re: self.re,
+            im: -self.im,
+        }
     }
 
     /// Complex square root
@@ -115,7 +118,10 @@ impl std::ops::Add for Complex {
     type Output = Self;
     #[inline]
     fn add(self, rhs: Self) -> Self {
-        Self { re: self.re + rhs.re, im: self.im + rhs.im }
+        Self {
+            re: self.re + rhs.re,
+            im: self.im + rhs.im,
+        }
     }
 }
 
@@ -123,7 +129,10 @@ impl std::ops::Sub for Complex {
     type Output = Self;
     #[inline]
     fn sub(self, rhs: Self) -> Self {
-        Self { re: self.re - rhs.re, im: self.im - rhs.im }
+        Self {
+            re: self.re - rhs.re,
+            im: self.im - rhs.im,
+        }
     }
 }
 
@@ -154,7 +163,10 @@ impl std::ops::Mul<f64> for Complex {
     type Output = Self;
     #[inline]
     fn mul(self, rhs: f64) -> Self {
-        Self { re: self.re * rhs, im: self.im * rhs }
+        Self {
+            re: self.re * rhs,
+            im: self.im * rhs,
+        }
     }
 }
 
@@ -381,8 +393,8 @@ pub mod metals {
     /// Characteristic yellow color from selective absorption in blue
     /// Source: Johnson & Christy (1972)
     pub const GOLD: SpectralComplexIOR = SpectralComplexIOR::from_arrays(
-        [0.18, 0.42, 1.47],   // n at R, G, B
-        [3.00, 2.35, 1.95],   // k at R, G, B
+        [0.18, 0.42, 1.47], // n at R, G, B
+        [3.00, 2.35, 1.95], // k at R, G, B
     );
 
     /// Silver (Ag) - Neutral white metal
@@ -390,8 +402,8 @@ pub mod metals {
     /// Highest reflectivity of common metals
     /// Source: Johnson & Christy (1972)
     pub const SILVER: SpectralComplexIOR = SpectralComplexIOR::from_arrays(
-        [0.15, 0.13, 0.14],   // n at R, G, B
-        [3.64, 3.04, 2.54],   // k at R, G, B
+        [0.15, 0.13, 0.14], // n at R, G, B
+        [3.64, 3.04, 2.54], // k at R, G, B
     );
 
     /// Copper (Cu) - Orange-red metal
@@ -399,8 +411,8 @@ pub mod metals {
     /// Distinctive reddish color
     /// Source: Johnson & Christy (1972)
     pub const COPPER: SpectralComplexIOR = SpectralComplexIOR::from_arrays(
-        [0.27, 0.68, 1.13],   // n at R, G, B
-        [3.41, 2.63, 2.57],   // k at R, G, B
+        [0.27, 0.68, 1.13], // n at R, G, B
+        [3.41, 2.63, 2.57], // k at R, G, B
     );
 
     /// Aluminum (Al) - Bright white metal
@@ -408,8 +420,8 @@ pub mod metals {
     /// Common reflective metal, slight blue tint
     /// Source: Rakic (1995)
     pub const ALUMINUM: SpectralComplexIOR = SpectralComplexIOR::from_arrays(
-        [1.35, 0.96, 0.62],   // n at R, G, B
-        [7.47, 6.39, 5.31],   // k at R, G, B
+        [1.35, 0.96, 0.62], // n at R, G, B
+        [7.47, 6.39, 5.31], // k at R, G, B
     );
 
     /// Iron (Fe) - Dark gray metal
@@ -417,8 +429,8 @@ pub mod metals {
     /// Lower reflectivity, used for steel effects
     /// Source: Johnson & Christy (1974)
     pub const IRON: SpectralComplexIOR = SpectralComplexIOR::from_arrays(
-        [2.91, 2.95, 2.80],   // n at R, G, B
-        [3.08, 3.47, 3.00],   // k at R, G, B
+        [2.91, 2.95, 2.80], // n at R, G, B
+        [3.08, 3.47, 3.00], // k at R, G, B
     );
 
     /// Chromium (Cr) - Bright silver metal
@@ -427,8 +439,8 @@ pub mod metals {
     /// Source: Johnson & Christy (1974)
     #[allow(clippy::approx_constant)] // 3.14 is the actual optical constant, not PI
     pub const CHROMIUM: SpectralComplexIOR = SpectralComplexIOR::from_arrays(
-        [3.18, 3.14, 2.98],   // n at R, G, B
-        [3.19, 3.34, 3.36],   // k at R, G, B
+        [3.18, 3.14, 2.98], // n at R, G, B
+        [3.19, 3.34, 3.36], // k at R, G, B
     );
 
     /// Titanium (Ti) - Dark silver metal
@@ -436,8 +448,8 @@ pub mod metals {
     /// Strong, lightweight, slight yellow tint
     /// Source: Johnson & Christy (1974)
     pub const TITANIUM: SpectralComplexIOR = SpectralComplexIOR::from_arrays(
-        [2.73, 2.16, 1.94],   // n at R, G, B
-        [3.82, 2.94, 2.58],   // k at R, G, B
+        [2.73, 2.16, 1.94], // n at R, G, B
+        [3.82, 2.94, 2.58], // k at R, G, B
     );
 
     /// Nickel (Ni) - Warm silver metal
@@ -445,8 +457,8 @@ pub mod metals {
     /// Common plating material
     /// Source: Ordal (1988)
     pub const NICKEL: SpectralComplexIOR = SpectralComplexIOR::from_arrays(
-        [2.01, 1.83, 1.65],   // n at R, G, B
-        [4.05, 3.56, 3.07],   // k at R, G, B
+        [2.01, 1.83, 1.65], // n at R, G, B
+        [4.05, 3.56, 3.07], // k at R, G, B
     );
 
     /// Platinum (Pt) - Dense silver-white metal
@@ -454,8 +466,8 @@ pub mod metals {
     /// Precious metal, slightly darker than silver
     /// Source: Johnson & Christy (1974)
     pub const PLATINUM: SpectralComplexIOR = SpectralComplexIOR::from_arrays(
-        [2.38, 2.07, 1.72],   // n at R, G, B
-        [4.36, 3.68, 3.06],   // k at R, G, B
+        [2.38, 2.07, 1.72], // n at R, G, B
+        [4.36, 3.68, 3.06], // k at R, G, B
     );
 
     /// Brass (Cu-Zn alloy) - Yellow metal
@@ -463,8 +475,8 @@ pub mod metals {
     /// Common alloy, warmer than gold
     /// Approximate values
     pub const BRASS: SpectralComplexIOR = SpectralComplexIOR::from_arrays(
-        [0.44, 0.58, 0.95],   // n at R, G, B
-        [3.22, 2.85, 2.40],   // k at R, G, B
+        [0.44, 0.58, 0.95], // n at R, G, B
+        [3.22, 2.85, 2.40], // k at R, G, B
     );
 
     /// Bronze (Cu-Sn alloy) - Brown metal
@@ -472,8 +484,8 @@ pub mod metals {
     /// Darker than brass, warmer tone
     /// Approximate values
     pub const BRONZE: SpectralComplexIOR = SpectralComplexIOR::from_arrays(
-        [0.35, 0.55, 0.85],   // n at R, G, B
-        [3.30, 2.70, 2.35],   // k at R, G, B
+        [0.35, 0.55, 0.85], // n at R, G, B
+        [3.30, 2.70, 2.35], // k at R, G, B
     );
 
     /// Tungsten (W) - Dense gray metal
@@ -481,8 +493,8 @@ pub mod metals {
     /// Very high melting point, used in filaments
     /// Source: Ordal (1988)
     pub const TUNGSTEN: SpectralComplexIOR = SpectralComplexIOR::from_arrays(
-        [3.54, 3.32, 2.76],   // n at R, G, B
-        [2.86, 2.84, 2.51],   // k at R, G, B
+        [3.54, 3.32, 2.76], // n at R, G, B
+        [2.86, 2.84, 2.51], // k at R, G, B
     );
 
     /// Get all metal presets with names
@@ -548,9 +560,17 @@ pub fn to_css_metallic_gradient(metal: &SpectralComplexIOR, intensity: f64) -> S
          rgba({}, {}, {}, {:.2}) 70%, \
          rgba(255, 255, 255, {:.2}) 95%, \
          rgba(255, 255, 255, {:.2}) 100%)",
-        r, g, b,
-        r, g, b, 0.3 * intensity,
-        r, g, b, 0.6 * intensity,
+        r,
+        g,
+        b,
+        r,
+        g,
+        b,
+        0.3 * intensity,
+        r,
+        g,
+        b,
+        0.6 * intensity,
         0.8 * intensity,
         0.9 * intensity,
     )
@@ -579,10 +599,7 @@ pub fn to_css_metallic_surface(metal: &SpectralComplexIOR, light_angle_deg: f64)
          rgb({}, {}, {}) 0%, \
          rgb({}, {}, {}) 50%, \
          rgb({}, {}, {}) 100%)",
-        light_angle_deg,
-        base_r, base_g, base_b,
-        hi_r, hi_g, hi_b,
-        base_r, base_g, base_b,
+        light_angle_deg, base_r, base_g, base_b, hi_r, hi_g, hi_b, base_r, base_g, base_b,
     )
 }
 
@@ -653,7 +670,11 @@ mod tests {
 
         // Schlick should be within 10% of full
         let error = (full - schlick).abs() / full;
-        assert!(error < 0.15, "Schlick should approximate full: error = {}", error);
+        assert!(
+            error < 0.15,
+            "Schlick should approximate full: error = {}",
+            error
+        );
     }
 
     #[test]
@@ -685,8 +706,14 @@ mod tests {
         let avg_gold: f64 = f0_gold.iter().sum::<f64>() / 3.0;
         let avg_copper: f64 = f0_copper.iter().sum::<f64>() / 3.0;
 
-        assert!(avg_silver > avg_gold, "Silver should have higher avg F0 than gold");
-        assert!(avg_silver > avg_copper, "Silver should have higher avg F0 than copper");
+        assert!(
+            avg_silver > avg_gold,
+            "Silver should have higher avg F0 than gold"
+        );
+        assert!(
+            avg_silver > avg_copper,
+            "Silver should have higher avg F0 than copper"
+        );
     }
 
     #[test]
@@ -705,8 +732,16 @@ mod tests {
 
             // All metals should be conductors
             assert!(metal.red.is_conductor(), "{} red should be conductor", name);
-            assert!(metal.green.is_conductor(), "{} green should be conductor", name);
-            assert!(metal.blue.is_conductor(), "{} blue should be conductor", name);
+            assert!(
+                metal.green.is_conductor(),
+                "{} green should be conductor",
+                name
+            );
+            assert!(
+                metal.blue.is_conductor(),
+                "{} blue should be conductor",
+                name
+            );
         }
     }
 

@@ -23,7 +23,7 @@
 
 use super::reference_renderer::ReferenceRenderer;
 use super::spectral_error::{
-    compute_spectral_metrics, compute_perceptual_metrics, compute_energy_metrics,
+    compute_energy_metrics, compute_perceptual_metrics, compute_spectral_metrics,
 };
 
 use std::time::Instant;
@@ -55,12 +55,7 @@ pub trait ExternalDataset: Send + Sync {
     ) -> Option<f64>;
 
     /// Get spectral reflectance at wavelength and angle
-    fn get_spectral(
-        &self,
-        material_index: usize,
-        wavelength_nm: f64,
-        theta: f64,
-    ) -> Option<f64>;
+    fn get_spectral(&self, material_index: usize, wavelength_nm: f64, theta: f64) -> Option<f64>;
 
     /// Check if dataset contains isotropic materials
     fn is_isotropic(&self) -> bool {
@@ -362,8 +357,10 @@ impl ValidationEngine {
         let material_idx = match dataset.material_index(material_name) {
             Some(idx) => idx,
             None => {
-                return ValidationResult::empty(dataset_name, material_name)
-                    .with_note(&format!("Material '{}' not found in dataset", material_name));
+                return ValidationResult::empty(dataset_name, material_name).with_note(&format!(
+                    "Material '{}' not found in dataset",
+                    material_name
+                ));
             }
         };
 
@@ -472,16 +469,10 @@ impl ValidationEngine {
         let passed_count = results.iter().filter(|r| r.passed).count();
 
         let sum_delta_e: f64 = results.iter().map(|r| r.delta_e_2000).sum();
-        let max_delta_e = results
-            .iter()
-            .map(|r| r.delta_e_2000)
-            .fold(0.0, f64::max);
+        let max_delta_e = results.iter().map(|r| r.delta_e_2000).fold(0.0, f64::max);
 
         let sum_rmse: f64 = results.iter().map(|r| r.spectral_rmse).sum();
-        let max_rmse = results
-            .iter()
-            .map(|r| r.spectral_rmse)
-            .fold(0.0, f64::max);
+        let max_rmse = results.iter().map(|r| r.spectral_rmse).fold(0.0, f64::max);
 
         let total_time: f64 = results.iter().map(|r| r.computation_time_ms).sum();
 
@@ -550,7 +541,10 @@ pub fn generate_markdown_report(report: &ValidationReport) -> String {
     let mut md = String::new();
 
     md.push_str("# Validation Report\n\n");
-    md.push_str(&format!("Generated: {}\n\n", format_timestamp(report.timestamp)));
+    md.push_str(&format!(
+        "Generated: {}\n\n",
+        format_timestamp(report.timestamp)
+    ));
 
     // Summary
     md.push_str("## Summary\n\n");
@@ -649,8 +643,14 @@ pub fn generate_json_report(report: &ValidationReport) -> String {
     for (i, m) in report.per_material.iter().enumerate() {
         json.push_str("    {\n");
         json.push_str(&format!("      \"name\": \"{}\",\n", m.name));
-        json.push_str(&format!("      \"delta_e_2000\": {:.4},\n", m.result.delta_e_2000));
-        json.push_str(&format!("      \"spectral_rmse\": {:.6},\n", m.result.spectral_rmse));
+        json.push_str(&format!(
+            "      \"delta_e_2000\": {:.4},\n",
+            m.result.delta_e_2000
+        ));
+        json.push_str(&format!(
+            "      \"spectral_rmse\": {:.6},\n",
+            m.result.spectral_rmse
+        ));
         json.push_str(&format!("      \"grade\": \"{}\",\n", m.grade));
         json.push_str(&format!("      \"passed\": {}\n", m.result.passed));
         json.push_str("    }");
@@ -705,7 +705,11 @@ fn spectral_to_lab(spectral: &[f64]) -> [f64; 3] {
         0.0
     };
 
-    [l.clamp(0.0, 100.0), a.clamp(-128.0, 128.0), b.clamp(-128.0, 128.0)]
+    [
+        l.clamp(0.0, 100.0),
+        a.clamp(-128.0, 128.0),
+        b.clamp(-128.0, 128.0),
+    ]
 }
 
 /// Get current timestamp
@@ -819,7 +823,10 @@ mod tests {
         engine.add_dataset(Box::new(MockDataset::new()));
 
         let wavelengths: Vec<f64> = (0..31).map(|i| 400.0 + i as f64 * 10.0).collect();
-        let rendered: Vec<f64> = wavelengths.iter().map(|w| 0.04 + 0.001 * (w - 400.0) / 300.0).collect();
+        let rendered: Vec<f64> = wavelengths
+            .iter()
+            .map(|w| 0.04 + 0.001 * (w - 400.0) / 300.0)
+            .collect();
         let lab = [50.0, 0.0, 0.0];
 
         let result = engine.validate_material(

@@ -24,10 +24,10 @@
 //! let hair = HairBSDF::new(0.5, 0.0, 0.3, 0.1, 0.0);
 //! ```
 
-use std::f64::consts::PI;
 use serde::{Deserialize, Serialize};
+use std::f64::consts::PI;
 
-use super::unified_bsdf::{BSDF, BSDFContext, BSDFResponse, BSDFSample, Vector3};
+use super::unified_bsdf::{BSDFContext, BSDFResponse, BSDFSample, Vector3, BSDF};
 
 // ============================================================================
 // Color Type for Material Responses
@@ -195,7 +195,11 @@ impl AnisotropicBSDF {
         let term = (h_dot_t * h_dot_t) / ax2 + (h_dot_b * h_dot_b) / ay2 + h_dot_n * h_dot_n;
         let denom = PI * self.alpha_x * self.alpha_y * term * term;
 
-        if denom > 0.0 { 1.0 / denom } else { 0.0 }
+        if denom > 0.0 {
+            1.0 / denom
+        } else {
+            0.0
+        }
     }
 
     /// Smith G1 term for GGX.
@@ -412,7 +416,8 @@ impl BSDF for AshikhminShirleyBSDF {
 
         // Diffuse term (energy conserving)
         let diff_factor = 28.0 / (23.0 * PI);
-        let diff = self.diffuse.luminance() * diff_factor
+        let diff = self.diffuse.luminance()
+            * diff_factor
             * (1.0 - self.specular)
             * (1.0 - (1.0 - cos_i / 2.0).powi(5))
             * (1.0 - (1.0 - cos_o / 2.0).powi(5));
@@ -428,21 +433,24 @@ impl BSDF for AshikhminShirleyBSDF {
         let cos_theta = (1.0 - u2).sqrt();
         let sin_theta = (u2).sqrt();
 
-        let wo = Vector3::new(
-            sin_theta * phi.cos(),
-            sin_theta * phi.sin(),
-            cos_theta,
-        );
+        let wo = Vector3::new(sin_theta * phi.cos(), sin_theta * phi.sin(), cos_theta);
 
         let pdf = cos_theta / PI;
-        let value = self.evaluate(&BSDFContext { wi: wo, ..ctx.clone() });
+        let value = self.evaluate(&BSDFContext {
+            wi: wo,
+            ..ctx.clone()
+        });
 
         BSDFSample::new(wo, value, pdf.max(1e-10), false)
     }
 
     fn pdf(&self, ctx: &BSDFContext) -> f64 {
         let cos_i = ctx.wi.dot(&ctx.normal);
-        if cos_i > 0.0 { cos_i / PI } else { 0.0 }
+        if cos_i > 0.0 {
+            cos_i / PI
+        } else {
+            0.0
+        }
     }
 }
 
@@ -614,7 +622,10 @@ impl BSDF for HairBSDF {
         );
 
         let pdf = 1.0 / (2.0 * PI * v);
-        let value = self.evaluate(&BSDFContext { wi: wo, ..ctx.clone() });
+        let value = self.evaluate(&BSDFContext {
+            wi: wo,
+            ..ctx.clone()
+        });
 
         BSDFSample::new(wo, value, pdf.max(1e-10), false)
     }

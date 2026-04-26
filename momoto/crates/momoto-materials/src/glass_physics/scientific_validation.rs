@@ -51,7 +51,11 @@ pub struct ValidationMetrics {
 impl ValidationMetrics {
     /// Calculate metrics from reference and measured values
     pub fn calculate(reference: &[f64], measured: &[f64], tolerance: f64) -> Self {
-        assert_eq!(reference.len(), measured.len(), "Arrays must have same length");
+        assert_eq!(
+            reference.len(),
+            measured.len(),
+            "Arrays must have same length"
+        );
         let n = reference.len();
 
         if n == 0 {
@@ -59,12 +63,14 @@ impl ValidationMetrics {
         }
 
         // Calculate errors
-        let errors: Vec<f64> = reference.iter()
+        let errors: Vec<f64> = reference
+            .iter()
             .zip(measured.iter())
             .map(|(r, m)| (r - m).abs())
             .collect();
 
-        let squared_errors: Vec<f64> = reference.iter()
+        let squared_errors: Vec<f64> = reference
+            .iter()
             .zip(measured.iter())
             .map(|(r, m)| (r - m).powi(2))
             .collect();
@@ -81,16 +87,32 @@ impl ValidationMetrics {
         let ss_tot: f64 = reference.iter().map(|r| (r - mean_ref).powi(2)).sum();
         let ss_res: f64 = squared_errors.iter().sum();
 
-        let r_squared = if ss_tot > 1e-10 { 1.0 - ss_res / ss_tot } else { 1.0 };
+        let r_squared = if ss_tot > 1e-10 {
+            1.0 - ss_res / ss_tot
+        } else {
+            1.0
+        };
 
         // Pearson correlation
-        let cov: f64 = reference.iter()
+        let cov: f64 = reference
+            .iter()
             .zip(measured.iter())
             .map(|(r, m)| (r - mean_ref) * (m - mean_meas))
-            .sum::<f64>() / n as f64;
+            .sum::<f64>()
+            / n as f64;
 
-        let std_ref = (reference.iter().map(|r| (r - mean_ref).powi(2)).sum::<f64>() / n as f64).sqrt();
-        let std_meas = (measured.iter().map(|m| (m - mean_meas).powi(2)).sum::<f64>() / n as f64).sqrt();
+        let std_ref = (reference
+            .iter()
+            .map(|r| (r - mean_ref).powi(2))
+            .sum::<f64>()
+            / n as f64)
+            .sqrt();
+        let std_meas = (measured
+            .iter()
+            .map(|m| (m - mean_meas).powi(2))
+            .sum::<f64>()
+            / n as f64)
+            .sqrt();
 
         let pearson_r = if std_ref > 1e-10 && std_meas > 1e-10 {
             cov / (std_ref * std_meas)
@@ -199,7 +221,7 @@ pub fn fresnel_conductor_exact(n: f64, k: f64, theta_i: f64) -> f64 {
 
     // s-polarization
     let rs = ((cos_i - two_a_plus_b / 2.0).powi(2) + (two_a_minus_b / 2.0).powi(2))
-           / ((cos_i + two_a_plus_b / 2.0).powi(2) + (two_a_minus_b / 2.0).powi(2));
+        / ((cos_i + two_a_plus_b / 2.0).powi(2) + (two_a_minus_b / 2.0).powi(2));
 
     // Simplified: return s-polarization for now
     rs.min(1.0).max(0.0)
@@ -212,12 +234,12 @@ pub fn fresnel_conductor_exact(n: f64, k: f64, theta_i: f64) -> f64 {
 /// Airy formula for thin film reflectance
 /// Returns intensity reflectance for single layer
 pub fn airy_thin_film_reflectance(
-    n0: f64,          // incident medium (air = 1.0)
-    n1: f64,          // film refractive index
-    n2: f64,          // substrate refractive index
-    thickness_nm: f64, // film thickness in nm
+    n0: f64,            // incident medium (air = 1.0)
+    n1: f64,            // film refractive index
+    n2: f64,            // substrate refractive index
+    thickness_nm: f64,  // film thickness in nm
     wavelength_nm: f64, // wavelength in nm
-    theta_i: f64,     // incident angle in radians
+    theta_i: f64,       // incident angle in radians
 ) -> f64 {
     // Fresnel coefficients at each interface
     let (_, _, r01) = fresnel_dielectric_exact(n0, n1, theta_i);
@@ -251,7 +273,7 @@ pub fn airy_thin_film_reflectance(
 
 /// Transfer Matrix Method for multilayer thin films
 pub fn transfer_matrix_multilayer(
-    n_layers: &[f64],      // refractive indices [n0, n1, n2, ..., n_substrate]
+    n_layers: &[f64],       // refractive indices [n0, n1, n2, ..., n_substrate]
     thicknesses_nm: &[f64], // thicknesses of middle layers (len = n_layers.len() - 2)
     wavelength_nm: f64,
     theta_i: f64,
@@ -335,7 +357,12 @@ pub fn transfer_matrix_multilayer(
 // ============================================================================
 
 /// Rayleigh scattering cross-section (small particle limit)
-pub fn rayleigh_scattering(wavelength_nm: f64, radius_nm: f64, n_particle: f64, n_medium: f64) -> f64 {
+pub fn rayleigh_scattering(
+    wavelength_nm: f64,
+    radius_nm: f64,
+    n_particle: f64,
+    n_medium: f64,
+) -> f64 {
     let x = 2.0 * PI * radius_nm * n_medium / wavelength_nm;
     let m = n_particle / n_medium;
 
@@ -515,7 +542,11 @@ impl ValidationReport {
             self.timestamp,
             self.passed_tests,
             self.total_tests,
-            if self.overall_pass { "OVERALL PASS" } else { "OVERALL FAIL" }
+            if self.overall_pass {
+                "OVERALL PASS"
+            } else {
+                "OVERALL FAIL"
+            }
         );
 
         for v in &self.validations {
@@ -553,16 +584,14 @@ pub fn validate_thin_film_vs_airy(tolerance: f64) -> PhenomenonValidation {
     let mut measured = Vec::new();
 
     let incident = SpectralSignal::d65_illuminant();
-    let pipeline = SpectralPipeline::new()
-        .add_stage(ThinFilmStage::new(n_film, thickness, n_sub));
+    let pipeline = SpectralPipeline::new().add_stage(ThinFilmStage::new(n_film, thickness, n_sub));
     let context = EvaluationContext::default().with_angle_deg(angle);
     let output = pipeline.evaluate(&incident, &context);
 
     for &wl in &wavelengths {
         // Analytical reference (Airy)
-        let r_airy = airy_thin_film_reflectance(
-            1.0, n_film, n_sub, thickness, wl, angle.to_radians()
-        );
+        let r_airy =
+            airy_thin_film_reflectance(1.0, n_film, n_sub, thickness, wl, angle.to_radians());
         reference.push(r_airy);
 
         // Momoto measured
@@ -586,7 +615,10 @@ pub fn validate_thin_film_vs_airy(tolerance: f64) -> PhenomenonValidation {
 
 /// Validate Fresnel equations for dielectric
 pub fn validate_fresnel_dielectric(tolerance: f64) -> PhenomenonValidation {
-    let angles: Vec<f64> = (0..=85).step_by(5).map(|a| (a as f64).to_radians()).collect();
+    let angles: Vec<f64> = (0..=85)
+        .step_by(5)
+        .map(|a| (a as f64).to_radians())
+        .collect();
     let n1 = 1.0;
     let n2 = 1.5;
 
@@ -656,8 +688,7 @@ pub fn validate_gold_reflectance(tolerance: f64) -> PhenomenonValidation {
     let mut measured = Vec::new();
 
     let incident = SpectralSignal::d65_illuminant();
-    let pipeline = SpectralPipeline::new()
-        .add_stage(MetalReflectanceStage::gold());
+    let pipeline = SpectralPipeline::new().add_stage(MetalReflectanceStage::gold());
     let context = EvaluationContext::default();
     let output = pipeline.evaluate(&incident, &context);
 
@@ -739,8 +770,7 @@ pub fn validate_energy_conservation(tolerance: f64) -> PhenomenonValidation {
         let incident = SpectralSignal::d65_illuminant();
         let input_energy = incident.total_energy();
 
-        let pipeline = SpectralPipeline::new()
-            .add_stage(ThinFilmStage::new(n, thickness, 1.52));
+        let pipeline = SpectralPipeline::new().add_stage(ThinFilmStage::new(n, thickness, 1.52));
         let context = EvaluationContext::default();
         let output = pipeline.evaluate(&incident, &context);
 
@@ -812,14 +842,22 @@ mod tests {
         let (rs, rp, r) = fresnel_dielectric_exact(1.0, 1.5, 0.0);
         let expected = ((1.5_f64 - 1.0) / (1.5 + 1.0)).powi(2);
 
-        assert!((r - expected).abs() < 0.001, "r={}, expected={}", r, expected);
+        assert!(
+            (r - expected).abs() < 0.001,
+            "r={}, expected={}",
+            r,
+            expected
+        );
         assert!((rs - expected).abs() < 0.001);
         assert!((rp - expected).abs() < 0.001);
 
         // Brewster's angle for n=1.5: arctan(1.5) ≈ 56.3°
         let brewster = (1.5_f64).atan();
         let (_, rp_brewster, _) = fresnel_dielectric_exact(1.0, 1.5, brewster);
-        assert!(rp_brewster < 0.01, "p-polarization should vanish at Brewster's angle");
+        assert!(
+            rp_brewster < 0.01,
+            "p-polarization should vanish at Brewster's angle"
+        );
     }
 
     #[test]
@@ -827,7 +865,7 @@ mod tests {
         // Test quarter-wave anti-reflection coating
         let wavelength = 550.0;
         let n_film = 1.38; // MgF2
-        let n_sub = 1.52;  // Glass
+        let n_sub = 1.52; // Glass
         let thickness = wavelength / (4.0 * n_film); // Quarter wave
 
         let r = airy_thin_film_reflectance(1.0, n_film, n_sub, thickness, wavelength, 0.0);
@@ -843,7 +881,12 @@ mod tests {
         let n_d = bk7_sellmeier(0.5876);
         let expected = 1.5168; // SCHOTT catalog value
 
-        assert!((n_d - expected).abs() < 0.001, "BK7 nd={}, expected={}", n_d, expected);
+        assert!(
+            (n_d - expected).abs() < 0.001,
+            "BK7 nd={}, expected={}",
+            n_d,
+            expected
+        );
     }
 
     #[test]
@@ -855,8 +898,12 @@ mod tests {
         let ratio = q_400 / q_800;
         let expected = (800.0 / 400.0_f64).powi(4); // = 16
 
-        assert!((ratio - expected).abs() / expected < 0.01,
-            "Ratio={}, expected={}", ratio, expected);
+        assert!(
+            (ratio - expected).abs() / expected < 0.01,
+            "Ratio={}, expected={}",
+            ratio,
+            expected
+        );
     }
 
     #[test]
@@ -867,6 +914,10 @@ mod tests {
 
         // Most tests should pass
         let pass_rate = report.passed_tests as f64 / report.total_tests as f64;
-        assert!(pass_rate >= 0.5, "At least 50% of tests should pass, got {:.0}%", pass_rate * 100.0);
+        assert!(
+            pass_rate >= 0.5,
+            "At least 50% of tests should pass, got {:.0}%",
+            pass_rate * 100.0
+        );
     }
 }

@@ -2,13 +2,13 @@
 //!
 //! Time-evolving materials that wrap base BSDFs with temporal behavior.
 
-use super::bsdf::{TemporalBSDF, TemporalEvolution, EvolutionRate, TemporalBSDFInfo};
+use super::super::unified_bsdf::{
+    BSDFContext, BSDFResponse, BSDFSample, ConductorBSDF, DielectricBSDF, EnergyValidation,
+    ThinFilmBSDF, BSDF,
+};
+use super::bsdf::{EvolutionRate, TemporalBSDF, TemporalBSDFInfo, TemporalEvolution};
 use super::context::TemporalContext;
 use super::interpolation::RateLimiter;
-use super::super::unified_bsdf::{
-    BSDF, BSDFContext, BSDFResponse, BSDFSample, EnergyValidation,
-    DielectricBSDF, ConductorBSDF, ThinFilmBSDF,
-};
 
 // ============================================================================
 // DIELECTRIC EVOLUTION
@@ -71,9 +71,9 @@ impl TemporalDielectric {
     /// Create drying paint preset.
     pub fn drying_paint() -> Self {
         Self::new(DielectricEvolution {
-            roughness_base: 0.05,      // Wet paint is glossy
-            roughness_target: 0.4,      // Dry paint is matte
-            roughness_tau: 60.0,        // Dries over ~1 minute
+            roughness_base: 0.05,  // Wet paint is glossy
+            roughness_target: 0.4, // Dry paint is matte
+            roughness_tau: 60.0,   // Dries over ~1 minute
             ior_base: 1.5,
             ior_temp_coeff: -1e-5,
         })
@@ -82,9 +82,9 @@ impl TemporalDielectric {
     /// Create weathering glass preset.
     pub fn weathering_glass() -> Self {
         Self::new(DielectricEvolution {
-            roughness_base: 0.01,       // New glass is smooth
-            roughness_target: 0.15,     // Weathered glass is scratched
-            roughness_tau: 3600.0,      // Weathers over ~1 hour simulation
+            roughness_base: 0.01,   // New glass is smooth
+            roughness_target: 0.15, // Weathered glass is scratched
+            roughness_tau: 3600.0,  // Weathers over ~1 hour simulation
             ior_base: 1.52,
             ior_temp_coeff: -1e-5,
         })
@@ -94,7 +94,8 @@ impl TemporalDielectric {
     fn roughness_at(&self, time: f64) -> f64 {
         let e = &self.evolution;
         // Exponential approach to target: r(t) = target + (base - target) * exp(-t/tau)
-        e.roughness_target + (e.roughness_base - e.roughness_target) * (-time / e.roughness_tau).exp()
+        e.roughness_target
+            + (e.roughness_base - e.roughness_target) * (-time / e.roughness_tau).exp()
     }
 
     /// Compute IOR at temperature.
@@ -149,11 +150,10 @@ impl TemporalBSDF for TemporalDielectric {
         TemporalBSDFInfo {
             name: "TemporalDielectric".to_string(),
             supports_temporal: true,
-            evolution: TemporalEvolution::default()
-                .with_roughness(EvolutionRate::Exponential {
-                    rate: 1.0 / self.evolution.roughness_tau,
-                    asymptote: self.evolution.roughness_target,
-                }),
+            evolution: TemporalEvolution::default().with_roughness(EvolutionRate::Exponential {
+                rate: 1.0 / self.evolution.roughness_tau,
+                asymptote: self.evolution.roughness_target,
+            }),
             time_min: 0.0,
             time_max: f64::INFINITY,
         }
@@ -314,11 +314,10 @@ impl TemporalBSDF for TemporalThinFilm {
         TemporalBSDFInfo {
             name: "TemporalThinFilm".to_string(),
             supports_temporal: true,
-            evolution: TemporalEvolution::default()
-                .with_thickness(EvolutionRate::Oscillating {
-                    frequency: self.evolution.thickness_frequency,
-                    amplitude: self.evolution.thickness_amplitude,
-                }),
+            evolution: TemporalEvolution::default().with_thickness(EvolutionRate::Oscillating {
+                frequency: self.evolution.thickness_frequency,
+                amplitude: self.evolution.thickness_amplitude,
+            }),
             time_min: 0.0,
             time_max: f64::INFINITY,
         }
@@ -349,7 +348,7 @@ pub struct ConductorEvolution {
 impl Default for ConductorEvolution {
     fn default() -> Self {
         Self {
-            n_base: 0.18,  // Gold-like
+            n_base: 0.18, // Gold-like
             k_base: 3.0,
             roughness_base: 0.1,
             n_temp_coeff: 1e-4,

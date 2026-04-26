@@ -244,7 +244,11 @@ impl ImpactCalculator {
         // Accessibility improvement
         let accessibility_delta = after.compliance - before.compliance;
         let accessibility_impact = (accessibility_delta.max(0.0) * 2.0).min(1.0);
-        breakdown = breakdown.add_impact("accessibility", accessibility_impact, self.weights.accessibility);
+        breakdown = breakdown.add_impact(
+            "accessibility",
+            accessibility_impact,
+            self.weights.accessibility,
+        );
 
         // Perceptual quality improvement
         let perceptual_delta = after.perceptual - before.perceptual;
@@ -257,7 +261,8 @@ impl ImpactCalculator {
         breakdown = breakdown.add_impact("overall", overall_impact, self.weights.contrast);
 
         // Calculate weighted sum
-        let total_weight = self.weights.accessibility + self.weights.perceptual + self.weights.contrast;
+        let total_weight =
+            self.weights.accessibility + self.weights.perceptual + self.weights.contrast;
         let impact = (accessibility_impact * self.weights.accessibility
             + perceptual_impact * self.weights.perceptual
             + overall_impact * self.weights.contrast)
@@ -335,9 +340,9 @@ impl EffortEstimator {
     /// Estimate effort for a color change
     pub fn estimate_color_change(
         &self,
-        delta_l: f64,  // Lightness change
-        delta_c: f64,  // Chroma change
-        delta_h: f64,  // Hue change
+        delta_l: f64, // Lightness change
+        delta_c: f64, // Chroma change
+        delta_h: f64, // Hue change
     ) -> (f64, EffortLevel, ScoreBreakdown) {
         let mut breakdown = ScoreBreakdown::default();
 
@@ -364,7 +369,11 @@ impl EffortEstimator {
 
         breakdown = breakdown.add_effort("magnitude", 1.0 - magnitude.min(1.0), 0.4);
         breakdown = breakdown.add_effort("hue_stability", hue_factor, 0.3);
-        breakdown = breakdown.add_effort("type_simplicity", if is_lightness_only { 1.0 } else { 0.5 }, 0.3);
+        breakdown = breakdown.add_effort(
+            "type_simplicity",
+            if is_lightness_only { 1.0 } else { 0.5 },
+            0.3,
+        );
 
         let level = if effort >= 0.9 {
             EffortLevel::Trivial
@@ -382,7 +391,11 @@ impl EffortEstimator {
     }
 
     /// Estimate effort for adopting a recommendation
-    pub fn estimate_recommendation(&self, modification_type: &str, color_count: usize) -> (f64, EffortLevel) {
+    pub fn estimate_recommendation(
+        &self,
+        modification_type: &str,
+        color_count: usize,
+    ) -> (f64, EffortLevel) {
         // Base effort by modification type
         let type_effort = match modification_type {
             "lightness" => 0.9,
@@ -526,7 +539,10 @@ impl ConfidenceCalculator {
         let compliance_conf = if quality_score.passes() { 0.9 } else { 0.6 };
         breakdown = breakdown.add_confidence("compliance", compliance_conf, 0.2);
 
-        let confidence = (historical_conf * 0.3 + quality_conf * 0.3 + magnitude_conf * 0.2 + compliance_conf * 0.2)
+        let confidence = (historical_conf * 0.3
+            + quality_conf * 0.3
+            + magnitude_conf * 0.2
+            + compliance_conf * 0.2)
             .clamp(0.0, 1.0);
 
         (confidence, breakdown)
@@ -541,7 +557,10 @@ impl ConfidenceCalculator {
         predicted: f64,
         actual: f64,
     ) {
-        let outcome = self.historical_data.entry(category.to_string()).or_default();
+        let outcome = self
+            .historical_data
+            .entry(category.to_string())
+            .or_default();
         outcome.record(accepted, successful, predicted, actual);
     }
 
@@ -594,11 +613,17 @@ impl AdvancedScorer {
         let (impact, impact_breakdown) = self.impact_calculator.calculate_impact(before, after);
 
         // Calculate effort
-        let (effort, _level, effort_breakdown) = self.effort_estimator.estimate_color_change(delta_l, delta_c, delta_h);
+        let (effort, _level, effort_breakdown) = self
+            .effort_estimator
+            .estimate_color_change(delta_l, delta_c, delta_h);
 
         // Calculate confidence
         let modification_magnitude = (delta_l.abs() + delta_c.abs() + delta_h.abs() / 360.0) / 3.0;
-        let (confidence, conf_breakdown) = self.confidence_calculator.calculate_confidence(category, after, modification_magnitude);
+        let (confidence, conf_breakdown) = self.confidence_calculator.calculate_confidence(
+            category,
+            after,
+            modification_magnitude,
+        );
 
         // Combine breakdowns
         let breakdown = ScoreBreakdown {
@@ -667,7 +692,10 @@ mod tests {
         // Large hue change should be harder
         let (effort2, level2, _) = estimator.estimate_color_change(0.1, 0.1, 45.0);
         assert!(effort2 < effort);
-        assert!(matches!(level2, EffortLevel::Moderate | EffortLevel::Significant));
+        assert!(matches!(
+            level2,
+            EffortLevel::Moderate | EffortLevel::Significant
+        ));
     }
 
     #[test]

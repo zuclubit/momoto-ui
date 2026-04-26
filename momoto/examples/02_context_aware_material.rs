@@ -26,21 +26,9 @@ fn main() {
             OKLCH::new(0.2, 0.02, 280.0),
             0.0, // viewing angle
         ),
-        (
-            "Light Background",
-            OKLCH::new(0.9, 0.02, 280.0),
-            0.0,
-        ),
-        (
-            "Saturated Background",
-            OKLCH::new(0.6, 0.15, 120.0),
-            0.0,
-        ),
-        (
-            "Grazing Angle (Dark)",
-            OKLCH::new(0.2, 0.02, 280.0),
-            75.0,
-        ),
+        ("Light Background", OKLCH::new(0.9, 0.02, 280.0), 0.0),
+        ("Saturated Background", OKLCH::new(0.6, 0.15, 120.0), 0.0),
+        ("Grazing Angle (Dark)", OKLCH::new(0.2, 0.02, 280.0), 75.0),
     ];
 
     let backend = CssBackend::new();
@@ -62,7 +50,10 @@ fn main() {
         println!("  Viewing Angle:      {:.1}°", angle);
         println!("  Result Opacity:     {:.4}", evaluated.opacity);
         println!("  Fresnel:            {:.4}", evaluated.fresnel_f0);
-        println!("  Edge Intensity:     {:.4}", evaluated.fresnel_edge_intensity);
+        println!(
+            "  Edge Intensity:     {:.4}",
+            evaluated.fresnel_edge_intensity
+        );
 
         match backend.render(&evaluated, &render_ctx) {
             Ok(css) => {

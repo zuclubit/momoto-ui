@@ -36,9 +36,9 @@ impl EbuR128Limits {
     ///
     /// Mandated by the European Broadcasting Union for broadcast television.
     pub const BROADCAST: Self = Self {
-        target_lufs:         -23.0,
-        tolerance_lu:          1.0,
-        max_true_peak_dbtp:   -1.0,
+        target_lufs: -23.0,
+        tolerance_lu: 1.0,
+        max_true_peak_dbtp: -1.0,
         max_short_term_lufs: Some(-18.0), // EBU R128 §3.4
         name: "EBU R128 Broadcast",
     };
@@ -47,18 +47,18 @@ impl EbuR128Limits {
     ///
     /// Used by most major streaming platforms (Spotify, Apple Music, YouTube).
     pub const STREAMING: Self = Self {
-        target_lufs:         -14.0,
-        tolerance_lu:          2.0,  // platforms accept -14±2 LU
-        max_true_peak_dbtp:   -1.0,
+        target_lufs: -14.0,
+        tolerance_lu: 2.0, // platforms accept -14±2 LU
+        max_true_peak_dbtp: -1.0,
         max_short_term_lufs: None,
         name: "EBU R128 Streaming",
     };
 
     /// Podcast / spoken word profile: -16 LUFS, TP -1 dBTP.
     pub const PODCAST: Self = Self {
-        target_lufs:         -16.0,
-        tolerance_lu:          1.0,
-        max_true_peak_dbtp:   -1.0,
+        target_lufs: -16.0,
+        tolerance_lu: 1.0,
+        max_true_peak_dbtp: -1.0,
         max_short_term_lufs: None,
         name: "EBU R128 Podcast",
     };
@@ -207,8 +207,14 @@ mod tests {
 
     #[test]
     fn broadcast_within_tolerance_passes() {
-        assert!(measure(-22.5).validate().passes, "-22.5 LUFS passes (+0.5 LU)");
-        assert!(measure(-23.5).validate().passes, "-23.5 LUFS passes (-0.5 LU)");
+        assert!(
+            measure(-22.5).validate().passes,
+            "-22.5 LUFS passes (+0.5 LU)"
+        );
+        assert!(
+            measure(-23.5).validate().passes,
+            "-23.5 LUFS passes (-0.5 LU)"
+        );
     }
 
     #[test]

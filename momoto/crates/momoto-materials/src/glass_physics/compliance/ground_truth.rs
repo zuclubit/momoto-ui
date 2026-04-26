@@ -243,7 +243,11 @@ impl GroundTruthValidator {
             }
             GroundTruthDataset::Custom { measurements, .. } => {
                 for measurement in measurements {
-                    let wavelength = measurement.inputs.get("wavelength").copied().unwrap_or(550.0);
+                    let wavelength = measurement
+                        .inputs
+                        .get("wavelength")
+                        .copied()
+                        .unwrap_or(550.0);
                     let angle = measurement.inputs.get("angle").copied();
                     let predicted = prediction_fn(wavelength, angle);
                     let error = (predicted - measurement.output).abs();

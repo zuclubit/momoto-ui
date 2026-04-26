@@ -84,12 +84,19 @@ impl Default for MaterialParams {
 impl MaterialParams {
     /// Create glass-like material
     pub fn glass(n: f64) -> Self {
-        Self { n, ..Default::default() }
+        Self {
+            n,
+            ..Default::default()
+        }
     }
 
     /// Create metal-like material
     pub fn metal(n: f64, k: f64) -> Self {
-        Self { n, k, ..Default::default() }
+        Self {
+            n,
+            k,
+            ..Default::default()
+        }
     }
 
     /// Create with thin-film coating
@@ -102,13 +109,22 @@ impl MaterialParams {
     /// Number of optimizable parameters
     pub fn param_count(&self) -> usize {
         let mut count = 5; // n, k, absorption, scattering, roughness
-        if self.film_thickness.is_some() { count += 2; }
+        if self.film_thickness.is_some() {
+            count += 2;
+        }
         count + 1 // g
     }
 
     /// Convert to parameter vector for optimization
     pub fn to_vec(&self) -> Vec<f64> {
-        let mut v = vec![self.n, self.k, self.absorption, self.scattering, self.roughness, self.g];
+        let mut v = vec![
+            self.n,
+            self.k,
+            self.absorption,
+            self.scattering,
+            self.roughness,
+            self.g,
+        ];
         if let (Some(ft), Some(fn_)) = (self.film_thickness, self.film_n) {
             v.push(ft);
             v.push(fn_);
@@ -169,7 +185,14 @@ pub struct ParamGradient {
 impl ParamGradient {
     /// Convert to vector
     pub fn to_vec(&self) -> Vec<f64> {
-        let mut v = vec![self.dn, self.dk, self.d_absorption, self.d_scattering, self.d_roughness, self.dg];
+        let mut v = vec![
+            self.dn,
+            self.dk,
+            self.d_absorption,
+            self.d_scattering,
+            self.d_roughness,
+            self.dg,
+        ];
         if let (Some(dft), Some(dfn)) = (self.d_film_thickness, self.d_film_n) {
             v.push(dft);
             v.push(dfn);
@@ -287,7 +310,8 @@ pub fn thin_film_reflectance_diff(
     let d_delta_d_thickness = 4.0 * PI * n_film * cos_theta_film / wavelength_nm;
     let d_numerator = -2.0 * r01 * r12 * sin_delta * d_delta_d_thickness;
     let d_denominator = -2.0 * r01 * r12 * sin_delta * d_delta_d_thickness;
-    let dr_d_thickness = (d_numerator * denominator - numerator * d_denominator) / (denominator * denominator);
+    let dr_d_thickness =
+        (d_numerator * denominator - numerator * d_denominator) / (denominator * denominator);
 
     // Gradient w.r.t. film n (simplified)
     let d_delta_d_n = 4.0 * PI * thickness_nm * cos_theta_film / wavelength_nm;
@@ -322,7 +346,11 @@ pub struct RenderOutput {
 impl RenderOutput {
     /// Create from spectral data
     pub fn new(wavelengths: Vec<f64>, reflectance: Vec<f64>, transmittance: Vec<f64>) -> Self {
-        Self { wavelengths, reflectance, transmittance }
+        Self {
+            wavelengths,
+            reflectance,
+            transmittance,
+        }
     }
 
     /// Sample RGB (650, 550, 450 nm)
@@ -336,15 +364,17 @@ impl RenderOutput {
         let mut result = [0.0; 3];
         for (i, &w) in target.iter().enumerate() {
             // Linear interpolation
-            let idx = self.wavelengths.iter()
+            let idx = self
+                .wavelengths
+                .iter()
                 .position(|&x| x >= w)
                 .unwrap_or(self.wavelengths.len() - 1);
 
             if idx == 0 {
                 result[i] = values[0];
             } else {
-                let t = (w - self.wavelengths[idx - 1]) /
-                       (self.wavelengths[idx] - self.wavelengths[idx - 1]);
+                let t = (w - self.wavelengths[idx - 1])
+                    / (self.wavelengths[idx] - self.wavelengths[idx - 1]);
                 result[i] = values[idx - 1] + t * (values[idx] - values[idx - 1]);
             }
         }
@@ -445,19 +475,20 @@ pub fn compute_loss(
             reference.reflectance.get(5).copied().unwrap_or(0.5),  // ~450nm
         ];
 
-        let delta_e = ((r_out[0] - r_ref[0]).powi(2) +
-                       (r_out[1] - r_ref[1]).powi(2) +
-                       (r_out[2] - r_ref[2]).powi(2)).sqrt();
+        let delta_e = ((r_out[0] - r_ref[0]).powi(2)
+            + (r_out[1] - r_ref[1]).powi(2)
+            + (r_out[2] - r_ref[2]).powi(2))
+        .sqrt();
         loss += config.w_color * delta_e;
     }
 
     // Regularization toward prior
     if config.w_regularization > 0.0 {
         if let Some(prior) = &config.prior {
-            let param_diff = (params.n - prior.n).powi(2) +
-                           (params.k - prior.k).powi(2) +
-                           (params.absorption - prior.absorption).powi(2) +
-                           (params.scattering - prior.scattering).powi(2);
+            let param_diff = (params.n - prior.n).powi(2)
+                + (params.k - prior.k).powi(2)
+                + (params.absorption - prior.absorption).powi(2)
+                + (params.scattering - prior.scattering).powi(2);
             loss += config.w_regularization * param_diff;
         }
     }
@@ -476,17 +507,34 @@ pub fn compute_loss_gradient(
     let mut grad = ParamGradient::default();
     let param_vec = params.to_vec();
 
-    for (i, g) in [&mut grad.dn, &mut grad.dk, &mut grad.d_absorption,
-                   &mut grad.d_scattering, &mut grad.d_roughness, &mut grad.dg].iter_mut().enumerate() {
+    for (i, g) in [
+        &mut grad.dn,
+        &mut grad.dk,
+        &mut grad.d_absorption,
+        &mut grad.d_scattering,
+        &mut grad.d_roughness,
+        &mut grad.dg,
+    ]
+    .iter_mut()
+    .enumerate()
+    {
         let mut params_plus = param_vec.clone();
         let mut params_minus = param_vec.clone();
         params_plus[i] += eps;
         params_minus[i] -= eps;
 
-        let loss_plus = compute_loss(&forward_fn(&MaterialParams::from_vec(&params_plus)),
-                                     reference, &MaterialParams::from_vec(&params_plus), config);
-        let loss_minus = compute_loss(&forward_fn(&MaterialParams::from_vec(&params_minus)),
-                                      reference, &MaterialParams::from_vec(&params_minus), config);
+        let loss_plus = compute_loss(
+            &forward_fn(&MaterialParams::from_vec(&params_plus)),
+            reference,
+            &MaterialParams::from_vec(&params_plus),
+            config,
+        );
+        let loss_minus = compute_loss(
+            &forward_fn(&MaterialParams::from_vec(&params_minus)),
+            reference,
+            &MaterialParams::from_vec(&params_minus),
+            config,
+        );
 
         **g = (loss_plus - loss_minus) / (2.0 * eps);
     }
@@ -514,7 +562,9 @@ pub struct SgdOptimizer {
 
 impl Default for SgdOptimizer {
     fn default() -> Self {
-        Self { learning_rate: 0.01 }
+        Self {
+            learning_rate: 0.01,
+        }
     }
 }
 
@@ -725,12 +775,9 @@ pub fn forward_thin_film(params: &MaterialParams, wavelengths: &[f64]) -> Render
 
     for &wavelength in wavelengths {
         let (r, _, _) = thin_film_reflectance_diff(
-            wavelength,
-            1.0,        // air
-            film_n,
-            params.n,   // substrate
-            film_d,
-            1.0,        // normal incidence
+            wavelength, 1.0, // air
+            film_n, params.n, // substrate
+            film_d, 1.0, // normal incidence
         );
 
         reflectance.push(r.clamp(0.0, 1.0));
@@ -774,24 +821,30 @@ pub mod reference_presets {
     /// AR coated glass (~1% reflection)
     pub fn ar_coated_glass() -> ReferenceData {
         let wavelengths = ReferenceData::visible_wavelengths();
-        let reflectance: Vec<f64> = wavelengths.iter().map(|w| {
-            // V-coat centered at 550nm
-            let x = (w - 550.0) / 100.0;
-            0.01 + 0.02 * x.abs()
-        }).collect();
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|w| {
+                // V-coat centered at 550nm
+                let x = (w - 550.0) / 100.0;
+                0.01 + 0.02 * x.abs()
+            })
+            .collect();
         ReferenceData::from_spectral(wavelengths, reflectance)
     }
 
     /// Gold reflectance (simplified)
     pub fn gold() -> ReferenceData {
         let wavelengths = ReferenceData::visible_wavelengths();
-        let reflectance: Vec<f64> = wavelengths.iter().map(|w| {
-            if *w < 550.0 {
-                0.4 + 0.3 * (w - 400.0) / 150.0
-            } else {
-                0.9 + 0.08 * (w - 550.0) / 150.0
-            }
-        }).collect();
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|w| {
+                if *w < 550.0 {
+                    0.4 + 0.3 * (w - 400.0) / 150.0
+                } else {
+                    0.9 + 0.08 * (w - 550.0) / 150.0
+                }
+            })
+            .collect();
         ReferenceData::from_spectral(wavelengths, reflectance)
     }
 
@@ -805,13 +858,16 @@ pub mod reference_presets {
     /// Copper reflectance
     pub fn copper() -> ReferenceData {
         let wavelengths = ReferenceData::visible_wavelengths();
-        let reflectance: Vec<f64> = wavelengths.iter().map(|w| {
-            if *w < 580.0 {
-                0.4 + 0.3 * (w - 400.0) / 180.0
-            } else {
-                0.95
-            }
-        }).collect();
+        let reflectance: Vec<f64> = wavelengths
+            .iter()
+            .map(|w| {
+                if *w < 580.0 {
+                    0.4 + 0.3 * (w - 400.0) / 180.0
+                } else {
+                    0.95
+                }
+            })
+            .collect();
         ReferenceData::from_spectral(wavelengths, reflectance)
     }
 }
@@ -851,7 +907,10 @@ mod tests {
     fn test_adam_optimizer() {
         let mut optimizer = AdamOptimizer::default();
         let mut params = MaterialParams::glass(1.4);
-        let grad = ParamGradient { dn: 0.1, ..Default::default() };
+        let grad = ParamGradient {
+            dn: 0.1,
+            ..Default::default()
+        };
 
         optimizer.step(&mut params, &grad);
 
@@ -887,7 +946,8 @@ mod tests {
         let wavelengths = ReferenceData::visible_wavelengths();
         let reference_params = MaterialParams::glass(1.52).with_film(1.38, 100.0);
         let reference_output = forward_thin_film(&reference_params, &wavelengths);
-        let reference = ReferenceData::from_spectral(wavelengths.clone(), reference_output.reflectance);
+        let reference =
+            ReferenceData::from_spectral(wavelengths.clone(), reference_output.reflectance);
 
         let mut calibrator = AutoCalibrator::new(AdamOptimizer::default());
 
@@ -925,15 +985,18 @@ mod tests {
         );
 
         // Should make some progress (loss should be finite)
-        assert!(result.final_loss.is_finite(),
-                "Calibration should produce finite loss, got {:?}", result.final_loss);
+        assert!(
+            result.final_loss.is_finite(),
+            "Calibration should produce finite loss, got {:?}",
+            result.final_loss
+        );
     }
 
     #[test]
     fn test_param_clamping() {
         let mut params = MaterialParams {
-            n: 0.5,        // Too low
-            k: -1.0,       // Negative
+            n: 0.5,            // Too low
+            k: -1.0,           // Negative
             absorption: 200.0, // Too high
             ..Default::default()
         };
@@ -957,7 +1020,9 @@ mod tests {
         let grad = compute_loss_gradient(&forward, &reference, &params, &config);
 
         // Gradient should be non-zero (some sensitivity to parameters)
-        assert!(grad.dn.abs() > 0.0 || grad.d_absorption.abs() > 0.0,
-                "Gradient should have some non-zero component");
+        assert!(
+            grad.dn.abs() > 0.0 || grad.d_absorption.abs() > 0.0,
+            "Gradient should have some non-zero component"
+        );
     }
 }

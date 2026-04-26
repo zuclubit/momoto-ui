@@ -119,7 +119,7 @@ impl CompressedLUT1D {
 
     /// Memory usage in bytes
     pub fn memory_bytes(&self) -> usize {
-        self.data.len() * 2 + 24  // data + metadata
+        self.data.len() * 2 + 24 // data + metadata
     }
 
     /// Sample count
@@ -236,7 +236,7 @@ impl CompressedLUT2D {
 
     /// Memory usage in bytes
     pub fn memory_bytes(&self) -> usize {
-        self.data.len() * 2 + 48  // data + metadata
+        self.data.len() * 2 + 48 // data + metadata
     }
 }
 
@@ -280,7 +280,7 @@ impl SparseLUT1D {
             } else {
                 (values[i + 1] - values[i - 1]) / (2.0 * h)
             };
-            derivatives.push(deriv * h);  // Scale by step for Hermite
+            derivatives.push(deriv * h); // Scale by step for Hermite
         }
 
         Self {
@@ -433,10 +433,7 @@ impl DeltaEncodedLUT {
         }
 
         // Find scale
-        let max_delta = raw_deltas
-            .iter()
-            .map(|d| d.abs())
-            .fold(0.0, f64::max);
+        let max_delta = raw_deltas.iter().map(|d| d.abs()).fold(0.0, f64::max);
 
         let delta_scale = if max_delta > 0.0 {
             max_delta / 32767.0
@@ -547,8 +544,10 @@ impl CompressedHGLUT {
             |cos_t, g| hg_fn(cos_t, g),
             angle_samples,
             g_samples,
-            -1.0, 1.0,  // cos_theta range
-            -0.95, 0.95,  // g range
+            -1.0,
+            1.0, // cos_theta range
+            -0.95,
+            0.95, // g range
         );
 
         Self { lut }
@@ -592,7 +591,7 @@ impl CompressionAnalysis {
     where
         F: Fn(f64) -> f64,
     {
-        let original_bytes = original_samples * 4;  // f32
+        let original_bytes = original_samples * 4; // f32
 
         let lut = CompressedLUT1D::build(&f, compressed_samples, input_min, input_max);
         let compressed_bytes = lut.memory_bytes();
@@ -625,15 +624,15 @@ impl CompressionAnalysis {
 /// Calculate total memory savings for Phase 4 compression
 pub fn calculate_memory_savings() -> (usize, usize, f64) {
     // Original Phase 1-3 memory
-    let original = 1_700_000;  // ~1.7MB
+    let original = 1_700_000; // ~1.7MB
 
     // Estimated compressed sizes
-    let compressed_fresnel = 32 * 2 + 24;           // 32 samples u16
-    let compressed_beer_lambert = 32 * 2 + 24;      // 32 samples u16
-    let compressed_hg = 32 * 32 * 2 + 48;           // 32x32 u16
+    let compressed_fresnel = 32 * 2 + 24; // 32 samples u16
+    let compressed_beer_lambert = 32 * 2 + 24; // 32 samples u16
+    let compressed_hg = 32 * 32 * 2 + 48; // 32x32 u16
     let compressed_spectral = 3 * 32 * 32 * 2 + 48; // 3x32x32 u16
-    let compressed_dhg = 8 * 8 * 4 * 32 * 2 + 48;   // Reduced DHG
-    let compressed_mie = 16 * 4 * 32 * 2 + 48;      // Reduced Mie
+    let compressed_dhg = 8 * 8 * 4 * 32 * 2 + 48; // Reduced DHG
+    let compressed_mie = 16 * 4 * 32 * 2 + 48; // Reduced Mie
 
     let compressed = compressed_fresnel
         + compressed_beer_lambert
@@ -696,7 +695,7 @@ mod tests {
     #[test]
     fn test_sparse_lut_cubic() {
         let f = |x: f64| x.sin();
-        let lut = SparseLUT1D::build(f, 16, 0.0, PI);  // Only 16 samples
+        let lut = SparseLUT1D::build(f, 16, 0.0, PI); // Only 16 samples
 
         // Test accuracy with cubic interpolation
         for i in 0..100 {
@@ -711,7 +710,8 @@ mod tests {
     #[test]
     fn test_hybrid_evaluator() {
         let f: fn(f64) -> f64 = |x| x.sin();
-        let evaluator = HybridEvaluator::new(f, 32, 0.0, PI, EvaluationMethod::Hybrid { boundary: 1.0 });
+        let evaluator =
+            HybridEvaluator::new(f, 32, 0.0, PI, EvaluationMethod::Hybrid { boundary: 1.0 });
 
         // Below boundary: analytical
         let v_low = evaluator.evaluate(0.5);
@@ -770,7 +770,11 @@ mod tests {
     fn test_memory_savings() {
         let (original, compressed, savings) = calculate_memory_savings();
 
-        assert!(savings > 0.5, "Should achieve >50% savings: {:.1}%", savings * 100.0);
+        assert!(
+            savings > 0.5,
+            "Should achieve >50% savings: {:.1}%",
+            savings * 100.0
+        );
         assert!(compressed < original, "Compressed < original");
     }
 
@@ -778,8 +782,8 @@ mod tests {
     fn test_compression_analysis() {
         let analysis = CompressionAnalysis::analyze_1d(
             |x| x.sin(),
-            256,  // Original samples
-            64,   // Compressed samples
+            256, // Original samples
+            64,  // Compressed samples
             0.0,
             PI,
         );

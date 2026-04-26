@@ -138,7 +138,10 @@ impl MandatoryTest {
                     max_deviation
                 )
             }
-            MandatoryTest::ColorAccuracy { max_delta_e, illuminant } => {
+            MandatoryTest::ColorAccuracy {
+                max_delta_e,
+                illuminant,
+            } => {
                 format!(
                     "Color accuracy under {} illuminant (max ΔE2000: {:.1})",
                     illuminant, max_delta_e
@@ -289,12 +292,16 @@ pub fn required_tests(level: CertificationLevel) -> Vec<MandatoryTest> {
         CertificationLevel::Industrial => vec![
             MandatoryTest::EnergyConservation { max_error: 0.02 },
             MandatoryTest::SpectralConsistency { max_rmse: 0.02 },
-            MandatoryTest::AngularReciprocity { max_violation: 0.01 },
+            MandatoryTest::AngularReciprocity {
+                max_violation: 0.01,
+            },
             MandatoryTest::TemporalStability { max_drift: 0.001 },
             MandatoryTest::NeuralCorrectionBound { max_share: 0.05 },
             MandatoryTest::ReproducibilityCheck { tolerance: 1e-6 },
             MandatoryTest::GroundTruthComparison { max_delta_e: 1.0 },
-            MandatoryTest::FresnelCompliance { max_deviation: 0.02 },
+            MandatoryTest::FresnelCompliance {
+                max_deviation: 0.02,
+            },
             MandatoryTest::ColorAccuracy {
                 max_delta_e: 1.0,
                 illuminant: "D65".to_string(),
@@ -308,12 +315,16 @@ pub fn required_tests(level: CertificationLevel) -> Vec<MandatoryTest> {
         CertificationLevel::Reference => vec![
             MandatoryTest::EnergyConservation { max_error: 0.01 },
             MandatoryTest::SpectralConsistency { max_rmse: 0.01 },
-            MandatoryTest::AngularReciprocity { max_violation: 0.005 },
+            MandatoryTest::AngularReciprocity {
+                max_violation: 0.005,
+            },
             MandatoryTest::TemporalStability { max_drift: 0.0001 },
             MandatoryTest::NeuralCorrectionBound { max_share: 0.02 },
             MandatoryTest::ReproducibilityCheck { tolerance: 1e-10 },
             MandatoryTest::GroundTruthComparison { max_delta_e: 0.5 },
-            MandatoryTest::FresnelCompliance { max_deviation: 0.01 },
+            MandatoryTest::FresnelCompliance {
+                max_deviation: 0.01,
+            },
             MandatoryTest::ColorAccuracy {
                 max_delta_e: 0.5,
                 illuminant: "D65".to_string(),
@@ -389,17 +400,17 @@ impl TestSuiteResult {
 
     /// Generate suite report.
     pub fn report(&self) -> String {
-        let mut report = format!(
-            "{} Certification Test Suite\n",
-            self.level
-        );
+        let mut report = format!("{} Certification Test Suite\n", self.level);
         report.push_str(&format!(
             "Overall: {} ({}/{})\n",
             if self.all_passed { "PASSED" } else { "FAILED" },
             self.passed_count(),
             self.results.len()
         ));
-        report.push_str(&format!("Total Duration: {} ms\n\n", self.total_duration_ms));
+        report.push_str(&format!(
+            "Total Duration: {} ms\n\n",
+            self.total_duration_ms
+        ));
 
         report.push_str("Test Results:\n");
         for result in &self.results {
@@ -491,10 +502,7 @@ mod tests {
     #[test]
     fn test_suite_result() {
         let results = vec![
-            TestResult::pass(
-                MandatoryTest::EnergyConservation { max_error: 0.05 },
-                0.02,
-            ),
+            TestResult::pass(MandatoryTest::EnergyConservation { max_error: 0.05 }, 0.02),
             TestResult::pass(
                 MandatoryTest::NeuralCorrectionBound { max_share: 0.10 },
                 0.05,
@@ -530,7 +538,9 @@ mod tests {
 
     #[test]
     fn test_fresnel_compliance() {
-        let test = MandatoryTest::FresnelCompliance { max_deviation: 0.01 };
+        let test = MandatoryTest::FresnelCompliance {
+            max_deviation: 0.01,
+        };
         assert_eq!(test.name(), "Fresnel Compliance");
         assert!((test.threshold() - 0.01).abs() < 1e-10);
     }
